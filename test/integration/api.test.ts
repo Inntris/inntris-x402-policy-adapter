@@ -112,4 +112,21 @@ describe("reference API", () => {
     expect(response?.statusCode).toBe(429);
     await app.close();
   });
+
+  it("applies the stricter limit to decision endpoints", async () => {
+    const context = await testContext();
+    const app = await buildDemoApi({ ...context, logger: false });
+    const action = actionFromX402(bindingInput);
+    const decision = await context.provider.evaluate(action);
+    let response;
+    for (let requestNumber = 0; requestNumber <= 30; requestNumber += 1) {
+      response = await app.inject({
+        method: "POST",
+        url: "/v1/decisions/verify",
+        payload: { decision, action },
+      });
+    }
+    expect(response?.statusCode).toBe(429);
+    await app.close();
+  });
 });

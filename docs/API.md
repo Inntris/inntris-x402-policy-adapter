@@ -13,8 +13,9 @@ A valid policy `BLOCK` or `REQUIRE_APPROVAL` is an HTTP `200` decision response.
 | `422`  | A valid request cannot be consumed                         |
 | `503`  | Signer, policy, nonce store or remote provider unavailable |
 
-The reference API applies a per-process limit of 100 requests per minute. Production deployments
-should enforce an additional distributed limit at the trusted ingress.
+The reference API applies a per-process limit of 100 requests per minute and a 30 request limit to
+each decision endpoint. Production deployments should enforce an additional distributed limit at the
+trusted ingress.
 
 ## Evaluate
 

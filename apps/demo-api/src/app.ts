@@ -81,84 +81,105 @@ export async function buildDemoApi(options: DemoApiOptions): Promise<FastifyInst
 
   app.get("/.well-known/inntris-keys.json", async () => options.keyRegistry);
 
-  app.post("/v1/decisions/evaluate", { preHandler: authenticate }, async (request, reply) => {
-    const started = performance.now();
-    let body: z.infer<typeof EvaluateBodySchema>;
-    try {
-      body = EvaluateBodySchema.parse(request.body);
-    } catch (error) {
-      parseFailure(reply, error);
-      return;
-    }
-    try {
-      const decision = await options.provider.evaluate(body.action);
+  app.post(
+    "/v1/decisions/evaluate",
+    {
+      preHandler: authenticate,
+      config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+    },
+    async (request, reply) => {
+      const started = performance.now();
+      let body: z.infer<typeof EvaluateBodySchema>;
+      try {
+        body = EvaluateBodySchema.parse(request.body);
+      } catch (error) {
+        parseFailure(reply, error);
+        return;
+      }
+      try {
+        const decision = await options.provider.evaluate(body.action);
+        request.log.info({
+          request_id: request.id,
+          decision_id: decision.decision_id,
+          verdict: decision.verdict,
+          rail: decision.rail,
+          reason_codes: decision.reason_codes,
+          evaluation_latency_ms: performance.now() - started,
+        });
+        await reply.status(200).send({ decision });
+      } catch {
+        await reply.status(503).send({
+          error: "decision_service_unavailable",
+        });
+      }
+    },
+  );
+
+  app.post(
+    "/v1/decisions/verify",
+    {
+      preHandler: authenticate,
+      config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+    },
+    async (request, reply) => {
+      let body: z.infer<typeof VerifyBodySchema>;
+      try {
+        body = VerifyBodySchema.parse(request.body);
+      } catch (error) {
+        parseFailure(reply, error);
+        return;
+      }
+      const result = verifyDecision({
+        decision: body.decision,
+        action: body.action,
+        keyRegistry: options.keyRegistry,
+        at: clock.now(),
+        expectedPolicyVersion: body.expected_policy_version ?? options.expectedPolicyVersion,
+      });
+      for (const reason of result.reason_codes) {
+        metrics.verificationFailure(reason);
+      }
       request.log.info({
         request_id: request.id,
-        decision_id: decision.decision_id,
-        verdict: decision.verdict,
-        rail: decision.rail,
-        reason_codes: decision.reason_codes,
-        evaluation_latency_ms: performance.now() - started,
+        decision_id: body.decision.decision_id,
+        verification_result: result.valid,
+        reason_codes: result.reason_codes,
       });
-      await reply.status(200).send({ decision });
-    } catch {
-      await reply.status(503).send({
-        error: "decision_service_unavailable",
+      await reply.status(200).send(result);
+    },
+  );
+
+  app.post(
+    "/v1/decisions/consume",
+    {
+      preHandler: authenticate,
+      config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+    },
+    async (request, reply) => {
+      let body: z.infer<typeof ConsumeBodySchema>;
+      try {
+        body = ConsumeBodySchema.parse(request.body);
+      } catch (error) {
+        parseFailure(reply, error);
+        return;
+      }
+      let result;
+      try {
+        result = await options.provider.consume(body);
+      } catch {
+        await reply.status(503).send({ error: "consumption_service_unavailable" });
+        return;
+      }
+      request.log.info({
+        request_id: request.id,
+        decision_id: body.decision_id,
+        consumption_result: result.status,
+        reason_codes: result.reason_code === undefined ? [] : [result.reason_code],
       });
-    }
-  });
-
-  app.post("/v1/decisions/verify", { preHandler: authenticate }, async (request, reply) => {
-    let body: z.infer<typeof VerifyBodySchema>;
-    try {
-      body = VerifyBodySchema.parse(request.body);
-    } catch (error) {
-      parseFailure(reply, error);
-      return;
-    }
-    const result = verifyDecision({
-      decision: body.decision,
-      action: body.action,
-      keyRegistry: options.keyRegistry,
-      at: clock.now(),
-      expectedPolicyVersion: body.expected_policy_version ?? options.expectedPolicyVersion,
-    });
-    for (const reason of result.reason_codes) {
-      metrics.verificationFailure(reason);
-    }
-    request.log.info({
-      request_id: request.id,
-      decision_id: body.decision.decision_id,
-      verification_result: result.valid,
-      reason_codes: result.reason_codes,
-    });
-    await reply.status(200).send(result);
-  });
-
-  app.post("/v1/decisions/consume", { preHandler: authenticate }, async (request, reply) => {
-    let body: z.infer<typeof ConsumeBodySchema>;
-    try {
-      body = ConsumeBodySchema.parse(request.body);
-    } catch (error) {
-      parseFailure(reply, error);
-      return;
-    }
-    let result;
-    try {
-      result = await options.provider.consume(body);
-    } catch {
-      await reply.status(503).send({ error: "consumption_service_unavailable" });
-      return;
-    }
-    request.log.info({
-      request_id: request.id,
-      decision_id: body.decision_id,
-      consumption_result: result.status,
-      reason_codes: result.reason_code === undefined ? [] : [result.reason_code],
-    });
-    const statusCode = result.status === "conflict" ? 409 : result.success ? 200 : 422;
-    await reply.status(statusCode).send(result);
-  });
+      const statusCode = result.status === "conflict" ? 409 : result.success ? 200 : 422;
+      await reply.status(statusCode).send(result);
+    },
+  );
 
   return app;
 }
