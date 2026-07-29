@@ -1,0 +1,14 @@
+{
+  "version": "inntris-key-registry-v1",
+  "keys": [
+    {
+      "key_id": "test-key-1",
+      "alg": "Ed25519",
+      "public_key": "IuUnHYxGXM86VjRZwrW6W-WobNiq77KPMmIxwgMMh48",
+      "fingerprint": "sha256:015bd970af2ef326e0f4481c597f6c3b2687a727c0b4855c0856205a54622e52",
+      "status": "active",
+      "not_before": "2026-01-01T00:00:00.000Z",
+      "not_after": null
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "tsBuildInfoFile": "dist/.tsbuildinfo"
+  },
+  "include": ["src/**/*.ts"],
+  "references": [
+    { "path": "../packages/decision-core" },
+    { "path": "../packages/policy-engine" },
+    { "path": "../packages/decision-verifier" },
+    { "path": "../packages/x402-adapter" }
+  ]
+}

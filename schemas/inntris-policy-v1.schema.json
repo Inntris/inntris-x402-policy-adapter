@@ -1,0 +1,139 @@
+{
+  "$id": "https://schemas.inntris.com/inntris-policy-v1.schema.json",
+  "title": "Inntris Policy v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": { "type": "number", "const": 1 },
+    "policy_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "policy_version": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "expires_at": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+    },
+    "defaults": {
+      "type": "object",
+      "properties": {
+        "verdict": { "type": "string", "const": "BLOCK" },
+        "decision_ttl_seconds": { "type": "integer", "minimum": 1, "maximum": 300 }
+      },
+      "required": ["verdict", "decision_ttl_seconds"],
+      "additionalProperties": false
+    },
+    "deny": {
+      "type": "object",
+      "properties": {
+        "networks": { "default": [], "type": "array", "items": { "type": "string" } },
+        "assets": { "default": [], "type": "array", "items": { "type": "string" } },
+        "payees": { "default": [], "type": "array", "items": { "type": "string" } },
+        "purposes": { "default": [], "type": "array", "items": { "type": "string" } },
+        "resources": {
+          "default": [],
+          "type": "array",
+          "items": { "type": "string", "format": "uri" }
+        }
+      },
+      "required": ["networks", "assets", "payees", "purposes", "resources"],
+      "additionalProperties": false
+    },
+    "rails": {
+      "type": "object",
+      "properties": {
+        "x402": {
+          "type": "object",
+          "properties": {
+            "allowed_networks": {
+              "minItems": 1,
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "allowed_assets": {
+              "minItems": 1,
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 }
+            }
+          },
+          "required": ["allowed_networks", "allowed_assets"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["x402"],
+      "additionalProperties": false
+    },
+    "limits": {
+      "type": "object",
+      "properties": {
+        "per_transaction": { "type": "string", "pattern": "^(0|[1-9]\\d*)\\.\\d{2,18}$" },
+        "daily": { "type": "string", "pattern": "^(0|[1-9]\\d*)\\.\\d{2,18}$" }
+      },
+      "required": ["per_transaction", "daily"],
+      "additionalProperties": false
+    },
+    "approval": {
+      "type": "object",
+      "properties": {
+        "require_human_above": { "type": "string", "pattern": "^(0|[1-9]\\d*)\\.\\d{2,18}$" }
+      },
+      "required": ["require_human_above"],
+      "additionalProperties": false
+    },
+    "merchants": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "merchant_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "payees": {
+            "minItems": 1,
+            "type": "array",
+            "items": { "type": "string", "minLength": 1, "maxLength": 512 }
+          },
+          "purposes": {
+            "minItems": 1,
+            "type": "array",
+            "items": { "type": "string", "minLength": 1, "maxLength": 128 }
+          },
+          "resources": {
+            "minItems": 1,
+            "type": "array",
+            "items": { "type": "string", "format": "uri" }
+          },
+          "per_transaction_limit": { "type": "string", "pattern": "^(0|[1-9]\\d*)\\.\\d{2,18}$" }
+        },
+        "required": ["merchant_id", "payees", "purposes", "resources", "per_transaction_limit"],
+        "additionalProperties": false
+      }
+    },
+    "time_windows": {
+      "type": "object",
+      "properties": {
+        "timezone": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "allowed_weekdays": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
+          }
+        },
+        "start": { "type": "string", "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$" },
+        "end": { "type": "string", "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$" }
+      },
+      "required": ["timezone", "allowed_weekdays", "start", "end"],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "version",
+    "policy_id",
+    "policy_version",
+    "defaults",
+    "rails",
+    "limits",
+    "approval",
+    "merchants",
+    "time_windows"
+  ],
+  "additionalProperties": false
+}

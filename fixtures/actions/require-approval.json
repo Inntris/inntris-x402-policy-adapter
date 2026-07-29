@@ -1,0 +1,21 @@
+{
+  "version": "inntris-action-v1",
+  "principal_id": "org_demo",
+  "agent_id": "agent_research_01",
+  "action_type": "financial_transaction",
+  "rail": "x402",
+  "transaction": {
+    "amount": "80.00",
+    "asset": "USDC",
+    "network": "eip155:8453",
+    "payee": "0x0000000000000000000000000000000000000001",
+    "purpose": "research_api"
+  },
+  "protocol_reference": {
+    "type": "x402",
+    "resource": "https://example.test/research",
+    "scheme": "exact",
+    "payment_requirements_hash": "sha256:da50b193add50b961eb19d8fd245963da4388ab0707a3ded77699ba02765234a",
+    "payment_payload_hash": null
+  }
+}

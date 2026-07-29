@@ -1,0 +1,41 @@
+# Security policy
+
+## Reporting a vulnerability
+
+Do not open a public issue for a suspected vulnerability that could expose secrets, bypass policy or
+permit duplicate settlement. Use GitHub private vulnerability reporting for this repository.
+
+Include the affected commit, attack preconditions, reproduction steps, expected security invariant
+and observed result. Do not include production credentials, signing seeds or customer data.
+
+## Signing keys
+
+1. Never commit or print a production signing seed.
+2. Normal API startup requires an environment value, mounted file or injected provider.
+3. `pnpm keys:generate:dev` writes a new local file with exclusive-create semantics and never prints
+   the seed.
+4. The committed fixture identity is deliberately public and is not a secret.
+5. Production deployments should use a managed Ed25519 signer or HSM-backed provider when available.
+
+Do not reuse the existing Inntris offline evidence-pack seed, live request-signing key or anchor
+worker key for this reference service.
+
+## Supported version
+
+Security fixes are applied to the latest `main` branch and the most recent tagged release.
+
+## Security invariants
+
+Changes must preserve:
+
+1. Strict schema validation before hashing.
+2. RFC 8785 canonicalisation.
+3. Exact x402 requirements binding.
+4. Local signature and fingerprint verification.
+5. Expiry and policy-version checks.
+6. `ALLOW` as the only executable verdict.
+7. Consumption before settlement.
+8. No remote-failure fallback.
+9. No private material in logs, fixtures or Git history.
+
+The test suite contains direct regression tests for these invariants.

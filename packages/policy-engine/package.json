@@ -1,0 +1,28 @@
+{
+  "name": "@inntris/policy-engine",
+  "version": "0.1.0",
+  "description": "Deterministic local policy evaluation and signed decision provider.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@inntris/decision-core": "workspace:*",
+    "decimal.js": "10.6.0",
+    "yaml": "2.9.0",
+    "zod": "4.4.3"
+  }
+}
