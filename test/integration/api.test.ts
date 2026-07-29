@@ -101,4 +101,15 @@ describe("reference API", () => {
     expect(denied.body).not.toContain("local-test-key");
     await app.close();
   });
+
+  it("rate limits repeated requests", async () => {
+    const context = await testContext();
+    const app = buildDemoApi({ ...context, logger: false });
+    let response;
+    for (let requestNumber = 0; requestNumber <= 100; requestNumber += 1) {
+      response = await app.inject({ method: "GET", url: "/healthz" });
+    }
+    expect(response?.statusCode).toBe(429);
+    await app.close();
+  });
 });

@@ -9,6 +9,7 @@
     "build": "tsc -b"
   },
   "dependencies": {
+    "@fastify/rate-limit": "11.1.0",
     "@inntris/decision-core": "workspace:*",
     "@inntris/decision-verifier": "workspace:*",
     "@inntris/policy-engine": "workspace:*",

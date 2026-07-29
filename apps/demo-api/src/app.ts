@@ -8,7 +8,8 @@ import {
   type MetricsRecorder,
 } from "@inntris/decision-core";
 import { verifyDecision } from "@inntris/decision-verifier";
-import { createHash, timingSafeEqual } from "node:crypto";
+import rateLimit from "@fastify/rate-limit";
+import { timingSafeEqual } from "node:crypto";
 import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from "fastify";
 import { z } from "zod";
 
@@ -46,11 +47,9 @@ function parseFailure(reply: FastifyReply, error: unknown): void {
 }
 
 function bearerMatches(actual: string | undefined, expectedKey: string): boolean {
-  const actualDigest = createHash("sha256")
-    .update(actual ?? "", "utf8")
-    .digest();
-  const expectedDigest = createHash("sha256").update(`Bearer ${expectedKey}`, "utf8").digest();
-  return timingSafeEqual(actualDigest, expectedDigest);
+  const actualBytes = Buffer.from(actual ?? "", "utf8");
+  const expectedBytes = Buffer.from(`Bearer ${expectedKey}`, "utf8");
+  return actualBytes.length === expectedBytes.length && timingSafeEqual(actualBytes, expectedBytes);
 }
 
 export function buildDemoApi(options: DemoApiOptions): FastifyInstance {
@@ -69,90 +68,110 @@ export function buildDemoApi(options: DemoApiOptions): FastifyInstance {
     }
   };
 
-  app.get("/healthz", async () => ({
-    status: "ok",
-    service: "inntris-decision-reference",
-  }));
-
-  app.get("/.well-known/inntris-keys.json", async () => options.keyRegistry);
-
-  app.post("/v1/decisions/evaluate", { preHandler: authenticate }, async (request, reply) => {
-    const started = performance.now();
-    let body: z.infer<typeof EvaluateBodySchema>;
-    try {
-      body = EvaluateBodySchema.parse(request.body);
-    } catch (error) {
-      parseFailure(reply, error);
-      return;
-    }
-    try {
-      const decision = await options.provider.evaluate(body.action);
-      request.log.info({
-        request_id: request.id,
-        decision_id: decision.decision_id,
-        verdict: decision.verdict,
-        rail: decision.rail,
-        reason_codes: decision.reason_codes,
-        evaluation_latency_ms: performance.now() - started,
-      });
-      await reply.status(200).send({ decision });
-    } catch {
-      await reply.status(503).send({
-        error: "decision_service_unavailable",
-      });
-    }
-  });
-
-  app.post("/v1/decisions/verify", { preHandler: authenticate }, async (request, reply) => {
-    let body: z.infer<typeof VerifyBodySchema>;
-    try {
-      body = VerifyBodySchema.parse(request.body);
-    } catch (error) {
-      parseFailure(reply, error);
-      return;
-    }
-    const result = verifyDecision({
-      decision: body.decision,
-      action: body.action,
-      keyRegistry: options.keyRegistry,
-      at: clock.now(),
-      expectedPolicyVersion: body.expected_policy_version ?? options.expectedPolicyVersion,
+  void app.register(async (limitedApp) => {
+    await limitedApp.register(rateLimit, {
+      global: true,
+      max: 100,
+      timeWindow: "1 minute",
     });
-    for (const reason of result.reason_codes) {
-      metrics.verificationFailure(reason);
-    }
-    request.log.info({
-      request_id: request.id,
-      decision_id: body.decision.decision_id,
-      verification_result: result.valid,
-      reason_codes: result.reason_codes,
-    });
-    await reply.status(200).send(result);
-  });
 
-  app.post("/v1/decisions/consume", { preHandler: authenticate }, async (request, reply) => {
-    let body: z.infer<typeof ConsumeBodySchema>;
-    try {
-      body = ConsumeBodySchema.parse(request.body);
-    } catch (error) {
-      parseFailure(reply, error);
-      return;
-    }
-    let result;
-    try {
-      result = await options.provider.consume(body);
-    } catch {
-      await reply.status(503).send({ error: "consumption_service_unavailable" });
-      return;
-    }
-    request.log.info({
-      request_id: request.id,
-      decision_id: body.decision_id,
-      consumption_result: result.status,
-      reason_codes: result.reason_code === undefined ? [] : [result.reason_code],
-    });
-    const statusCode = result.status === "conflict" ? 409 : result.success ? 200 : 422;
-    await reply.status(statusCode).send(result);
+    limitedApp.get("/healthz", async () => ({
+      status: "ok",
+      service: "inntris-decision-reference",
+    }));
+
+    limitedApp.get("/.well-known/inntris-keys.json", async () => options.keyRegistry);
+
+    limitedApp.post(
+      "/v1/decisions/evaluate",
+      { preHandler: authenticate },
+      async (request, reply) => {
+        const started = performance.now();
+        let body: z.infer<typeof EvaluateBodySchema>;
+        try {
+          body = EvaluateBodySchema.parse(request.body);
+        } catch (error) {
+          parseFailure(reply, error);
+          return;
+        }
+        try {
+          const decision = await options.provider.evaluate(body.action);
+          request.log.info({
+            request_id: request.id,
+            decision_id: decision.decision_id,
+            verdict: decision.verdict,
+            rail: decision.rail,
+            reason_codes: decision.reason_codes,
+            evaluation_latency_ms: performance.now() - started,
+          });
+          await reply.status(200).send({ decision });
+        } catch {
+          await reply.status(503).send({
+            error: "decision_service_unavailable",
+          });
+        }
+      },
+    );
+
+    limitedApp.post(
+      "/v1/decisions/verify",
+      { preHandler: authenticate },
+      async (request, reply) => {
+        let body: z.infer<typeof VerifyBodySchema>;
+        try {
+          body = VerifyBodySchema.parse(request.body);
+        } catch (error) {
+          parseFailure(reply, error);
+          return;
+        }
+        const result = verifyDecision({
+          decision: body.decision,
+          action: body.action,
+          keyRegistry: options.keyRegistry,
+          at: clock.now(),
+          expectedPolicyVersion: body.expected_policy_version ?? options.expectedPolicyVersion,
+        });
+        for (const reason of result.reason_codes) {
+          metrics.verificationFailure(reason);
+        }
+        request.log.info({
+          request_id: request.id,
+          decision_id: body.decision.decision_id,
+          verification_result: result.valid,
+          reason_codes: result.reason_codes,
+        });
+        await reply.status(200).send(result);
+      },
+    );
+
+    limitedApp.post(
+      "/v1/decisions/consume",
+      { preHandler: authenticate },
+      async (request, reply) => {
+        let body: z.infer<typeof ConsumeBodySchema>;
+        try {
+          body = ConsumeBodySchema.parse(request.body);
+        } catch (error) {
+          parseFailure(reply, error);
+          return;
+        }
+        let result;
+        try {
+          result = await options.provider.consume(body);
+        } catch {
+          await reply.status(503).send({ error: "consumption_service_unavailable" });
+          return;
+        }
+        request.log.info({
+          request_id: request.id,
+          decision_id: body.decision_id,
+          consumption_result: result.status,
+          reason_codes: result.reason_code === undefined ? [] : [result.reason_code],
+        });
+        const statusCode = result.status === "conflict" ? 409 : result.success ? 200 : 422;
+        await reply.status(statusCode).send(result);
+      },
+    );
   });
 
   return app;

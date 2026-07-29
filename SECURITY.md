@@ -37,5 +37,6 @@ Changes must preserve:
 7. Consumption before settlement.
 8. No remote-failure fallback.
 9. No private material in logs, fixtures or Git history.
+10. Constant-time API key comparison and rate limiting on the reference API.
 
 The test suite contains direct regression tests for these invariants.
