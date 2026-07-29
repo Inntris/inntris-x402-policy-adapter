@@ -53,7 +53,7 @@ const keyRegistry = {
     }),
   ],
 };
-const app = buildDemoApi({
+const app = await buildDemoApi({
   provider,
   keyRegistry,
   expectedPolicyVersion: policy.policy_version,

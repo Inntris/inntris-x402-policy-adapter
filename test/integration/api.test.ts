@@ -7,7 +7,7 @@ import { actionFromX402 } from "@inntris/x402-adapter";
 describe("reference API", () => {
   it("serves health and the public key registry", async () => {
     const context = await testContext();
-    const app = buildDemoApi({ ...context, logger: false });
+    const app = await buildDemoApi({ ...context, logger: false });
     const health = await app.inject({ method: "GET", url: "/healthz" });
     const keys = await app.inject({
       method: "GET",
@@ -22,7 +22,7 @@ describe("reference API", () => {
 
   it("returns policy BLOCK decisions with HTTP 200", async () => {
     const context = await testContext();
-    const app = buildDemoApi({ ...context, logger: false });
+    const app = await buildDemoApi({ ...context, logger: false });
     const action = actionFromX402({
       ...bindingInput,
       paymentRequirements: { ...bindingInput.paymentRequirements, amount: "150000000" },
@@ -44,7 +44,7 @@ describe("reference API", () => {
 
   it("verifies and consumes a decision with replay conflict semantics", async () => {
     const context = await testContext();
-    const app = buildDemoApi({ ...context, logger: false });
+    const app = await buildDemoApi({ ...context, logger: false });
     const action = actionFromX402(bindingInput);
     const decision = await context.provider.evaluate(action);
 
@@ -87,7 +87,7 @@ describe("reference API", () => {
 
   it("supports optional bearer authentication without exposing the key", async () => {
     const context = await testContext();
-    const app = buildDemoApi({
+    const app = await buildDemoApi({
       ...context,
       logger: false,
       serviceApiKey: "local-test-key",
@@ -104,7 +104,7 @@ describe("reference API", () => {
 
   it("rate limits repeated requests", async () => {
     const context = await testContext();
-    const app = buildDemoApi({ ...context, logger: false });
+    const app = await buildDemoApi({ ...context, logger: false });
     let response;
     for (let requestNumber = 0; requestNumber <= 100; requestNumber += 1) {
       response = await app.inject({ method: "GET", url: "/healthz" });
