@@ -1,0 +1,102 @@
+[
+  {
+    "name": "valid-allow",
+    "expected": { "verification_valid": true, "reason_code": null, "settlement_may_proceed": true }
+  },
+  {
+    "name": "valid-block",
+    "expected": {
+      "verification_valid": true,
+      "reason_code": "DECISION_NOT_ALLOW",
+      "settlement_may_proceed": false
+    }
+  },
+  {
+    "name": "valid-require-approval",
+    "expected": {
+      "verification_valid": true,
+      "reason_code": "DECISION_NOT_ALLOW",
+      "settlement_may_proceed": false
+    }
+  },
+  {
+    "name": "tampered-verdict",
+    "expected": {
+      "verification_valid": false,
+      "reason_code": "FINGERPRINT_MISMATCH",
+      "settlement_may_proceed": false
+    }
+  },
+  {
+    "name": "tampered-amount",
+    "expected": {
+      "verification_valid": false,
+      "reason_code": "ACTION_HASH_MISMATCH",
+      "settlement_may_proceed": false
+    }
+  },
+  {
+    "name": "tampered-payee",
+    "expected": {
+      "verification_valid": false,
+      "reason_code": "ACTION_HASH_MISMATCH",
+      "settlement_may_proceed": false
+    }
+  },
+  {
+    "name": "tampered-network",
+    "expected": {
+      "verification_valid": false,
+      "reason_code": "ACTION_HASH_MISMATCH",
+      "settlement_may_proceed": false
+    }
+  },
+  {
+    "name": "tampered-policy-hash",
+    "expected": {
+      "verification_valid": false,
+      "reason_code": "FINGERPRINT_MISMATCH",
+      "settlement_may_proceed": false
+    }
+  },
+  {
+    "name": "unknown-signing-key",
+    "expected": {
+      "verification_valid": false,
+      "reason_code": "UNKNOWN_SIGNING_KEY",
+      "settlement_may_proceed": false
+    }
+  },
+  {
+    "name": "expired-decision",
+    "expected": {
+      "verification_valid": false,
+      "reason_code": "DECISION_EXPIRED",
+      "settlement_may_proceed": false
+    }
+  },
+  {
+    "name": "stale-policy-version",
+    "expected": {
+      "verification_valid": false,
+      "reason_code": "POLICY_VERSION_MISMATCH",
+      "settlement_may_proceed": false
+    }
+  },
+  {
+    "name": "replayed-decision",
+    "expected": {
+      "verification_valid": true,
+      "reason_code": "NONCE_ALREADY_CONSUMED",
+      "settlement_may_proceed": false
+    }
+  },
+  {
+    "name": "x402-challenge-mismatch",
+    "expected": {
+      "verification_valid": false,
+      "reason_code": "PAYMENT_REQUIREMENTS_MISMATCH",
+      "settlement_may_proceed": false
+    }
+  }
+]

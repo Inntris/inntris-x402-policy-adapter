@@ -1,0 +1,60 @@
+{
+  "$id": "https://schemas.inntris.com/inntris-action-v1.schema.json",
+  "title": "Inntris Action v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": { "type": "string", "const": "inntris-action-v1" },
+    "principal_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "agent_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "action_type": { "type": "string", "const": "financial_transaction" },
+    "rail": { "type": "string", "const": "x402" },
+    "transaction": {
+      "type": "object",
+      "properties": {
+        "amount": { "type": "string", "pattern": "^(0|[1-9]\\d*)\\.\\d{2,18}$" },
+        "asset": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "network": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "payee": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "purpose": { "type": "string", "minLength": 1, "maxLength": 128 }
+      },
+      "required": ["amount", "asset", "network", "payee", "purpose"],
+      "additionalProperties": false
+    },
+    "protocol_reference": {
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "const": "x402" },
+        "resource": { "type": "string", "format": "uri" },
+        "scheme": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "payment_requirements_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "payment_payload_hash": {
+          "anyOf": [{ "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }, { "type": "null" }]
+        }
+      },
+      "required": [
+        "type",
+        "resource",
+        "scheme",
+        "payment_requirements_hash",
+        "payment_payload_hash"
+      ],
+      "additionalProperties": false
+    },
+    "extensions": {
+      "type": "object",
+      "propertyNames": { "type": "string" },
+      "additionalProperties": {}
+    }
+  },
+  "required": [
+    "version",
+    "principal_id",
+    "agent_id",
+    "action_type",
+    "rail",
+    "transaction",
+    "protocol_reference"
+  ],
+  "additionalProperties": false
+}

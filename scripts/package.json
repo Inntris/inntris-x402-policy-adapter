@@ -1,0 +1,18 @@
+{
+  "name": "@inntris/repository-scripts",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@inntris/decision-core": "workspace:*",
+    "@inntris/decision-verifier": "workspace:*",
+    "@inntris/policy-engine": "workspace:*",
+    "@inntris/x402-adapter": "workspace:*",
+    "prettier": "3.8.1",
+    "zod": "4.4.3"
+  }
+}

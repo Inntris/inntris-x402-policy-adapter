@@ -1,0 +1,69 @@
+{
+  "name": "valid-block",
+  "decision": {
+    "version": "inntris-decision-v1",
+    "decision_id": "018f0000-0000-7000-8000-000000000002",
+    "decision_fingerprint": "sha256:5a19906fc1595669b6e68168b42ecccee1c57e22f28df6d6561691351e7309df",
+    "verdict": "BLOCK",
+    "principal_id": "org_demo",
+    "agent_id": "agent_research_01",
+    "action_type": "financial_transaction",
+    "action_hash": "sha256:a86120f143f29cdc7f058fb05811bb4a7a104041c768ef0c0b0715d04356979e",
+    "rail": "x402",
+    "protocol_reference": {
+      "type": "x402",
+      "resource": "https://example.test/research",
+      "scheme": "exact",
+      "payment_requirements_hash": "sha256:4b54419926d14f9d2e66805c31f23c3332cae423ebda212e38e60f798868504f",
+      "payment_payload_hash": null
+    },
+    "transaction": {
+      "amount": "150.00",
+      "asset": "USDC",
+      "network": "eip155:8453",
+      "payee": "0x0000000000000000000000000000000000000001",
+      "purpose": "research_api"
+    },
+    "policy": {
+      "policy_hash": "sha256:05dd89a67f249d060122e5ee38171a161fec81e02fd93c536b459338c02e2ab2",
+      "policy_version": "1"
+    },
+    "approval": { "mode": "policy_engine", "approval_reference": null, "approver_ids": [] },
+    "reason_codes": ["AMOUNT_EXCEEDS_TRANSACTION_LIMIT"],
+    "issued_at": "2026-07-29T09:30:00.000Z",
+    "expires_at": "2026-07-29T09:31:00.000Z",
+    "nonce": "Zml4dHVyZS1ub25jZS1ibG9jaw",
+    "supersedes_decision_id": null,
+    "signing": {
+      "alg": "Ed25519",
+      "key_id": "test-key-1",
+      "signature": "B_1ODl9lhip8-jjUYWh0dQidmgdtb_Oy2vStJ3QhmHMty0mN-wD3P0yDkijofH4DJIlvIf0jn3bfO5cm0O1XBA"
+    }
+  },
+  "action": {
+    "version": "inntris-action-v1",
+    "principal_id": "org_demo",
+    "agent_id": "agent_research_01",
+    "action_type": "financial_transaction",
+    "rail": "x402",
+    "transaction": {
+      "amount": "150.00",
+      "asset": "USDC",
+      "network": "eip155:8453",
+      "payee": "0x0000000000000000000000000000000000000001",
+      "purpose": "research_api"
+    },
+    "protocol_reference": {
+      "type": "x402",
+      "resource": "https://example.test/research",
+      "scheme": "exact",
+      "payment_requirements_hash": "sha256:4b54419926d14f9d2e66805c31f23c3332cae423ebda212e38e60f798868504f",
+      "payment_payload_hash": null
+    }
+  },
+  "expected": {
+    "verification_valid": true,
+    "reason_code": "DECISION_NOT_ALLOW",
+    "settlement_may_proceed": false
+  }
+}

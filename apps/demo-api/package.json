@@ -1,0 +1,19 @@
+{
+  "name": "@inntris/demo-api",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/start.js",
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@fastify/rate-limit": "11.1.0",
+    "@inntris/decision-core": "workspace:*",
+    "@inntris/decision-verifier": "workspace:*",
+    "@inntris/policy-engine": "workspace:*",
+    "fastify": "5.10.0",
+    "zod": "4.4.3"
+  }
+}

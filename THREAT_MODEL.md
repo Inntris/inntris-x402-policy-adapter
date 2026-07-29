@@ -1,0 +1,66 @@
+# Threat model
+
+## Assets
+
+1. Organisational payment policy.
+2. Decision signing identity and public key registry.
+3. Action and x402 challenge integrity.
+4. Single-use decision state.
+5. Settlement ordering and execution reference.
+6. Audit and evidence integrity.
+
+## Actors
+
+1. Legitimate organisational agent and operator.
+2. Prompt-injected or compromised agent.
+3. Malicious resource server or altered 402 response.
+4. Network attacker.
+5. Compromised decision service.
+6. Compromised or stale key registry.
+7. Faulty or malicious executor.
+
+## Trust boundaries
+
+The agent, x402 challenge and remote response cross untrusted boundaries. The verifier trusts only
+the explicitly selected key registry. The executor trusts a decision only after every local check
+passes and after the nonce store accepts consumption.
+
+## Attack scenarios and mitigations
+
+| Scenario                                               | Impact                                         | Mitigation                                                                                 |
+| ------------------------------------------------------ | ---------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Prompt-injected agent requests an unauthorised payment | Funds could move outside policy                | Strict policy checks, exact action binding and fail-closed settlement                      |
+| Malicious or altered 402 challenge                     | Payment terms change after approval            | Official SDK validation plus requirements digest and action hash                           |
+| Changed payee                                          | Redirected payment                             | Payee is in both the action and requirements digest                                        |
+| Changed amount                                         | Overspend                                      | Canonical decimal amount and atomic x402 amount are both bound                             |
+| Changed settlement network                             | Wrong-chain settlement                         | Network is in the action and requirements digest                                           |
+| Replayed decision                                      | Duplicate settlement                           | Short TTL, nonce and atomic single-use store                                               |
+| Same retry creates a duplicate                         | Duplicate execution                            | Stable execution reference, idempotent consumption and facilitator idempotency requirement |
+| Stale policy                                           | Old control set authorises payment             | Expected policy version and signed policy hash                                             |
+| Expired approval                                       | Old authority is reused                        | Issued-at and expires-at checks at execution time                                          |
+| Compromised or unknown signing key                     | Forged decisions                               | Explicit registry, key fingerprint, validity window and local Ed25519 verification         |
+| Changed verdict or reason                              | Evidence misrepresents the decision            | Fingerprint and signature cover verdict and reason codes                                   |
+| Inntris unavailable                                    | Policy bypass                                  | Remote errors fail closed and never fall back to allow                                     |
+| Nonce store unavailable                                | Replay window                                  | Consumption failure blocks settlement                                                      |
+| Partial failure after consume                          | Decision consumed but settlement state unknown | Reconcile by execution reference; never create a second reference                          |
+| Log tampering                                          | Misleading operational record                  | Signed portable decision remains independently verifiable                                  |
+| Attacker-controlled key URL in evidence                | Trust-root substitution or SSRF                | Offline default; embedded URLs are ignored; explicit HTTPS URL only                        |
+| Private key leaked in logs or repository               | Decision forgery                               | Explicit key loading, no startup generation, redacted logging and secret scanning          |
+
+## Residual risks
+
+1. An executor that ignores the guard can still settle. Enforcement belongs at the actual side
+   effect boundary.
+2. The in-memory reference stores are not durable or distributed.
+3. A registry publisher can revoke or replace keys. Verifiers should pin a reviewed registry or
+   public key for high-assurance workflows.
+4. A valid decision proves authorisation, not successful settlement.
+5. Consumption-before-settlement creates an outcome-reconciliation requirement when the rail times
+   out.
+6. Policy correctness depends on configuration review and a reliable durable spend-state adapter.
+
+## Out of scope claims
+
+This repository does not claim HSM-grade custody, tested disaster recovery, guaranteed blockchain
+finality, production availability, production latency or Base anchoring as a root of trust. It does
+not implement a wallet, facilitator or payment rail.
