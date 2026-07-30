@@ -90,16 +90,30 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for trust boundaries and the fingerprint 
 
 ## Packages
 
-| Package                      | Responsibility                                                                         |
-| ---------------------------- | -------------------------------------------------------------------------------------- |
-| `@inntris/decision-core`     | Strict schemas, JCS, SHA 256 hashes, Ed25519, stable reason codes and replay contracts |
-| `@inntris/policy-engine`     | Versioned policy parsing, deterministic evaluation and the local provider              |
-| `@inntris/decision-verifier` | Offline verification library and `inntris-verify` CLI                                  |
-| `@inntris/x402-adapter`      | Official x402 type binding, remote provider and fail-closed settlement guard           |
-| `@inntris/demo-api`          | Fastify reference API, key discovery, verification and consumption                     |
+| Package                        | Responsibility                                                                         |
+| ------------------------------ | -------------------------------------------------------------------------------------- |
+| `@inntris/decision-core`       | Strict schemas, JCS, SHA 256 hashes, Ed25519, stable reason codes and replay contracts |
+| `@inntris/policy-engine`       | Versioned policy parsing, deterministic evaluation and the local provider              |
+| `@inntris/decision-verifier`   | Offline verification library and `inntris-verify` CLI                                  |
+| `@inntris/x402-adapter`        | Official x402 type binding, remote provider and fail-closed settlement guard           |
+| `@inntris/a2a-settlement-gate` | Finality, consumption, delegate idempotency and signed receipts for paid A2A tasks     |
+| `@inntris/demo-api`            | Fastify reference API, key discovery, verification and consumption                     |
 
 The adapter pins `@x402/core` `2.20.0`. It imports `PaymentRequirements` and `PaymentPayload` from
 `@x402/core/types` and validates them with the official runtime schemas.
+
+## A2A settlement gate
+
+The follow-on `@inntris/a2a-settlement-gate` package imports the official A2A 1.0 `Task` type from
+`@a2a-js/sdk` `1.0.0`. A2A does not define payment submission or settlement finality states, so the
+package exposes those as explicit Inntris adapter interfaces.
+
+The gate binds the exact x402 payment to the A2A task, context and resource. It requires a verified
+Inntris `ALLOW`, confirms the configured settlement finality, reverifies and consumes the decision,
+claims one delegate execution and signs an action receipt. `PAYMENT_SUBMITTED`, `UNKNOWN`, failed,
+malformed or mismatched settlement evidence never reaches the delegate.
+
+See [`packages/a2a-settlement-gate/README.md`](packages/a2a-settlement-gate/README.md).
 
 ## Verify the committed evidence offline
 
@@ -236,8 +250,8 @@ pnpm audit --prod --audit-level high
 4. The public fixture signing identity is intentionally known and must never be used in production.
 5. No claim is made about HSM custody, disaster recovery, production latency, blockchain finality or
    a live hosted deployment.
-6. Phase 1 supports x402 only. AP2, cards, wallet signing, A2A and multi-rail conformance are
-   separate follow-on projects.
+6. The `v0.1.0` Phase 1 release supports x402 only. The A2A settlement gate is a later follow-on
+   package. AP2, cards, wallet signing and multi-rail conformance remain separate projects.
 
 ## Licence
 

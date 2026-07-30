@@ -10,6 +10,7 @@ export interface X402BindingInput {
   agentId: string;
   purpose: string;
   assetDecimals: number;
+  extensions?: Record<string, unknown>;
 }
 
 export class X402BindingError extends Error {
@@ -101,5 +102,6 @@ export function actionFromX402(input: X402BindingInput): InntrisActionV1 {
       payment_requirements_hash: paymentRequirementsHash(requirements),
       payment_payload_hash: payload === undefined ? null : paymentPayloadHash(payload),
     },
+    ...(input.extensions === undefined ? {} : { extensions: input.extensions }),
   });
 }

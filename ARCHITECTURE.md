@@ -26,6 +26,10 @@ flowchart LR
     API["Fastify demo API"] --> P
     API --> V
     A --> E["Injected settlement executor"]
+    T["Official A2A Task type"] --> G["@inntris/a2a-settlement-gate"]
+    G --> A
+    G --> S["Injected settlement and finality provider"]
+    G --> D["Injected delegate executor"]
 ```
 
 `decision-core` has no x402 dependency. Rail-specific packages construct a common `InntrisActionV1`,
@@ -101,6 +105,30 @@ call injected settlement function
 
 Every failure stops before settlement. There is no fallback allow path.
 
+## A2A settlement and delegate gate
+
+The A2A package treats the official A2A task ID and context ID as binding inputs. Its
+`PAYMENT_SUBMITTED` and settlement states are Inntris adapter contracts, not A2A protocol task
+states.
+
+```text
+validate A2A task and submitted payment binding
+construct the x402 action with a signed-hash A2A extension
+request and locally verify the Inntris decision
+require ALLOW
+settle or confirm the configured finality
+reject PAYMENT_SUBMITTED, UNKNOWN, failed or mismatched evidence
+reverify the decision after settlement confirmation
+consume the decision
+claim one delegate execution
+execute the delegate
+sign the task, payment, settlement and result receipt
+```
+
+Settlement uses a deterministic idempotency key. Delegate execution uses a separate atomic claim. A
+completed retry returns the stored receipt and result. An unresolved prior delegate claim pauses
+instead of risking a second side effect.
+
 ## Consumption and partial failure
 
 First consumption succeeds. A retry using the same execution reference returns the original
@@ -109,6 +137,11 @@ consumption success. A different reference is a replay conflict.
 No generic library can make a database nonce write atomic with every external facilitator. A
 production executor must use the same execution reference as the facilitator idempotency key and
 reconcile an unknown settlement outcome instead of creating a new execution.
+
+The A2A gate deliberately places consumption after confirmed settlement and before delegate
+execution. This protects the paid task rather than using a payment submission as authority. A
+production deployment still needs durable execution state and reconciliation when a process fails
+after claiming the delegate or after the delegate returns but before the receipt is stored.
 
 ## Observability
 
