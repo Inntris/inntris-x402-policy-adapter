@@ -28,3 +28,8 @@ contracts.
 
 Keep changes focused. Explain the threat addressed, compatibility impact, tests added and any
 residual risk. Never include credentials or production signing material.
+
+## Dependency updates
+
+Dependabot may group minor and patch development-tool updates. Review major upgrades separately so
+their compatibility changes, migrations and complete validation remain visible.
