@@ -12,7 +12,7 @@
     "@inntris/decision-verifier": "workspace:*",
     "@inntris/policy-engine": "workspace:*",
     "@inntris/x402-adapter": "workspace:*",
-    "prettier": "3.8.1",
+    "prettier": "3.9.6",
     "zod": "4.4.3"
   }
 }
