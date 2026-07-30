@@ -16,6 +16,9 @@ import { bindingInput } from "../helpers.js";
 describe("canonical action and policy hashing", () => {
   it("ignores JSON key order", () => {
     const action = actionFromX402(bindingInput);
+    if (action.protocol_reference.type !== "x402") {
+      throw new Error("x402 binding produced a non-x402 action");
+    }
     const reordered = InntrisActionV1Schema.parse({
       rail: action.rail,
       action_type: action.action_type,

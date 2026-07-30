@@ -8,6 +8,11 @@ import {
   A2ASettlementObservationSchema,
 } from "@inntris/a2a-settlement-gate";
 import {
+  AP2ActionReceiptSchema,
+  AP2MandatePresentationSchema,
+  AP2OfficialVerificationSchema,
+} from "@inntris/ap2-runtime-gate";
+import {
   InntrisActionV1Schema,
   InntrisDecisionV1Schema,
   KeyRegistrySchema,
@@ -36,6 +41,21 @@ const schemas: [string, string, ZodType][] = [
     "inntris-a2a-settlement-observation-v1.schema.json",
     "Inntris A2A Settlement Observation v1",
     A2ASettlementObservationSchema,
+  ],
+  [
+    "inntris-ap2-action-receipt-v1.schema.json",
+    "Inntris AP2 Action Receipt v1",
+    AP2ActionReceiptSchema,
+  ],
+  [
+    "inntris-ap2-mandate-presentation-v1.schema.json",
+    "Inntris AP2 Mandate Presentation v1",
+    AP2MandatePresentationSchema,
+  ],
+  [
+    "inntris-ap2-official-verification-v1.schema.json",
+    "Inntris AP2 Official Verification v1",
+    AP2OfficialVerificationSchema,
   ],
   ["inntris-action-v1.schema.json", "Inntris Action v1", InntrisActionV1Schema],
   ["inntris-decision-v1.schema.json", "Inntris Decision v1", InntrisDecisionV1Schema],

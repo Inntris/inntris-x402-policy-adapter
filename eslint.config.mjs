@@ -6,6 +6,8 @@ export default tseslint.config(
     ignores: [
       "**/dist/**",
       "**/node_modules/**",
+      ".dev/**",
+      ".pytest_cache/**",
       ".inspect-x402/**",
       "coverage/**",
       "eslint.config.mjs",

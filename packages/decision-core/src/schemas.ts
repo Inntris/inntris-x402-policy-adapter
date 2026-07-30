@@ -34,7 +34,7 @@ export const TransactionSchema = z
   })
   .strict();
 
-export const ProtocolReferenceSchema = z
+export const X402ProtocolReferenceSchema = z
   .object({
     type: z.literal("x402"),
     resource: z.url(),
@@ -44,18 +44,52 @@ export const ProtocolReferenceSchema = z
   })
   .strict();
 
-export const InntrisActionV1Schema = z
+export const AP2ProtocolReferenceSchema = z
   .object({
-    version: z.literal("inntris-action-v1"),
-    principal_id: IdentifierSchema,
-    agent_id: IdentifierSchema,
-    action_type: z.literal("financial_transaction"),
-    rail: z.literal("x402"),
-    transaction: TransactionSchema,
-    protocol_reference: ProtocolReferenceSchema,
-    extensions: z.record(z.string(), z.unknown()).optional(),
+    type: z.literal("ap2"),
+    protocol_version: z.literal("0.2"),
+    resource: z.url(),
+    mode: z.literal("autonomous"),
+    intent_verification_hash: HashSchema,
+    checkout_mandate_hash: HashSchema,
+    payment_mandate_hash: HashSchema,
+    checkout_hash: Base64UrlSchema,
+    transaction_id: Base64UrlSchema,
   })
   .strict();
+
+export const ProtocolReferenceSchema = z.discriminatedUnion("type", [
+  X402ProtocolReferenceSchema,
+  AP2ProtocolReferenceSchema,
+]);
+
+export const RailSchema = z.enum(["x402", "ap2"]);
+
+const ActionBaseShape = {
+  version: z.literal("inntris-action-v1"),
+  principal_id: IdentifierSchema,
+  agent_id: IdentifierSchema,
+  action_type: z.literal("financial_transaction"),
+  transaction: TransactionSchema,
+  extensions: z.record(z.string(), z.unknown()).optional(),
+};
+
+export const InntrisActionV1Schema = z.discriminatedUnion("rail", [
+  z
+    .object({
+      ...ActionBaseShape,
+      rail: z.literal("x402"),
+      protocol_reference: X402ProtocolReferenceSchema,
+    })
+    .strict(),
+  z
+    .object({
+      ...ActionBaseShape,
+      rail: z.literal("ap2"),
+      protocol_reference: AP2ProtocolReferenceSchema,
+    })
+    .strict(),
+]);
 
 export const VerdictSchema = z.enum(["ALLOW", "BLOCK", "REQUIRE_APPROVAL"]);
 
@@ -102,34 +136,48 @@ export const DecisionSigningSchema = z
   })
   .strict();
 
+const DecisionBaseShape = {
+  version: z.literal("inntris-decision-v1"),
+  decision_id: IdentifierSchema,
+  decision_fingerprint: HashSchema,
+  verdict: VerdictSchema,
+  principal_id: IdentifierSchema,
+  agent_id: IdentifierSchema,
+  action_type: z.literal("financial_transaction"),
+  action_hash: HashSchema,
+  transaction: TransactionSchema,
+  policy: z
+    .object({
+      policy_hash: HashSchema,
+      policy_version: z.string().min(1).max(64),
+    })
+    .strict(),
+  approval: ApprovalSchema,
+  reason_codes: z.array(ReasonCodeSchema).min(1),
+  issued_at: IsoTimestampSchema,
+  expires_at: IsoTimestampSchema,
+  nonce: Base64UrlSchema,
+  supersedes_decision_id: IdentifierSchema.nullable(),
+  signing: DecisionSigningSchema,
+};
+
 export const InntrisDecisionV1Schema = z
-  .object({
-    version: z.literal("inntris-decision-v1"),
-    decision_id: IdentifierSchema,
-    decision_fingerprint: HashSchema,
-    verdict: VerdictSchema,
-    principal_id: IdentifierSchema,
-    agent_id: IdentifierSchema,
-    action_type: z.literal("financial_transaction"),
-    action_hash: HashSchema,
-    rail: z.literal("x402"),
-    protocol_reference: ProtocolReferenceSchema,
-    transaction: TransactionSchema,
-    policy: z
+  .discriminatedUnion("rail", [
+    z
       .object({
-        policy_hash: HashSchema,
-        policy_version: z.string().min(1).max(64),
+        ...DecisionBaseShape,
+        rail: z.literal("x402"),
+        protocol_reference: X402ProtocolReferenceSchema,
       })
       .strict(),
-    approval: ApprovalSchema,
-    reason_codes: z.array(ReasonCodeSchema).min(1),
-    issued_at: IsoTimestampSchema,
-    expires_at: IsoTimestampSchema,
-    nonce: Base64UrlSchema,
-    supersedes_decision_id: IdentifierSchema.nullable(),
-    signing: DecisionSigningSchema,
-  })
-  .strict()
+    z
+      .object({
+        ...DecisionBaseShape,
+        rail: z.literal("ap2"),
+        protocol_reference: AP2ProtocolReferenceSchema,
+      })
+      .strict(),
+  ])
   .superRefine((decision, context) => {
     if (Date.parse(decision.expires_at) <= Date.parse(decision.issued_at)) {
       context.addIssue({
@@ -180,6 +228,7 @@ export type InntrisActionV1 = z.infer<typeof InntrisActionV1Schema>;
 export type InntrisDecisionV1 = z.infer<typeof InntrisDecisionV1Schema>;
 export type Transaction = z.infer<typeof TransactionSchema>;
 export type ProtocolReference = z.infer<typeof ProtocolReferenceSchema>;
+export type Rail = z.infer<typeof RailSchema>;
 export type Verdict = z.infer<typeof VerdictSchema>;
 export type ReasonCode = z.infer<typeof ReasonCodeSchema>;
 export type Approval = z.infer<typeof ApprovalSchema>;

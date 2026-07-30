@@ -9,6 +9,7 @@
 5. Settlement ordering and execution reference.
 6. Audit and evidence integrity.
 7. A2A task binding, delegate execution state and action receipts.
+8. AP2 mandate integrity, merchant trust roots, execution claims and action receipts.
 
 ## Actors
 
@@ -49,6 +50,13 @@ decision only after every local check passes and after the nonce store accepts c
 | Unknown A2A settlement state                           | Delegate runs while payment outcome is unclear | Pause execution and require confirmation or reconciliation                                 |
 | A2A delegate retry executes twice                      | Duplicate external side effect                 | Atomic execution claim, stable execution reference and completed-result replay             |
 | Process fails after delegate claim                     | Delegate outcome is unresolved                 | Keep the claim in progress and block automatic retry pending reconciliation                |
+| Forged or altered AP2 mandate chain                    | Unauthorised payment                           | Pinned official SDK verifies every chain hop, disclosure and key binding                   |
+| Valid AP2 mandate violates current policy              | Protocol authority bypasses organisation       | Exact mandate hashes feed a new policy decision and only `ALLOW` can execute               |
+| AP2 merchant, amount or checkout substitution          | Funds or terms are redirected                  | Exact merchant, payee, amount, currency and checkout hash checks                           |
+| AP2 Payment Mandate replayed for another action        | Duplicate or substituted execution             | Atomic claim keyed by Payment Mandate hash and exact execution binding                     |
+| AP2 verification becomes stale before execution        | Expired authority reaches the rail             | Verification age and mandate expiry are checked before and after policy evaluation         |
+| AP2 trust registry unavailable                         | Unreviewed keys could be accepted              | Trust resolution fails closed                                                              |
+| AP2 delegate fails after claim                         | Payment outcome is uncertain                   | Keep claim in progress and require reconciliation before retry                             |
 | Log tampering                                          | Misleading operational record                  | Signed portable decision remains independently verifiable                                  |
 | Attacker-controlled key URL in evidence                | Trust-root substitution or SSRF                | Offline default; embedded URLs are ignored; explicit HTTPS URL only                        |
 | Private key leaked in logs or repository               | Decision forgery                               | Explicit key loading, no startup generation, redacted logging and secret scanning          |
@@ -66,6 +74,8 @@ decision only after every local check passes and after the nonce store accepts c
 6. Policy correctness depends on configuration review and a reliable durable spend-state adapter.
 7. The in-memory A2A execution store cannot provide cross-process or crash recovery guarantees.
 8. A delegate that ignores the supplied execution reference can still create an external duplicate.
+9. The AP2 Python subprocess and pinned SDK add a deployment and upgrade governance boundary.
+10. The in memory AP2 execution store cannot provide cross process or crash recovery guarantees.
 
 ## Out of scope claims
 

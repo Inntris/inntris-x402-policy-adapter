@@ -3,7 +3,6 @@
   "principal_id": "org_demo",
   "agent_id": "agent_research_01",
   "action_type": "financial_transaction",
-  "rail": "x402",
   "transaction": {
     "amount": "150.00",
     "asset": "USDC",
@@ -11,6 +10,7 @@
     "payee": "0x0000000000000000000000000000000000000001",
     "purpose": "research_api"
   },
+  "rail": "x402",
   "protocol_reference": {
     "type": "x402",
     "resource": "https://example.test/research",

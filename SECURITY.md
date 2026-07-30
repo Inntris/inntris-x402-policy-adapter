@@ -41,5 +41,10 @@ Changes must preserve:
 10. Constant-time API key comparison and rate limiting on the reference API.
 11. A2A payment submission never counts as final settlement.
 12. A2A task, payment, settlement and delegate execution references remain exact-bound.
+13. AP2 mandate cryptography is verified by the pinned official SDK.
+14. AP2 merchant, payee, amount, currency, checkout and expiry bindings are checked before policy.
+15. A valid AP2 mandate still requires a current signed Inntris `ALLOW`.
+16. An AP2 Payment Mandate is atomically claimed for one exact execution before the delegate runs.
+17. AP2 Python dependencies use the committed security override set and pass `pip-audit`.
 
 The test suite contains direct regression tests for these invariants.

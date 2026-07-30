@@ -55,6 +55,23 @@
           },
           "required": ["allowed_networks", "allowed_assets"],
           "additionalProperties": false
+        },
+        "ap2": {
+          "type": "object",
+          "properties": {
+            "allowed_networks": {
+              "minItems": 1,
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "allowed_assets": {
+              "minItems": 1,
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 }
+            }
+          },
+          "required": ["allowed_networks", "allowed_assets"],
+          "additionalProperties": false
         }
       },
       "required": ["x402"],

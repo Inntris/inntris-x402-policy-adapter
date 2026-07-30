@@ -1,0 +1,53 @@
+{
+  "$id": "https://schemas.inntris.com/inntris-ap2-action-receipt-v1.schema.json",
+  "title": "Inntris AP2 Action Receipt v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": { "type": "string", "const": "inntris-ap2-action-receipt-v1" },
+    "receipt_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "receipt_fingerprint": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "intent_verification_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "checkout_mandate_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "payment_mandate_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "checkout_hash": { "type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9_-]+$" },
+    "transaction_id": { "type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9_-]+$" },
+    "decision_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "decision_fingerprint": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "action_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "execution_ref": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "delegate_result_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "executed_at": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+    },
+    "signing": {
+      "type": "object",
+      "properties": {
+        "alg": { "type": "string", "const": "Ed25519" },
+        "key_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "signature": { "type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9_-]+$" }
+      },
+      "required": ["alg", "key_id", "signature"],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "version",
+    "receipt_id",
+    "receipt_fingerprint",
+    "intent_verification_hash",
+    "checkout_mandate_hash",
+    "payment_mandate_hash",
+    "checkout_hash",
+    "transaction_id",
+    "decision_id",
+    "decision_fingerprint",
+    "action_hash",
+    "execution_ref",
+    "delegate_result_hash",
+    "executed_at",
+    "signing"
+  ],
+  "additionalProperties": false
+}

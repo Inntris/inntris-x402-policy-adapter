@@ -36,6 +36,13 @@ const DenySchema = z
   })
   .strict();
 
+const RailPolicySchema = z
+  .object({
+    allowed_networks: z.array(z.string().min(1)).min(1),
+    allowed_assets: z.array(z.string().min(1)).min(1),
+  })
+  .strict();
+
 export const InntrisPolicyV1Schema = z
   .object({
     version: z.literal(1),
@@ -51,12 +58,8 @@ export const InntrisPolicyV1Schema = z
     deny: DenySchema.optional(),
     rails: z
       .object({
-        x402: z
-          .object({
-            allowed_networks: z.array(z.string().min(1)).min(1),
-            allowed_assets: z.array(z.string().min(1)).min(1),
-          })
-          .strict(),
+        x402: RailPolicySchema,
+        ap2: RailPolicySchema.optional(),
       })
       .strict(),
     limits: z

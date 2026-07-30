@@ -1,0 +1,5 @@
+# Security reviewed overrides for dependencies pinned by the official AP2 SDK commit.
+cryptography==48.0.1
+jwcrypto==1.5.7
+pytest==9.0.3
+pip-audit==2.10.1

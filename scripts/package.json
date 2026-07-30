@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@inntris/a2a-settlement-gate": "workspace:*",
+    "@inntris/ap2-runtime-gate": "workspace:*",
     "@inntris/decision-core": "workspace:*",
     "@inntris/decision-verifier": "workspace:*",
     "@inntris/policy-engine": "workspace:*",

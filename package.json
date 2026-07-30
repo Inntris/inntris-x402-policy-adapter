@@ -23,6 +23,7 @@
     "lint": "eslint .",
     "schemas:generate": "pnpm build && node scripts/dist/generate-schemas.js",
     "test": "pnpm build && vitest run",
+    "test:ap2-official": "python packages/ap2-runtime-gate/python/self_test.py",
     "test:integration": "pnpm build && vitest run --config vitest.integration.config.ts",
     "test:unit": "pnpm build && vitest run --config vitest.unit.config.ts",
     "typecheck": "tsc -b --pretty false"
@@ -30,6 +31,7 @@
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@inntris/a2a-settlement-gate": "workspace:*",
+    "@inntris/ap2-runtime-gate": "workspace:*",
     "@inntris/decision-core": "workspace:*",
     "@inntris/decision-verifier": "workspace:*",
     "@inntris/policy-engine": "workspace:*",
