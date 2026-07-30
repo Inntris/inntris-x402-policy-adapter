@@ -73,7 +73,10 @@ Circular hashing is avoided with two explicit preimages:
 7. Insert the base64url signature.
 
 The signed decision is immutable. A human approval produces a new decision whose
-`supersedes_decision_id` points to the earlier `REQUIRE_APPROVAL` decision.
+`supersedes_decision_id` points to the earlier `REQUIRE_APPROVAL` decision. The provider
+re-evaluates current organisational policy when the approval is resolved, so the superseding
+decision is a signed `BLOCK` whenever policy now denies the same action. Resolution is single use
+and is bounded by `approval.request_ttl_seconds` rather than by the decision TTL.
 
 ## Evaluation precedence
 

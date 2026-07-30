@@ -9,14 +9,40 @@ import { Decimal } from "decimal.js";
 
 import type { InntrisPolicyV1, Weekday } from "./policy.js";
 
-export interface SpendState {
-  getDailySpend(principalId: string, dayKey: string): Promise<string>;
+export interface RecordSpendInput {
+  principalId: string;
+  dayKey: string;
+  amount: string;
 }
 
+export interface SpendState {
+  getDailySpend(principalId: string, dayKey: string): Promise<string>;
+  /**
+   * Adds a settled amount to the cumulative daily total. The executor records
+   * spend when a decision is consumed for the first time, because consumption
+   * is the single-use gate that immediately precedes settlement.
+   */
+  recordSpend(input: RecordSpendInput): Promise<void>;
+}
+
+/**
+ * A deliberately non-accumulating spend state. Cumulative limits are evaluated
+ * against a permanent zero, so it is only suitable for demonstrations and for
+ * deployments that enforce cumulative limits elsewhere.
+ */
 export class ZeroSpendState implements SpendState {
   async getDailySpend(): Promise<string> {
     return "0.00";
   }
+
+  async recordSpend(): Promise<void> {
+    return undefined;
+  }
+}
+
+export function toCanonicalAmount(value: Decimal): string {
+  const [whole, fraction = ""] = value.toFixed().split(".");
+  return `${whole}.${fraction.padEnd(2, "0")}`;
 }
 
 export class InMemorySpendState implements SpendState {
@@ -28,6 +54,12 @@ export class InMemorySpendState implements SpendState {
 
   async getDailySpend(principalId: string, dayKey: string): Promise<string> {
     return this.#spend.get(`${principalId}:${dayKey}`) ?? "0.00";
+  }
+
+  async recordSpend(input: RecordSpendInput): Promise<void> {
+    const key = `${input.principalId}:${input.dayKey}`;
+    const current = new Decimal(this.#spend.get(key) ?? "0.00");
+    this.#spend.set(key, toCanonicalAmount(current.plus(new Decimal(input.amount))));
   }
 }
 
@@ -95,6 +127,23 @@ function localTimeParts(
     time: `${value("hour")}:${value("minute")}`,
     dayKey: `${value("year")}-${value("month")}-${value("day")}`,
   };
+}
+
+/**
+ * The cumulative-limit day key for an instant in the policy timezone.
+ */
+export function spendDayKey(at: Date, timeZone: string): string {
+  return localTimeParts(at, timeZone).dayKey;
+}
+
+/**
+ * A window whose start is later than its end crosses local midnight. Both ends
+ * are inclusive, and the weekday is always the weekday of the evaluated
+ * instant, so the post-midnight part of a crossing window belongs to the
+ * following day.
+ */
+export function withinTimeWindow(time: string, start: string, end: string): boolean {
+  return start <= end ? time >= start && time <= end : time >= start || time <= end;
 }
 
 function deniedByExplicitRule(action: InntrisActionV1, policy: InntrisPolicyV1): ReasonCode | null {
@@ -177,8 +226,7 @@ export async function evaluatePolicy(input: {
 
   if (
     !policy.time_windows.allowed_weekdays.includes(local.weekday) ||
-    local.time < policy.time_windows.start ||
-    local.time > policy.time_windows.end
+    !withinTimeWindow(local.time, policy.time_windows.start, policy.time_windows.end)
   ) {
     return block("OUTSIDE_ALLOWED_TIME");
   }

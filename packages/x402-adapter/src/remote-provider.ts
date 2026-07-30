@@ -8,8 +8,14 @@ import {
   type InntrisActionV1,
   type InntrisDecisionV1,
   type KeyRegistry,
+  type ResolveApprovalInput,
+  type ResolveApprovalResult,
 } from "@inntris/decision-core";
-import { fetchExplicitKeyRegistry, verifyDecision } from "@inntris/decision-verifier";
+import {
+  fetchExplicitKeyRegistry,
+  verifyDecision,
+  verifySignedDecision,
+} from "@inntris/decision-verifier";
 import { z } from "zod";
 
 const ConsumeResultSchema = z
@@ -35,6 +41,39 @@ const ConsumeResultSchema = z
       context.addIssue({
         code: "custom",
         message: "Rejected consumption requires a reason code",
+        path: ["reason_code"],
+      });
+    }
+  });
+
+const ResolveApprovalResultSchema = z
+  .object({
+    success: z.boolean(),
+    status: z.enum(["superseded", "conflict", "rejected"]),
+    decision_id: z.string(),
+    decision: InntrisDecisionV1Schema.optional(),
+    reason_code: ReasonCodeSchema.optional(),
+  })
+  .strict()
+  .superRefine((result, context) => {
+    if (result.success !== (result.status === "superseded")) {
+      context.addIssue({
+        code: "custom",
+        message: "Approval success does not match its status",
+        path: ["success"],
+      });
+    }
+    if (result.success && result.decision === undefined) {
+      context.addIssue({
+        code: "custom",
+        message: "A superseded approval requires the new decision",
+        path: ["decision"],
+      });
+    }
+    if (!result.success && result.reason_code === undefined) {
+      context.addIssue({
+        code: "custom",
+        message: "Rejected approval resolution requires a reason code",
         path: ["reason_code"],
       });
     }
@@ -78,7 +117,17 @@ export class RemoteInntrisDecisionProvider implements DecisionProvider {
     KeyRegistrySchema.parse(options.keyRegistry);
   }
 
-  async #post(path: string, body: unknown): Promise<unknown> {
+  /**
+   * `acceptedRejectionStatuses` are statuses that carry a structured protocol
+   * rejection rather than a technical failure, such as a replay conflict. Their
+   * body is parsed and returned so the caller keeps the precise reason code
+   * instead of collapsing it into an availability error.
+   */
+  async #post(
+    path: string,
+    body: unknown,
+    acceptedRejectionStatuses: readonly number[] = [],
+  ): Promise<unknown> {
     let response: Response;
     try {
       response = await this.#fetch(new URL(path, this.#apiUrl), {
@@ -95,7 +144,7 @@ export class RemoteInntrisDecisionProvider implements DecisionProvider {
     } catch {
       throw new RemoteInntrisDecisionProviderError("Remote Inntris service is unavailable");
     }
-    if (!response.ok) {
+    if (!response.ok && !acceptedRejectionStatuses.includes(response.status)) {
       throw new RemoteInntrisDecisionProviderError(
         `Remote Inntris request failed with HTTP ${response.status}`,
       );
@@ -123,8 +172,41 @@ export class RemoteInntrisDecisionProvider implements DecisionProvider {
     return response.decision;
   }
 
+  async resolveApproval(input: ResolveApprovalInput): Promise<ResolveApprovalResult> {
+    const result = ResolveApprovalResultSchema.parse(
+      await this.#post("/v1/decisions/approve", input, [409, 422]),
+    );
+    if (result.decision_id !== input.decision_id) {
+      throw new RemoteInntrisDecisionProviderError(
+        "Remote approval response does not match the request",
+      );
+    }
+    if (result.decision !== undefined) {
+      if (result.decision.supersedes_decision_id !== input.decision_id) {
+        throw new RemoteInntrisDecisionProviderError(
+          "The superseding decision does not reference the approved decision",
+        );
+      }
+      const verification = verifySignedDecision(result.decision, this.options.keyRegistry);
+      if (!verification.valid) {
+        throw new RemoteInntrisDecisionProviderError(
+          `Superseding decision verification failed: ${verification.reason_codes.join(",")}`,
+        );
+      }
+    }
+    return {
+      success: result.success,
+      status: result.status,
+      decision_id: result.decision_id,
+      ...(result.decision === undefined ? {} : { decision: result.decision }),
+      ...(result.reason_code === undefined ? {} : { reason_code: result.reason_code }),
+    };
+  }
+
   async consume(input: ConsumeDecisionInput): Promise<ConsumeDecisionResult> {
-    const result = ConsumeResultSchema.parse(await this.#post("/v1/decisions/consume", input));
+    const result = ConsumeResultSchema.parse(
+      await this.#post("/v1/decisions/consume", input, [409, 422]),
+    );
     if (result.decision_id !== input.decision_id || result.execution_ref !== input.execution_ref) {
       throw new RemoteInntrisDecisionProviderError(
         "Remote consumption response does not match the request",

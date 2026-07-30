@@ -28,6 +28,14 @@ const ConsumeBodySchema = z
     execution_ref: z.string().min(1).max(512),
   })
   .strict();
+const ApproveBodySchema = z
+  .object({
+    decision_id: z.string().min(1),
+    granted: z.boolean(),
+    approval_reference: z.string().min(1).max(256),
+    approver_ids: z.array(z.string().min(1).max(128)).min(1).max(32),
+  })
+  .strict();
 
 export interface DemoApiOptions {
   provider: DecisionProvider;
@@ -146,6 +154,44 @@ export async function buildDemoApi(options: DemoApiOptions): Promise<FastifyInst
         reason_codes: result.reason_codes,
       });
       await reply.status(200).send(result);
+    },
+  );
+
+  app.post(
+    "/v1/decisions/approve",
+    {
+      preHandler: authenticate,
+      config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+    },
+    async (request, reply) => {
+      let body: z.infer<typeof ApproveBodySchema>;
+      try {
+        body = ApproveBodySchema.parse(request.body);
+      } catch (error) {
+        parseFailure(reply, error);
+        return;
+      }
+      if (options.provider.resolveApproval === undefined) {
+        await reply.status(503).send({ error: "approval_service_unavailable" });
+        return;
+      }
+      let result;
+      try {
+        result = await options.provider.resolveApproval(body);
+      } catch {
+        await reply.status(503).send({ error: "approval_service_unavailable" });
+        return;
+      }
+      request.log.info({
+        request_id: request.id,
+        decision_id: body.decision_id,
+        approval_result: result.status,
+        superseding_decision_id: result.decision?.decision_id,
+        verdict: result.decision?.verdict,
+        reason_codes: result.reason_code === undefined ? [] : [result.reason_code],
+      });
+      const statusCode = result.success ? 200 : result.status === "conflict" ? 409 : 422;
+      await reply.status(statusCode).send(result);
     },
   );
 

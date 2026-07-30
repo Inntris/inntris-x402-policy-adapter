@@ -41,6 +41,15 @@ Prerequisites:
 2. pnpm `10.18.1`.
 3. Python `3.12` for the optional AP2 runtime gate and its official SDK.
 
+The Node version is enforced, so `pnpm install` stops with `ERR_PNPM_UNSUPPORTED_ENGINE` on any
+other release. Install the pinned version first if `node --version` disagrees with `.node-version`:
+
+```bash
+nvm install && nvm use          # or: fnm use --install-if-missing
+```
+
+Then:
+
 ```bash
 corepack enable
 corepack prepare pnpm@10.18.1 --activate
@@ -48,15 +57,17 @@ pnpm install --frozen-lockfile
 pnpm demo
 ```
 
-The demo runs six scenarios without paid services:
+The demo runs eight scenarios without paid services:
 
 ```text
 Scenario 1: ALLOW; signature valid; decision consumed; settlement permitted
-Scenario 2: DECISION_NOT_ALLOW; settlement not called
-Scenario 3: DECISION_NOT_ALLOW; settlement not called
+Scenario 2: BLOCK; AMOUNT_EXCEEDS_TRANSACTION_LIMIT; DECISION_NOT_ALLOW; settlement not called
+Scenario 3: REQUIRE_APPROVAL; HUMAN_APPROVAL_REQUIRED; DECISION_NOT_ALLOW; settlement not called
 Scenario 4: ACTION_HASH_MISMATCH; settlement not called
 Scenario 5: NONCE_ALREADY_CONSUMED; settlement not called
 Scenario 6: DECISION_EXPIRED; settlement not called
+Scenario 7: human approval issues a superseding ALLOW; original decision unchanged; settlement permitted
+Scenario 8: APPROVAL_ALREADY_RESOLVED; no second decision issued
 ```
 
 ## Architecture
@@ -104,6 +115,32 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for trust boundaries and the fingerprint 
 The adapter pins `@x402/core` `2.20.0`. It imports `PaymentRequirements` and `PaymentPayload` from
 `@x402/core/types` and validates them with the official runtime schemas.
 
+## Human approval and supersession
+
+A signed decision is never mutated. `REQUIRE_APPROVAL` is an immutable statement that policy needed
+a human, and it can never reach settlement.
+
+Resolving the approval issues a **new** signed decision whose `supersedes_decision_id` references
+the original:
+
+```text
+REQUIRE_APPROVAL decision (immutable, never consumable)
+        ↓ POST /v1/decisions/approve
+Current policy re-evaluated at resolution time
+        ↓
+New signed ALLOW or BLOCK decision, supersedes_decision_id set
+        ↓
+Verified, consumed once, then settled
+```
+
+Because policy is re-evaluated when the approval is resolved, a human grant cannot override a policy
+that now denies the same action: a breached limit still produces a signed `BLOCK`. A refused
+approval produces a signed `BLOCK` carrying `HUMAN_APPROVAL_REFUSED`. Resolution is single use, so a
+repeat returns `APPROVAL_ALREADY_RESOLVED`.
+
+The approval window is `approval.request_ttl_seconds` (default 900), measured from the original
+decision's `issued_at` and independent of the much shorter `decision_ttl_seconds`.
+
 ## A2A settlement gate
 
 The follow-on `@inntris/a2a-settlement-gate` package imports the official A2A 1.0 `Task` type from
@@ -149,6 +186,7 @@ PASS schema
 PASS decision fingerprint
 PASS Ed25519 signature
 PASS action hash
+PASS decision binds the supplied action
 PASS decision expiry at supplied execution time
 PASS policy version
 PASS x402 payment-requirements binding
@@ -197,6 +235,7 @@ The service exposes:
 | `GET`  | `/.well-known/inntris-keys.json` | Public Ed25519 key registry |
 | `POST` | `/v1/decisions/evaluate`         | Signed policy decision      |
 | `POST` | `/v1/decisions/verify`           | Local verification result   |
+| `POST` | `/v1/decisions/approve`          | Resolve a human approval    |
 | `POST` | `/v1/decisions/consume`          | Single-use consumption      |
 
 A valid policy `BLOCK` is an HTTP `200` response. HTTP errors represent technical failure, invalid
@@ -257,13 +296,15 @@ pnpm audit --prod --audit-level high
 
 ## Known limitations
 
-1. The local nonce and decision stores are in-memory reference implementations. A deployment must
-   use a durable, atomic store shared by every executor instance.
+1. The local nonce, decision and approval stores are in-memory reference implementations. A
+   deployment must use a durable, atomic store shared by every executor instance.
 2. Generic consumption cannot be atomic with every external payment rail. The executor must retain
    the same execution reference, use facilitator idempotency and reconcile a consume-success,
    settlement-unknown outcome.
-3. The local spend-state interface demonstrates policy evaluation but is not a distributed ledger.
-   Production cumulative limits require an atomic durable spend store.
+3. `SpendState` accumulates on first consumption, so the reference cumulative limit is only as
+   correct as the injected store. It is not a distributed ledger, and `recordSpend` is not atomic
+   with nonce consumption: if recording fails the nonce is already burnt, so the decision is dead
+   and settlement is refused. Production cumulative limits require an atomic durable spend store.
 4. The public fixture signing identity is intentionally known and must never be used in production.
 5. No claim is made about HSM custody, disaster recovery, production latency, blockchain finality or
    a live hosted deployment.

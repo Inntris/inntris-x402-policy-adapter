@@ -8,9 +8,9 @@ A valid policy `BLOCK` or `REQUIRE_APPROVAL` is an HTTP `200` decision response.
 | ------ | ---------------------------------------------------------- |
 | `400`  | Malformed input                                            |
 | `401`  | Optional bearer authentication failed                      |
-| `409`  | A different execution reference attempted replay           |
+| `409`  | A replayed execution reference or approval resolution      |
 | `429`  | The per-process request limit was exceeded                 |
-| `422`  | A valid request cannot be consumed                         |
+| `422`  | A valid request cannot be consumed or resolved             |
 | `503`  | Signer, policy, nonce store or remote provider unavailable |
 
 The reference API applies a per-process limit of 100 requests per minute and a 30 request limit to
@@ -48,6 +48,44 @@ Response:
 ```
 
 The response contains boolean checks and stable failure reason codes.
+
+## Approve
+
+`POST /v1/decisions/approve`
+
+```json
+{
+  "decision_id": "018f...",
+  "granted": true,
+  "approval_reference": "approval-ticket-4711",
+  "approver_ids": ["user_finance_lead"]
+}
+```
+
+The original `REQUIRE_APPROVAL` decision is never mutated. A resolution issues a new signed decision
+whose `supersedes_decision_id` references it:
+
+```json
+{
+  "success": true,
+  "status": "superseded",
+  "decision_id": "018f...",
+  "decision": {}
+}
+```
+
+Current organisational policy is re-evaluated at resolution time, so a granted approval still yields
+a signed `BLOCK` decision when policy now denies the same action. A refused approval yields a signed
+`BLOCK` decision carrying `HUMAN_APPROVAL_REFUSED`. Both are HTTP `200`, because a policy outcome is
+not a technical failure.
+
+Resolution is single use. A repeat returns HTTP `409` with `APPROVAL_ALREADY_RESOLVED`. A decision
+that is not an open approval request returns HTTP `422` with `APPROVAL_NOT_PENDING`, and a request
+resolved after its approval window closes returns HTTP `422` with `DECISION_EXPIRED`.
+
+The approval window is `approval.request_ttl_seconds`, measured from the original decision's
+`issued_at` and defaulting to 900 seconds. It is deliberately independent of `decision_ttl_seconds`,
+because a human takes longer to answer than a signed decision stays valid.
 
 ## Consume
 

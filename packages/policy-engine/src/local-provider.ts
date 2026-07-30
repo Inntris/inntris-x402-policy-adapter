@@ -12,11 +12,20 @@ import {
   type InntrisDecisionV1,
   type MetricsRecorder,
   type NonceStore,
+  type ReasonCode,
+  type ResolveApprovalInput,
+  type ResolveApprovalResult,
   type SigningProvider,
+  type UnsignedEvaluation,
 } from "@inntris/decision-core";
 
-import { evaluatePolicy, ZeroSpendState, type SpendState } from "./evaluate.js";
-import type { InntrisPolicyV1 } from "./policy.js";
+import { evaluatePolicy, spendDayKey, ZeroSpendState, type SpendState } from "./evaluate.js";
+import { DEFAULT_APPROVAL_REQUEST_TTL_SECONDS, type InntrisPolicyV1 } from "./policy.js";
+
+interface IssuedDecision {
+  decision: InntrisDecisionV1;
+  action: InntrisActionV1;
+}
 
 export interface LocalPolicyDecisionProviderOptions {
   policy: InntrisPolicyV1;
@@ -33,7 +42,8 @@ export class LocalPolicyDecisionProvider implements DecisionProvider {
   readonly #spendState: SpendState;
   readonly #nonceStore: NonceStore;
   readonly #metrics: MetricsRecorder;
-  readonly #decisions = new Map<string, InntrisDecisionV1>();
+  readonly #decisions = new Map<string, IssuedDecision>();
+  readonly #resolvedApprovals = new Set<string>();
 
   constructor(readonly options: LocalPolicyDecisionProviderOptions) {
     this.policyHash = hashPolicyObject(options.policy);
@@ -41,6 +51,25 @@ export class LocalPolicyDecisionProvider implements DecisionProvider {
     this.#spendState = options.spendState ?? new ZeroSpendState();
     this.#nonceStore = options.nonceStore ?? new InMemoryNonceStore();
     this.#metrics = options.metrics ?? noOpMetrics;
+  }
+
+  async #sign(
+    action: InntrisActionV1,
+    evaluation: UnsignedEvaluation,
+    supersedesDecisionId?: string,
+  ): Promise<InntrisDecisionV1> {
+    const decision = await createSignedDecision({
+      action,
+      evaluation,
+      policyHash: this.policyHash,
+      policyVersion: this.options.policy.policy_version,
+      decisionTtlSeconds: this.options.policy.defaults.decision_ttl_seconds,
+      signer: this.options.signer,
+      clock: this.#clock,
+      ...(supersedesDecisionId === undefined ? {} : { supersedesDecisionId }),
+    });
+    this.#decisions.set(decision.decision_id, { decision, action });
+    return decision;
   }
 
   async evaluate(action: InntrisActionV1): Promise<InntrisDecisionV1> {
@@ -51,22 +80,81 @@ export class LocalPolicyDecisionProvider implements DecisionProvider {
       spendState: this.#spendState,
       clock: this.#clock,
     });
-    const decision = await createSignedDecision({
-      action,
-      evaluation,
-      policyHash: this.policyHash,
-      policyVersion: this.options.policy.policy_version,
-      decisionTtlSeconds: this.options.policy.defaults.decision_ttl_seconds,
-      signer: this.options.signer,
-      clock: this.#clock,
-    });
-    this.#decisions.set(decision.decision_id, decision);
+    const decision = await this.#sign(action, evaluation);
     this.#metrics.decision(decision.verdict, decision.rail, performance.now() - started);
     return decision;
   }
 
+  /**
+   * Issues a new decision that supersedes an open `REQUIRE_APPROVAL` decision.
+   * The original decision is never mutated, and current organisational policy
+   * is re-evaluated, so a human grant cannot override a policy that now denies
+   * the same action.
+   */
+  async resolveApproval(input: ResolveApprovalInput): Promise<ResolveApprovalResult> {
+    const rejection = (reasonCode: ReasonCode): ResolveApprovalResult => ({
+      success: false,
+      status: reasonCode === "APPROVAL_ALREADY_RESOLVED" ? "conflict" : "rejected",
+      decision_id: input.decision_id,
+      reason_code: reasonCode,
+    });
+
+    if (this.#resolvedApprovals.has(input.decision_id)) {
+      return rejection("APPROVAL_ALREADY_RESOLVED");
+    }
+    const issued = this.#decisions.get(input.decision_id);
+    if (issued?.decision.verdict !== "REQUIRE_APPROVAL") {
+      return rejection("APPROVAL_NOT_PENDING");
+    }
+
+    const requestTtlSeconds =
+      this.options.policy.approval.request_ttl_seconds ?? DEFAULT_APPROVAL_REQUEST_TTL_SECONDS;
+    const closesAt = Date.parse(issued.decision.issued_at) + requestTtlSeconds * 1_000;
+    if (this.#clock.now().getTime() >= closesAt) {
+      return rejection("DECISION_EXPIRED");
+    }
+
+    const started = performance.now();
+    const policyEvaluation = await evaluatePolicy({
+      action: issued.action,
+      policy: this.options.policy,
+      spendState: this.#spendState,
+      clock: this.#clock,
+    });
+    const approval = {
+      mode: "human" as const,
+      approval_reference: input.approval_reference,
+      approver_ids: input.approver_ids,
+    };
+    let evaluation: UnsignedEvaluation;
+    if (!input.granted) {
+      evaluation = { verdict: "BLOCK", reasonCodes: ["HUMAN_APPROVAL_REFUSED"], approval };
+    } else if (policyEvaluation.verdict === "BLOCK") {
+      evaluation = { ...policyEvaluation, approval };
+    } else {
+      evaluation = {
+        verdict: "ALLOW",
+        reasonCodes: [
+          ...policyEvaluation.reasonCodes.filter((code) => code !== "HUMAN_APPROVAL_REQUIRED"),
+          "HUMAN_APPROVAL_GRANTED",
+        ],
+        approval,
+      };
+    }
+
+    this.#resolvedApprovals.add(input.decision_id);
+    const decision = await this.#sign(issued.action, evaluation, issued.decision.decision_id);
+    this.#metrics.decision(decision.verdict, decision.rail, performance.now() - started);
+    return {
+      success: true,
+      status: "superseded",
+      decision_id: input.decision_id,
+      decision,
+    };
+  }
+
   async consume(input: ConsumeDecisionInput): Promise<ConsumeDecisionResult> {
-    const decision = this.#decisions.get(input.decision_id);
+    const decision = this.#decisions.get(input.decision_id)?.decision;
     if (decision?.verdict !== "ALLOW") {
       return {
         success: false,
@@ -105,6 +193,19 @@ export class LocalPolicyDecisionProvider implements DecisionProvider {
     });
     if (result.status === "conflict") {
       this.#metrics.replayAttempt();
+    }
+    /**
+     * Only a first, unique consumption adds to the cumulative daily total, so
+     * an idempotent retry never counts twice. The nonce is already burnt at
+     * this point: if recording fails, the error propagates, the executor
+     * blocks settlement and the decision cannot be reused.
+     */
+    if (result.status === "consumed") {
+      await this.#spendState.recordSpend({
+        principalId: decision.principal_id,
+        dayKey: spendDayKey(now, this.options.policy.time_windows.timezone),
+        amount: decision.transaction.amount,
+      });
     }
     return result;
   }

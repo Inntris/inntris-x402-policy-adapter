@@ -6,6 +6,7 @@ import {
   createPublicDemoSigner,
   type Clock,
   type InntrisDecisionV1,
+  type ReasonCode,
 } from "@inntris/decision-core";
 import { LocalPolicyDecisionProvider, parsePolicyText } from "@inntris/policy-engine";
 import {
@@ -62,7 +63,8 @@ function assert(condition: unknown, message: string): asserts condition {
 async function expectBlocked(
   name: string,
   operation: () => Promise<unknown>,
-  expectedReason: string,
+  expectedReason: ReasonCode,
+  policy?: { decision: InntrisDecisionV1; reasonCode: ReasonCode },
 ): Promise<void> {
   try {
     await operation();
@@ -71,8 +73,18 @@ async function expectBlocked(
     if (!(error instanceof InntrisGuardError)) {
       throw error;
     }
-    assert(error.reasonCodes.includes(expectedReason as never), `${name} reason code`);
-    process.stdout.write(`${name}: ${expectedReason}; settlement not called\n`);
+    assert(error.reasonCodes.includes(expectedReason), `${name} gate reason code`);
+    /**
+     * The gate reports why it refused to settle. When the refusal came from a
+     * signed policy verdict, that verdict and the reason the policy reached it
+     * are reported alongside.
+     */
+    if (policy !== undefined) {
+      assert(policy.decision.reason_codes.includes(policy.reasonCode), `${name} policy reason`);
+    }
+    const verdict =
+      policy === undefined ? "" : `${policy.decision.verdict}; ${policy.reasonCode}; `;
+    process.stdout.write(`${name}: ${verdict}${expectedReason}; settlement not called\n`);
   }
 }
 
@@ -117,10 +129,7 @@ await expectBlocked(
   () =>
     guard.settleIfAuthorised(inputWithAmount("150000000"), blocked, "execution-block", settlement),
   "DECISION_NOT_ALLOW",
-);
-assert(
-  blocked.reason_codes.includes("AMOUNT_EXCEEDS_TRANSACTION_LIMIT"),
-  "blocked decision reason",
+  { decision: blocked, reasonCode: "AMOUNT_EXCEEDS_TRANSACTION_LIMIT" },
 );
 
 const approval = await guard.authorise(inputWithAmount("80000000"));
@@ -135,8 +144,8 @@ await expectBlocked(
       settlement,
     ),
   "DECISION_NOT_ALLOW",
+  { decision: approval, reasonCode: "HUMAN_APPROVAL_REQUIRED" },
 );
-assert(approval.reason_codes.includes("HUMAN_APPROVAL_REQUIRED"), "approval reason");
 
 const tamperDecision = await guard.authorise(baseInput);
 const tamperedInput: X402SettlementInput = {
@@ -168,5 +177,39 @@ await expectBlocked(
   "DECISION_EXPIRED",
 );
 
-assert(settlementCalls === 2, "only the two authorised unique executions settled");
+const resolved = await provider.resolveApproval({
+  decision_id: approval.decision_id,
+  granted: true,
+  approval_reference: "approval-ticket-4711",
+  approver_ids: ["user_finance_lead"],
+});
+assert(resolved.success && resolved.decision !== undefined, "approval resolution succeeded");
+const superseding = resolved.decision;
+assert(superseding.verdict === "ALLOW", "superseding verdict");
+assert(
+  superseding.supersedes_decision_id === approval.decision_id,
+  "superseding decision references the approval request",
+);
+assert(approval.verdict === "REQUIRE_APPROVAL", "the original decision was never mutated");
+await guard.settleIfAuthorised(
+  inputWithAmount("80000000"),
+  superseding,
+  "execution-approved",
+  settlement,
+);
+process.stdout.write(
+  "Scenario 7: human approval issues a superseding ALLOW; original decision unchanged; settlement permitted\n",
+);
+
+const replayedApproval = await provider.resolveApproval({
+  decision_id: approval.decision_id,
+  granted: true,
+  approval_reference: "approval-ticket-4711",
+  approver_ids: ["user_finance_lead"],
+});
+assert(!replayedApproval.success, "a second approval resolution is refused");
+assert(replayedApproval.reason_code === "APPROVAL_ALREADY_RESOLVED", "approval replay reason");
+process.stdout.write("Scenario 8: APPROVAL_ALREADY_RESOLVED; no second decision issued\n");
+
+assert(settlementCalls === 3, "only the three authorised unique executions settled");
 process.stdout.write(`\nPASS: settlement called exactly ${settlementCalls} times\n`);

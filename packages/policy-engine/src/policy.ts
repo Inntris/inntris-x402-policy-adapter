@@ -4,6 +4,8 @@ import { CanonicalAmountSchema, IsoTimestampSchema } from "@inntris/decision-cor
 import { parse } from "yaml";
 import { z } from "zod";
 
+export const DEFAULT_APPROVAL_REQUEST_TTL_SECONDS = 900;
+
 const WeekdaySchema = z.enum([
   "MONDAY",
   "TUESDAY",
@@ -71,6 +73,15 @@ export const InntrisPolicyV1Schema = z
     approval: z
       .object({
         require_human_above: CanonicalAmountSchema,
+        /**
+         * How long a `REQUIRE_APPROVAL` decision stays resolvable, measured
+         * from its `issued_at`. It is deliberately independent of
+         * `decision_ttl_seconds`, because a human takes longer to answer than
+         * a signed decision stays valid. Omitted policies use
+         * `DEFAULT_APPROVAL_REQUEST_TTL_SECONDS`, which keeps the hashed
+         * policy object unchanged.
+         */
+        request_ttl_seconds: z.number().int().min(1).max(86_400).optional(),
       })
       .strict(),
     merchants: z.array(MerchantSchema).min(1),

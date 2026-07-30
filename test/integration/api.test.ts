@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { bindingInput, testContext } from "../helpers.js";
 import { actionFromX402 } from "@inntris/x402-adapter";
+import type { InntrisDecisionV1 } from "@inntris/decision-core";
 
 describe("reference API", () => {
   it("serves health and the public key registry", async () => {
@@ -82,6 +83,66 @@ describe("reference API", () => {
     expect(retry.json()).toMatchObject({ status: "idempotent" });
     expect(replay.statusCode).toBe(409);
     expect(replay.json()).toMatchObject({ reason_code: "NONCE_ALREADY_CONSUMED" });
+    await app.close();
+  });
+
+  it("resolves a human approval into a superseding decision", async () => {
+    const context = await testContext();
+    const app = await buildDemoApi({ ...context, logger: false });
+    const action = actionFromX402({
+      ...bindingInput,
+      paymentRequirements: { ...bindingInput.paymentRequirements, amount: "80000000" },
+    });
+    const evaluated = await app.inject({
+      method: "POST",
+      url: "/v1/decisions/evaluate",
+      payload: { action },
+    });
+    const pending = evaluated.json<{ decision: InntrisDecisionV1 }>().decision;
+    expect(pending.verdict).toBe("REQUIRE_APPROVAL");
+
+    const payload = {
+      decision_id: pending.decision_id,
+      granted: true,
+      approval_reference: "approval-ticket-api",
+      approver_ids: ["user_finance_lead"],
+    };
+    const approved = await app.inject({
+      method: "POST",
+      url: "/v1/decisions/approve",
+      payload,
+    });
+    expect(approved.statusCode).toBe(200);
+    expect(approved.json()).toMatchObject({
+      success: true,
+      status: "superseded",
+      decision: {
+        verdict: "ALLOW",
+        supersedes_decision_id: pending.decision_id,
+        approval: { mode: "human", approval_reference: "approval-ticket-api" },
+      },
+    });
+
+    // The approval request is single use, so a repeat is a conflict.
+    const replay = await app.inject({
+      method: "POST",
+      url: "/v1/decisions/approve",
+      payload,
+    });
+    expect(replay.statusCode).toBe(409);
+    expect(replay.json()).toMatchObject({ reason_code: "APPROVAL_ALREADY_RESOLVED" });
+
+    // A decision that was never an open approval request cannot be resolved.
+    const notPending = await app.inject({
+      method: "POST",
+      url: "/v1/decisions/approve",
+      payload: {
+        ...payload,
+        decision_id: approved.json<{ decision: InntrisDecisionV1 }>().decision.decision_id,
+      },
+    });
+    expect(notPending.statusCode).toBe(422);
+    expect(notPending.json()).toMatchObject({ reason_code: "APPROVAL_NOT_PENDING" });
     await app.close();
   });
 
