@@ -66,7 +66,9 @@ export class InntrisX402Guard {
     try {
       decision = await this.options.provider.evaluate(action);
     } catch {
-      throw new InntrisGuardError("Inntris evaluation failed closed", ["DECISION_NOT_ALLOW"]);
+      throw new InntrisGuardError("Inntris evaluation failed closed", [
+        "DECISION_SERVICE_UNAVAILABLE",
+      ]);
     }
     const verification = verifyDecision({
       decision,
@@ -100,6 +102,7 @@ export class InntrisX402Guard {
           signature: false,
           fingerprint: false,
           action_hash: false,
+          decision_binding: false,
           expiry: false,
           policy_version: false,
           payment_requirements: false,
@@ -135,7 +138,7 @@ export class InntrisX402Guard {
         status: "rejected",
         decision_id: decision.decision_id,
         execution_ref: executionRef,
-        reason_code: "DECISION_NOT_ALLOW",
+        reason_code: "DECISION_SERVICE_UNAVAILABLE",
       };
     }
   }

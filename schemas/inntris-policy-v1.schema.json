@@ -89,7 +89,8 @@
     "approval": {
       "type": "object",
       "properties": {
-        "require_human_above": { "type": "string", "pattern": "^(0|[1-9]\\d*)\\.\\d{2,18}$" }
+        "require_human_above": { "type": "string", "pattern": "^(0|[1-9]\\d*)\\.\\d{2,18}$" },
+        "request_ttl_seconds": { "type": "integer", "minimum": 1, "maximum": 86400 }
       },
       "required": ["require_human_above"],
       "additionalProperties": false

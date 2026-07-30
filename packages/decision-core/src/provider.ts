@@ -15,9 +15,35 @@ export interface ConsumeDecisionResult {
   reason_code?: ReasonCode;
 }
 
+export interface ResolveApprovalInput {
+  decision_id: string;
+  granted: boolean;
+  approval_reference: string;
+  approver_ids: string[];
+}
+
+export interface ResolveApprovalResult {
+  success: boolean;
+  status: "superseded" | "conflict" | "rejected";
+  decision_id: string;
+  /**
+   * The new signed decision that supersedes the original `REQUIRE_APPROVAL`
+   * decision. A refused or newly blocked approval still produces a signed
+   * decision, because a policy outcome is not a technical failure.
+   */
+  decision?: InntrisDecisionV1;
+  reason_code?: ReasonCode;
+}
+
 export interface DecisionProvider {
   evaluate(input: InntrisActionV1): Promise<InntrisDecisionV1>;
   consume(input: ConsumeDecisionInput): Promise<ConsumeDecisionResult>;
+  /**
+   * Resolves a human approval by issuing a new decision. The original
+   * `REQUIRE_APPROVAL` decision is never mutated. Providers that do not host
+   * an approval workflow may omit this member.
+   */
+  resolveApproval?(input: ResolveApprovalInput): Promise<ResolveApprovalResult>;
 }
 
 export interface NonceConsumption {

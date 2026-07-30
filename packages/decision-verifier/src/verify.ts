@@ -4,6 +4,7 @@ import {
   KeyRegistrySchema,
   calculateDecisionFingerprint,
   hashAction,
+  hashCanonical,
   publicKeyFingerprint,
   verifyDecisionSignature,
   type InntrisActionV1,
@@ -18,6 +19,7 @@ export interface VerificationChecks {
   signature: boolean;
   fingerprint: boolean;
   action_hash: boolean;
+  decision_binding: boolean;
   expiry: boolean;
   policy_version: boolean;
   payment_requirements: boolean;
@@ -46,10 +48,27 @@ function emptyChecks(): VerificationChecks {
     signature: false,
     fingerprint: false,
     action_hash: false,
+    decision_binding: false,
     expiry: false,
     policy_version: false,
     payment_requirements: false,
   };
+}
+
+/**
+ * The signed decision restates the subject it decided on. A correct issuer
+ * always restates the same action it hashed, so a mismatch means the decision
+ * is internally inconsistent even when its signature is genuine.
+ */
+function bindsSuppliedAction(decision: InntrisDecisionV1, action: InntrisActionV1): boolean {
+  return (
+    decision.principal_id === action.principal_id &&
+    decision.agent_id === action.agent_id &&
+    decision.action_type === action.action_type &&
+    decision.rail === action.rail &&
+    hashCanonical(decision.transaction) === hashCanonical(action.transaction) &&
+    hashCanonical(decision.protocol_reference) === hashCanonical(action.protocol_reference)
+  );
 }
 
 function addReason(reasons: ReasonCode[], reason: ReasonCode): void {
@@ -78,6 +97,53 @@ function findUsableKey(
     return null;
   }
   return { publicKey };
+}
+
+export interface SignedDecisionVerificationResult {
+  valid: boolean;
+  checks: { schema: boolean; fingerprint: boolean; signature: boolean };
+  reason_codes: ReasonCode[];
+}
+
+/**
+ * Verifies only that a decision is a well-formed, untampered, correctly signed
+ * envelope. Callers that hold the original action should use `verifyDecision`,
+ * which additionally proves the decision is bound to that exact action.
+ */
+export function verifySignedDecision(
+  decisionInput: unknown,
+  keyRegistryInput: unknown,
+): SignedDecisionVerificationResult {
+  const checks = { schema: false, fingerprint: false, signature: false };
+  const reasonCodes: ReasonCode[] = [];
+  const parsedDecision = InntrisDecisionV1Schema.safeParse(decisionInput);
+  const parsedRegistry = KeyRegistrySchema.safeParse(keyRegistryInput);
+  if (!parsedDecision.success || !parsedRegistry.success) {
+    return { valid: false, checks, reason_codes: ["INVALID_DECISION_SCHEMA"] };
+  }
+  checks.schema = true;
+  const decision = parsedDecision.data;
+
+  checks.fingerprint = calculateDecisionFingerprint(decision) === decision.decision_fingerprint;
+  if (!checks.fingerprint) {
+    addReason(reasonCodes, "FINGERPRINT_MISMATCH");
+  }
+
+  const key = findUsableKey(decision, parsedRegistry.data);
+  if (key === null) {
+    addReason(reasonCodes, "UNKNOWN_SIGNING_KEY");
+  } else {
+    checks.signature = verifyDecisionSignature(decision, key.publicKey);
+    if (!checks.signature) {
+      addReason(reasonCodes, "INVALID_SIGNATURE");
+    }
+  }
+
+  return {
+    valid: Object.values(checks).every(Boolean),
+    checks,
+    reason_codes: reasonCodes,
+  };
 }
 
 export function verifyDecision(input: VerifyDecisionInput): VerificationResult {
@@ -120,6 +186,11 @@ export function verifyDecision(input: VerifyDecisionInput): VerificationResult {
     addReason(reasonCodes, "ACTION_HASH_MISMATCH");
   }
 
+  checks.decision_binding = bindsSuppliedAction(decision, action);
+  if (!checks.decision_binding) {
+    addReason(reasonCodes, "DECISION_BINDING_MISMATCH");
+  }
+
   const at = input.at ?? new Date();
   checks.expiry =
     at.getTime() >= Date.parse(decision.issued_at) &&
@@ -159,6 +230,7 @@ export function humanVerificationOutput(result: VerificationResult): string {
     `${result.checks.fingerprint ? "PASS" : "FAIL"} decision fingerprint`,
     `${result.checks.signature ? "PASS" : "FAIL"} Ed25519 signature`,
     `${result.checks.action_hash ? "PASS" : "FAIL"} action hash`,
+    `${result.checks.decision_binding ? "PASS" : "FAIL"} decision binds the supplied action`,
     `${result.checks.expiry ? "PASS" : "FAIL"} decision expiry at supplied execution time`,
     `${result.checks.policy_version ? "PASS" : "FAIL"} policy version`,
     `${result.checks.payment_requirements ? "PASS" : "FAIL"} x402 payment-requirements binding`,

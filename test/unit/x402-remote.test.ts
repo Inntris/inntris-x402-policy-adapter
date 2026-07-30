@@ -59,5 +59,45 @@ describe("official x402 binding and remote failure", () => {
       clock: context.clock,
     });
     await expect(guard.authorise(bindingInput)).rejects.toBeInstanceOf(InntrisGuardError);
+    // An unreachable service is an availability failure, never a policy verdict.
+    await expect(guard.authorise(bindingInput)).rejects.toMatchObject({
+      reasonCodes: ["DECISION_SERVICE_UNAVAILABLE"],
+    });
+  });
+
+  it("keeps a remote replay conflict distinct from an unavailable service", async () => {
+    const context = await testContext();
+    const conflict = {
+      success: false,
+      status: "conflict",
+      decision_id: "018f0000-0000-7000-8000-000000000001",
+      execution_ref: "execution-B",
+      reason_code: "NONCE_ALREADY_CONSUMED",
+    };
+    const remote = new RemoteInntrisDecisionProvider({
+      apiUrl: "https://api.example.test",
+      apiKey: "not-a-real-key",
+      keyRegistry: context.keyRegistry,
+      fetchImplementation: vi.fn(
+        async () =>
+          new Response(JSON.stringify(conflict), {
+            status: 409,
+            headers: { "content-type": "application/json" },
+          }),
+      ),
+    });
+
+    // A structured 409 body carries a protocol rejection, not a transport failure.
+    await expect(
+      remote.consume({
+        decision_id: conflict.decision_id,
+        action_hash: `sha256:${"0".repeat(64)}`,
+        execution_ref: "execution-B",
+      }),
+    ).resolves.toMatchObject({
+      success: false,
+      status: "conflict",
+      reason_code: "NONCE_ALREADY_CONSUMED",
+    });
   });
 });

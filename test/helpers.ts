@@ -7,7 +7,11 @@ import {
   type Clock,
   type KeyRegistry,
 } from "@inntris/decision-core";
-import { LocalPolicyDecisionProvider, parsePolicyText } from "@inntris/policy-engine";
+import {
+  LocalPolicyDecisionProvider,
+  parsePolicyText,
+  type SpendState,
+} from "@inntris/policy-engine";
 import {
   InntrisX402Guard,
   type PaymentRequirements,
@@ -45,7 +49,10 @@ export const bindingInput: X402SettlementInput = {
   assetDecimals: 6,
 };
 
-export async function testContext(clock = new MutableClock()): Promise<{
+export async function testContext(
+  clock = new MutableClock(),
+  options: { spendState?: SpendState } = {},
+): Promise<{
   clock: MutableClock;
   provider: LocalPolicyDecisionProvider;
   guard: InntrisX402Guard;
@@ -61,7 +68,12 @@ export async function testContext(clock = new MutableClock()): Promise<{
       }),
     ],
   };
-  const provider = new LocalPolicyDecisionProvider({ policy, signer, clock });
+  const provider = new LocalPolicyDecisionProvider({
+    policy,
+    signer,
+    clock,
+    ...(options.spendState === undefined ? {} : { spendState: options.spendState }),
+  });
   return {
     clock,
     provider,

@@ -53,7 +53,12 @@ It therefore includes the calculated fingerprint.
 
 A signed decision is never mutated. Human approval creates a new signed decision with a new ID,
 nonce and expiry. The new decision sets `supersedes_decision_id` to the original `REQUIRE_APPROVAL`
-ID.
+ID, and carries `approval.mode` `human` with the recorded approval reference and approver IDs.
+
+Current organisational policy is re-evaluated at resolution time, so a granted approval yields
+`HUMAN_APPROVAL_GRANTED` on an `ALLOW` decision only when policy still permits the action. A refusal
+yields `HUMAN_APPROVAL_REFUSED` on a `BLOCK` decision. The original `REQUIRE_APPROVAL` decision
+stays byte-for-byte unchanged and can never be consumed.
 
 ## Canonical money
 
