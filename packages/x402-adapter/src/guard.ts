@@ -21,6 +21,7 @@ export interface X402SettlementInput {
   agentId: string;
   purpose: string;
   assetDecimals: number;
+  extensions?: Record<string, unknown>;
 }
 
 export interface InntrisX402GuardOptions {

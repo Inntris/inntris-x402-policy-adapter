@@ -2,6 +2,12 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 import {
+  A2AActionBindingSchema,
+  A2AActionReceiptSchema,
+  A2APaymentSubmissionSchema,
+  A2ASettlementObservationSchema,
+} from "@inntris/a2a-settlement-gate";
+import {
   InntrisActionV1Schema,
   InntrisDecisionV1Schema,
   KeyRegistrySchema,
@@ -11,6 +17,26 @@ import { format } from "prettier";
 import { toJSONSchema, type ZodType } from "zod";
 
 const schemas: [string, string, ZodType][] = [
+  [
+    "inntris-a2a-action-binding-v1.schema.json",
+    "Inntris A2A Action Binding v1",
+    A2AActionBindingSchema,
+  ],
+  [
+    "inntris-a2a-action-receipt-v1.schema.json",
+    "Inntris A2A Action Receipt v1",
+    A2AActionReceiptSchema,
+  ],
+  [
+    "inntris-a2a-payment-submission-v1.schema.json",
+    "Inntris A2A Payment Submission v1",
+    A2APaymentSubmissionSchema,
+  ],
+  [
+    "inntris-a2a-settlement-observation-v1.schema.json",
+    "Inntris A2A Settlement Observation v1",
+    A2ASettlementObservationSchema,
+  ],
   ["inntris-action-v1.schema.json", "Inntris Action v1", InntrisActionV1Schema],
   ["inntris-decision-v1.schema.json", "Inntris Decision v1", InntrisDecisionV1Schema],
   ["inntris-key-registry-v1.schema.json", "Inntris Key Registry v1", KeyRegistrySchema],

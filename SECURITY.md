@@ -34,9 +34,12 @@ Changes must preserve:
 4. Local signature and fingerprint verification.
 5. Expiry and policy-version checks.
 6. `ALLOW` as the only executable verdict.
-7. Consumption before settlement.
+7. Consumption before direct x402 settlement, or after confirmed settlement and before A2A delegate
+   execution.
 8. No remote-failure fallback.
 9. No private material in logs, fixtures or Git history.
 10. Constant-time API key comparison and rate limiting on the reference API.
+11. A2A payment submission never counts as final settlement.
+12. A2A task, payment, settlement and delegate execution references remain exact-bound.
 
 The test suite contains direct regression tests for these invariants.

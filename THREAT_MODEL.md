@@ -8,6 +8,7 @@
 4. Single-use decision state.
 5. Settlement ordering and execution reference.
 6. Audit and evidence integrity.
+7. A2A task binding, delegate execution state and action receipts.
 
 ## Actors
 
@@ -21,9 +22,9 @@
 
 ## Trust boundaries
 
-The agent, x402 challenge and remote response cross untrusted boundaries. The verifier trusts only
-the explicitly selected key registry. The executor trusts a decision only after every local check
-passes and after the nonce store accepts consumption.
+The agent, A2A task, x402 challenge, settlement observation and remote response cross untrusted
+boundaries. The verifier trusts only the explicitly selected key registry. The executor trusts a
+decision only after every local check passes and after the nonce store accepts consumption.
 
 ## Attack scenarios and mitigations
 
@@ -43,6 +44,11 @@ passes and after the nonce store accepts consumption.
 | Inntris unavailable                                    | Policy bypass                                  | Remote errors fail closed and never fall back to allow                                     |
 | Nonce store unavailable                                | Replay window                                  | Consumption failure blocks settlement                                                      |
 | Partial failure after consume                          | Decision consumed but settlement state unknown | Reconcile by execution reference; never create a second reference                          |
+| `PAYMENT_SUBMITTED` treated as settlement              | Delegate runs before payment is final          | Require explicit settled state and configured finality                                     |
+| Settlement for task A is replayed for task B           | Paid authority unlocks the wrong task          | Bind task, context, resource, submission and settlement into action and execution hashes   |
+| Unknown A2A settlement state                           | Delegate runs while payment outcome is unclear | Pause execution and require confirmation or reconciliation                                 |
+| A2A delegate retry executes twice                      | Duplicate external side effect                 | Atomic execution claim, stable execution reference and completed-result replay             |
+| Process fails after delegate claim                     | Delegate outcome is unresolved                 | Keep the claim in progress and block automatic retry pending reconciliation                |
 | Log tampering                                          | Misleading operational record                  | Signed portable decision remains independently verifiable                                  |
 | Attacker-controlled key URL in evidence                | Trust-root substitution or SSRF                | Offline default; embedded URLs are ignored; explicit HTTPS URL only                        |
 | Private key leaked in logs or repository               | Decision forgery                               | Explicit key loading, no startup generation, redacted logging and secret scanning          |
@@ -58,6 +64,8 @@ passes and after the nonce store accepts consumption.
 5. Consumption-before-settlement creates an outcome-reconciliation requirement when the rail times
    out.
 6. Policy correctness depends on configuration review and a reliable durable spend-state adapter.
+7. The in-memory A2A execution store cannot provide cross-process or crash recovery guarantees.
+8. A delegate that ignores the supplied execution reference can still create an external duplicate.
 
 ## Out of scope claims
 

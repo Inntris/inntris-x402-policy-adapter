@@ -1,0 +1,44 @@
+{
+  "$id": "https://schemas.inntris.com/inntris-a2a-settlement-observation-v1.schema.json",
+  "title": "Inntris A2A Settlement Observation v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": { "type": "string", "const": "inntris-a2a-settlement-observation-v1" },
+    "state": { "type": "string", "enum": ["PAYMENT_SUBMITTED", "SETTLED", "FAILED", "UNKNOWN"] },
+    "task_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "context_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "payment_submission_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "payment_requirements_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "resource": { "type": "string", "format": "uri" },
+    "settlement_ref": {
+      "anyOf": [{ "type": "string", "minLength": 1, "maxLength": 512 }, { "type": "null" }]
+    },
+    "finality": {
+      "anyOf": [{ "type": "string", "minLength": 1, "maxLength": 128 }, { "type": "null" }]
+    },
+    "observed_at": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+    },
+    "evidence": {
+      "type": "object",
+      "propertyNames": { "type": "string" },
+      "additionalProperties": {}
+    }
+  },
+  "required": [
+    "version",
+    "state",
+    "task_id",
+    "context_id",
+    "payment_submission_id",
+    "payment_requirements_hash",
+    "resource",
+    "settlement_ref",
+    "finality",
+    "observed_at",
+    "evidence"
+  ],
+  "additionalProperties": false
+}
