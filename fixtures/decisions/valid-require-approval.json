@@ -3,20 +3,12 @@
   "decision": {
     "version": "inntris-decision-v1",
     "decision_id": "018f0000-0000-7000-8000-000000000003",
-    "decision_fingerprint": "sha256:a70b581697b2e82eac35f444a1e0f98493715488292db5f493f7369733cfe09d",
+    "decision_fingerprint": "sha256:c5d4b8f379f6588cf7d84d5717288f3fe67090cc2d3b35781e9a418939029a91",
     "verdict": "REQUIRE_APPROVAL",
     "principal_id": "org_demo",
     "agent_id": "agent_research_01",
     "action_type": "financial_transaction",
     "action_hash": "sha256:e61205e550684618508500c41404efe9dfd33c4eed6330f367fb3b32a1c0a685",
-    "rail": "x402",
-    "protocol_reference": {
-      "type": "x402",
-      "resource": "https://example.test/research",
-      "scheme": "exact",
-      "payment_requirements_hash": "sha256:da50b193add50b961eb19d8fd245963da4388ab0707a3ded77699ba02765234a",
-      "payment_payload_hash": null
-    },
     "transaction": {
       "amount": "80.00",
       "asset": "USDC",
@@ -25,7 +17,7 @@
       "purpose": "research_api"
     },
     "policy": {
-      "policy_hash": "sha256:05dd89a67f249d060122e5ee38171a161fec81e02fd93c536b459338c02e2ab2",
+      "policy_hash": "sha256:a025db352a8939466c0338ba856bec7e2936157da59bd0b0fe7b1cfc9c4c2518",
       "policy_version": "1"
     },
     "approval": { "mode": "human", "approval_reference": null, "approver_ids": [] },
@@ -42,7 +34,15 @@
     "signing": {
       "alg": "Ed25519",
       "key_id": "test-key-1",
-      "signature": "-kmDJDOSBtOrpJDip2rl940vbHzSIv_86LuSGXKdXBuRo_HWQRvYueAPh_aiC3R9oxswG-LACy5Op9zOOjPLDg"
+      "signature": "qUGIJ92nFZLWdOVUJMLppQT_G88Je9NRRnf5ltsND-8u9adjDl3PhmOxMXoj3-r0qW9yN6yUojj7pH3X2ABMCA"
+    },
+    "rail": "x402",
+    "protocol_reference": {
+      "type": "x402",
+      "resource": "https://example.test/research",
+      "scheme": "exact",
+      "payment_requirements_hash": "sha256:da50b193add50b961eb19d8fd245963da4388ab0707a3ded77699ba02765234a",
+      "payment_payload_hash": null
     }
   },
   "action": {
@@ -50,7 +50,6 @@
     "principal_id": "org_demo",
     "agent_id": "agent_research_01",
     "action_type": "financial_transaction",
-    "rail": "x402",
     "transaction": {
       "amount": "80.00",
       "asset": "USDC",
@@ -58,6 +57,7 @@
       "payee": "0x0000000000000000000000000000000000000001",
       "purpose": "research_api"
     },
+    "rail": "x402",
     "protocol_reference": {
       "type": "x402",
       "resource": "https://example.test/research",

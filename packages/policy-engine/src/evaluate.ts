@@ -128,10 +128,14 @@ export async function evaluatePolicy(input: {
     return block(explicitDeny);
   }
 
-  if (!policy.rails.x402.allowed_networks.includes(action.transaction.network)) {
+  const railPolicy = policy.rails[action.rail];
+  if (railPolicy === undefined) {
+    return block("DEFAULT_DENY");
+  }
+  if (!railPolicy.allowed_networks.includes(action.transaction.network)) {
     return block("NETWORK_NOT_ALLOWED");
   }
-  if (!policy.rails.x402.allowed_assets.includes(action.transaction.asset)) {
+  if (!railPolicy.allowed_assets.includes(action.transaction.asset)) {
     return block("ASSET_NOT_ALLOWED");
   }
 

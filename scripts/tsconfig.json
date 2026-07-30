@@ -8,6 +8,7 @@
   "include": ["src/**/*.ts"],
   "references": [
     { "path": "../packages/a2a-settlement-gate" },
+    { "path": "../packages/ap2-runtime-gate" },
     { "path": "../packages/decision-core" },
     { "path": "../packages/policy-engine" },
     { "path": "../packages/decision-verifier" },

@@ -1,0 +1,93 @@
+{
+  "$id": "https://schemas.inntris.com/inntris-ap2-official-verification-v1.schema.json",
+  "title": "Inntris AP2 Official Verification v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": { "type": "string", "const": "inntris-ap2-official-verification-v1" },
+    "sdk": {
+      "type": "object",
+      "properties": {
+        "repository": {
+          "type": "string",
+          "const": "https://github.com/google-agentic-commerce/AP2"
+        },
+        "commit": { "type": "string", "const": "e1ea56db72a6385bce3e5c1112b3a56ce60acb43" },
+        "protocol_version": { "type": "string", "const": "0.2" }
+      },
+      "required": ["repository", "commit", "protocol_version"],
+      "additionalProperties": false
+    },
+    "mode": { "type": "string", "const": "autonomous" },
+    "intent": {
+      "type": "object",
+      "properties": {
+        "verified": { "type": "boolean" },
+        "checkout_open_mandate_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "payment_open_mandate_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      },
+      "required": ["verified", "checkout_open_mandate_hash", "payment_open_mandate_hash"],
+      "additionalProperties": false
+    },
+    "checkout": {
+      "type": "object",
+      "properties": {
+        "verified": { "type": "boolean", "const": true },
+        "mandate_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "expires_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "checkout_hash": { "type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9_-]+$" },
+        "checkout_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "merchant_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "merchant_name": { "type": "string", "minLength": 1, "maxLength": 512 }
+      },
+      "required": [
+        "verified",
+        "mandate_hash",
+        "expires_at",
+        "checkout_hash",
+        "checkout_id",
+        "merchant_id",
+        "merchant_name"
+      ],
+      "additionalProperties": false
+    },
+    "payment": {
+      "type": "object",
+      "properties": {
+        "verified": { "type": "boolean", "const": true },
+        "mandate_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "expires_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "transaction_id": { "type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9_-]+$" },
+        "payee_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "payee_name": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "amount_minor": { "type": "string", "pattern": "^(0|[1-9]\\d*)$" },
+        "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+        "payment_instrument_type": { "type": "string", "minLength": 1, "maxLength": 128 }
+      },
+      "required": [
+        "verified",
+        "mandate_hash",
+        "expires_at",
+        "transaction_id",
+        "payee_id",
+        "payee_name",
+        "amount_minor",
+        "currency",
+        "payment_instrument_type"
+      ],
+      "additionalProperties": false
+    },
+    "verified_at": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+    }
+  },
+  "required": ["version", "sdk", "mode", "intent", "checkout", "payment", "verified_at"],
+  "additionalProperties": false
+}

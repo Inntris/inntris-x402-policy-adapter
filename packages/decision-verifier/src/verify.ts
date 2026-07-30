@@ -137,7 +137,9 @@ export function verifyDecision(input: VerifyDecisionInput): VerificationResult {
 
   checks.payment_requirements =
     input.expectedPaymentRequirementsHash === undefined ||
-    decision.protocol_reference.payment_requirements_hash === input.expectedPaymentRequirementsHash;
+    (decision.protocol_reference.type === "x402" &&
+      decision.protocol_reference.payment_requirements_hash ===
+        input.expectedPaymentRequirementsHash);
   if (!checks.payment_requirements) {
     addReason(reasonCodes, "PAYMENT_REQUIREMENTS_MISMATCH");
   }

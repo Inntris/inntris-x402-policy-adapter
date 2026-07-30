@@ -30,6 +30,9 @@ flowchart LR
     G --> A
     G --> S["Injected settlement and finality provider"]
     G --> D["Injected delegate executor"]
+    M["Official AP2 Python SDK"] --> R["@inntris/ap2-runtime-gate"]
+    R --> C
+    R --> Q["Injected AP2 payment delegate"]
 ```
 
 `decision-core` has no x402 dependency. Rail-specific packages construct a common `InntrisActionV1`,
@@ -142,6 +145,28 @@ The A2A gate deliberately places consumption after confirmed settlement and befo
 execution. This protects the paid task rather than using a payment submission as authority. A
 production deployment still needs durable execution state and reconciliation when a process fails
 after claiming the delegate or after the delegate returns but before the receipt is stored.
+
+## AP2 mandate and runtime gate
+
+The AP2 gate delegates mandate cryptography to the official AP2 Python SDK pinned by commit. In the
+autonomous AP2 0.2 flow, open Checkout and Payment Mandates represent intent. Closed Checkout and
+Payment Mandates bind the merchant checkout JWT and the exact transaction.
+
+```text
+validate the mandate presentation
+resolve trusted issuer and merchant public keys
+verify both mandate chains and the checkout JWT with the official AP2 SDK
+require current expiry and exact merchant, payee, amount, currency and checkout bindings
+bind all verified mandate hashes to the Inntris AP2 action
+request and locally verify the current Inntris policy decision
+require ALLOW and consume the decision
+atomically claim the Payment Mandate hash for the exact execution
+execute the AP2 delegate
+sign and store the action receipt
+```
+
+An AP2 valid mandate remains non executable when current organisational policy returns `BLOCK` or
+`REQUIRE_APPROVAL`. The default in memory execution store is a reference implementation only.
 
 ## Observability
 

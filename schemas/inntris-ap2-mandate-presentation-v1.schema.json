@@ -1,0 +1,29 @@
+{
+  "$id": "https://schemas.inntris.com/inntris-ap2-mandate-presentation-v1.schema.json",
+  "title": "Inntris AP2 Mandate Presentation v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": { "type": "string", "const": "inntris-ap2-mandate-presentation-v1" },
+    "checkout_mandate_token": { "type": "string", "minLength": 16, "maxLength": 1000000 },
+    "payment_mandate_token": { "type": "string", "minLength": 16, "maxLength": 1000000 },
+    "checkout_jwt": { "type": "string", "minLength": 16, "maxLength": 1000000 },
+    "checkout_audience": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "checkout_nonce": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "checkout_issuer": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "payment_audience": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "payment_nonce": { "type": "string", "minLength": 1, "maxLength": 128 }
+  },
+  "required": [
+    "version",
+    "checkout_mandate_token",
+    "payment_mandate_token",
+    "checkout_jwt",
+    "checkout_audience",
+    "checkout_nonce",
+    "checkout_issuer",
+    "payment_audience",
+    "payment_nonce"
+  ],
+  "additionalProperties": false
+}

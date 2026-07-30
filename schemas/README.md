@@ -11,3 +11,6 @@ authoritative enforcement path.
 
 The A2A binding, payment submission, settlement observation and action receipt schemas are generated
 from the runtime schemas exported by `@inntris/a2a-settlement-gate`.
+
+The AP2 mandate presentation, official verification evidence and action receipt schemas are
+generated from the runtime schemas exported by `@inntris/ap2-runtime-gate`.

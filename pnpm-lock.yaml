@@ -14,6 +14,9 @@ importers:
       '@inntris/a2a-settlement-gate':
         specifier: workspace:*
         version: link:packages/a2a-settlement-gate
+      '@inntris/ap2-runtime-gate':
+        specifier: workspace:*
+        version: link:packages/ap2-runtime-gate
       '@inntris/decision-core':
         specifier: workspace:*
         version: link:packages/decision-core
@@ -108,6 +111,21 @@ importers:
         specifier: 4.4.3
         version: 4.4.3
 
+  packages/ap2-runtime-gate:
+    dependencies:
+      '@inntris/decision-core':
+        specifier: workspace:*
+        version: link:../decision-core
+      '@inntris/decision-verifier':
+        specifier: workspace:*
+        version: link:../decision-verifier
+      tweetnacl:
+        specifier: 1.0.3
+        version: 1.0.3
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+
   packages/decision-core:
     dependencies:
       canonicalize:
@@ -167,6 +185,9 @@ importers:
       '@inntris/a2a-settlement-gate':
         specifier: workspace:*
         version: link:../packages/a2a-settlement-gate
+      '@inntris/ap2-runtime-gate':
+        specifier: workspace:*
+        version: link:../packages/ap2-runtime-gate
       '@inntris/decision-core':
         specifier: workspace:*
         version: link:../packages/decision-core

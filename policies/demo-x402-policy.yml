@@ -12,6 +12,11 @@ rails:
       - eip155:8453
     allowed_assets:
       - USDC
+  ap2:
+    allowed_networks:
+      - card
+    allowed_assets:
+      - USD
 
 limits:
   per_transaction: "100.00"
@@ -24,6 +29,7 @@ merchants:
   - merchant_id: research-api
     payees:
       - "0x0000000000000000000000000000000000000001"
+      - merchant-research-api
     purposes:
       - research_api
     resources:

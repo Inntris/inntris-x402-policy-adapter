@@ -5,6 +5,9 @@ coverage/
 .env.*
 !.env.example
 .dev/
+.pytest_cache/
+__pycache__/
+*.py[cod]
 .inspect-x402/
 *.log
 *.tsbuildinfo

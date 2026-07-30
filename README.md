@@ -39,6 +39,7 @@ Prerequisites:
 
 1. Node.js `24.18.0`, the pinned active LTS release.
 2. pnpm `10.18.1`.
+3. Python `3.12` for the optional AP2 runtime gate and its official SDK.
 
 ```bash
 corepack enable
@@ -97,6 +98,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for trust boundaries and the fingerprint 
 | `@inntris/decision-verifier`   | Offline verification library and `inntris-verify` CLI                                  |
 | `@inntris/x402-adapter`        | Official x402 type binding, remote provider and fail-closed settlement guard           |
 | `@inntris/a2a-settlement-gate` | Finality, consumption, delegate idempotency and signed receipts for paid A2A tasks     |
+| `@inntris/ap2-runtime-gate`    | Official AP2 mandate verification, policy binding, replay control and signed receipts  |
 | `@inntris/demo-api`            | Fastify reference API, key discovery, verification and consumption                     |
 
 The adapter pins `@x402/core` `2.20.0`. It imports `PaymentRequirements` and `PaymentPayload` from
@@ -114,6 +116,20 @@ claims one delegate execution and signs an action receipt. `PAYMENT_SUBMITTED`, 
 malformed or mismatched settlement evidence never reaches the delegate.
 
 See [`packages/a2a-settlement-gate/README.md`](packages/a2a-settlement-gate/README.md).
+
+## AP2 runtime gate
+
+The `@inntris/ap2-runtime-gate` package verifies autonomous AP2 Checkout and Payment Mandate chains
+with the pinned official AP2 Python SDK. It verifies the merchant checkout JWT, open mandate
+constraints, key binding, expiry, amount, currency, merchant, payee and checkout reference. It then
+binds the verified mandate hashes to an Inntris action and applies the current organisational
+policy. Protocol validity does not override a policy block or approval requirement.
+
+AP2 0.2 represents autonomous intent through open Checkout and Payment Mandates rather than a
+separate Intent Mandate. The package commits both open mandate hashes into an explicit intent
+verification hash. TypeScript does not reimplement AP2 cryptography.
+
+See [`packages/ap2-runtime-gate/README.md`](packages/ap2-runtime-gate/README.md).
 
 ## Verify the committed evidence offline
 
@@ -233,6 +249,7 @@ pnpm lint
 pnpm typecheck
 pnpm test:unit
 pnpm test:integration
+pnpm test:ap2-official
 pnpm build
 pnpm evidence:verify
 pnpm audit --prod --audit-level high
@@ -250,8 +267,11 @@ pnpm audit --prod --audit-level high
 4. The public fixture signing identity is intentionally known and must never be used in production.
 5. No claim is made about HSM custody, disaster recovery, production latency, blockchain finality or
    a live hosted deployment.
-6. The `v0.1.0` Phase 1 release supports x402 only. The A2A settlement gate is a later follow-on
-   package. AP2, cards, wallet signing and multi-rail conformance remain separate projects.
+6. The `v0.1.0` release remains the x402 Phase 1 release. A2A and AP2 are follow-on packages on
+   `main`; they are not evidence that a production service is deployed.
+7. The AP2 reference gate uses a local Python process and a pinned official SDK revision. Production
+   packaging, monitored process isolation and SDK upgrade governance remain operator work.
+8. Wallet signing and full multi-rail conformance remain separate projects.
 
 ## Licence
 
