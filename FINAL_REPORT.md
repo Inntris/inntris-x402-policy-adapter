@@ -2,15 +2,15 @@
 
 ## Outcome
 
-Phase 1 is implemented in the public `Inntris/inntris-policy-adapter` repository. Pull request
-[#1](https://github.com/Inntris/inntris-policy-adapter/pull/1) introduced the Inntris Decision
+Phase 1 is implemented in the public `Inntris/inntris-x402-policy-adapter` repository. Pull request
+[#1](https://github.com/Inntris/inntris-x402-policy-adapter/pull/1) introduced the Inntris Decision
 Envelope, local policy engine, offline verifier, x402 adapter, reference API, evidence, tests and
-documentation. Pull request [#8](https://github.com/Inntris/inntris-policy-adapter/pull/8) refreshed
-and immutably pinned the GitHub Action dependencies.
+documentation. Pull request [#8](https://github.com/Inntris/inntris-x402-policy-adapter/pull/8)
+refreshed and immutably pinned the GitHub Action dependencies.
 
-The requested repository slug was `inntris-x402-policy-adapter`. The existing authorised repository
-is `inntris-policy-adapter`. Renaming it requires organisation owner or repository administrator
-access and remains an owner action.
+The repository now uses the requested `inntris-x402-policy-adapter` slug. The default branch is
+protected by an active ruleset requiring pull requests, linear history, resolved review
+conversations, current required checks and CodeQL scanning. Deletions and force pushes are blocked.
 
 The existing MIT licence was retained because the build brief allowed an existing Inntris licensing
 decision to take precedence over the Apache 2.0 default.
@@ -220,7 +220,7 @@ Pull request #1 also replaced the placeholder contents of `README.md`. Pull requ
    anchoring as a root of trust.
 8. The packages are workspace packages and were not published to npm in Phase 1.
 9. AP2, A2A, wallet and multi-rail work remains deliberately separate in issues
-   [#2](https://github.com/Inntris/inntris-policy-adapter/issues/2),
-   [#3](https://github.com/Inntris/inntris-policy-adapter/issues/3),
-   [#4](https://github.com/Inntris/inntris-policy-adapter/issues/4) and
-   [#5](https://github.com/Inntris/inntris-policy-adapter/issues/5).
+   [#2](https://github.com/Inntris/inntris-x402-policy-adapter/issues/2),
+   [#3](https://github.com/Inntris/inntris-x402-policy-adapter/issues/3),
+   [#4](https://github.com/Inntris/inntris-x402-policy-adapter/issues/4) and
+   [#5](https://github.com/Inntris/inntris-x402-policy-adapter/issues/5).
