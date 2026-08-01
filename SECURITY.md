@@ -50,5 +50,8 @@ Changes must preserve:
     `ALLOW` decision bound to every signing field.
 19. Signed EVM bytes are parsed, exact-matched and signer-recovered before broadcast.
 20. Inntris never receives or stores the injected wallet's private key.
+21. Multi-rail conformance uses one policy and one verifier, and every exact action mutation must
+    invalidate the original signed decision.
+22. Mock card fixtures contain only opaque credential-reference hashes, never card credentials.
 
 The test suite contains direct regression tests for these invariants.

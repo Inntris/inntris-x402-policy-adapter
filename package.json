@@ -13,6 +13,7 @@
   "scripts": {
     "build": "tsc -b",
     "clean": "tsc -b --clean",
+    "conformance": "pnpm build && node packages/multi-rail-conformance/dist/cli.js",
     "demo": "pnpm build && node examples/local-x402/dist/demo.js",
     "demo:api": "pnpm build && node apps/demo-api/dist/start.js",
     "evidence:generate": "pnpm build && node scripts/dist/generate-evidence.js",
@@ -34,6 +35,7 @@
     "@inntris/ap2-runtime-gate": "workspace:*",
     "@inntris/decision-core": "workspace:*",
     "@inntris/decision-verifier": "workspace:*",
+    "@inntris/multi-rail-conformance": "workspace:*",
     "@inntris/policy-engine": "workspace:*",
     "@inntris/wallet-signing-gate": "workspace:*",
     "@inntris/x402-adapter": "workspace:*",

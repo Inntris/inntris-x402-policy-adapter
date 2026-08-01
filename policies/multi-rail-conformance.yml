@@ -1,0 +1,67 @@
+version: 1
+policy_id: multi-rail-conformance
+policy_version: "1"
+
+defaults:
+  verdict: BLOCK
+  decision_ttl_seconds: 60
+
+rails:
+  x402:
+    allowed_networks:
+      - eip155:8453
+    allowed_assets:
+      - USDC
+  ap2:
+    allowed_networks:
+      - card
+    allowed_assets:
+      - USD
+  evm:
+    allowed_networks:
+      - eip155:8453
+    allowed_assets:
+      - ETH
+  card:
+    allowed_networks:
+      - card:visa
+    allowed_assets:
+      - USD
+  mcp:
+    allowed_networks:
+      - mcp:mcp-research-server
+    allowed_assets:
+      - USD
+
+limits:
+  per_transaction: "100.00"
+  daily: "500.00"
+
+approval:
+  require_human_above: "75.00"
+
+merchants:
+  - merchant_id: conformance-research
+    payees:
+      - "0x0000000000000000000000000000000000000001"
+      - merchant-research-api
+      - merchant-card-demo
+      - mcp-research-server
+    purposes:
+      - research_api
+    resources:
+      - "https://example.test/research"
+      - "https://card.example.test/authorise"
+      - "https://mcp.example.test/tools/research"
+    per_transaction_limit: "100.00"
+
+time_windows:
+  timezone: UTC
+  allowed_weekdays:
+    - MONDAY
+    - TUESDAY
+    - WEDNESDAY
+    - THURSDAY
+    - FRIDAY
+  start: "06:00"
+  end: "22:00"

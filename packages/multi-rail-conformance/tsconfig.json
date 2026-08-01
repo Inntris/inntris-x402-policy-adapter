@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "tsBuildInfoFile": "dist/.tsbuildinfo"
+  },
+  "include": ["src/**/*.ts"],
+  "references": [
+    { "path": "../ap2-runtime-gate" },
+    { "path": "../decision-core" },
+    { "path": "../decision-verifier" },
+    { "path": "../policy-engine" },
+    { "path": "../wallet-signing-gate" },
+    { "path": "../x402-adapter" }
+  ]
+}

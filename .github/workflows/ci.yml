@@ -66,6 +66,9 @@ jobs:
       - name: Integration tests
         run: pnpm test:integration
 
+      - name: Multi-rail conformance
+        run: pnpm conformance
+
       - name: Build
         run: pnpm build
 

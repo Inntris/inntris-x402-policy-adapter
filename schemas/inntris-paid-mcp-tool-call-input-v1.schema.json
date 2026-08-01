@@ -1,0 +1,55 @@
+{
+  "$id": "https://schemas.inntris.com/inntris-paid-mcp-tool-call-input-v1.schema.json",
+  "title": "Inntris Paid MCP Tool Call Input v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": { "type": "string", "const": "inntris-paid-mcp-tool-call-v1" },
+    "toolCallId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "principalId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "agentId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "resource": { "type": "string", "format": "uri" },
+    "purpose": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "amount": { "type": "string", "pattern": "^(0|[1-9]\\d*)\\.\\d{2,18}$" },
+    "asset": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "serverId": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "toolName": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "arguments": {
+      "type": "object",
+      "propertyNames": { "type": "string" },
+      "additionalProperties": { "$ref": "#/$defs/__schema0" }
+    },
+    "paymentReference": { "type": "string", "minLength": 1, "maxLength": 256 }
+  },
+  "required": [
+    "version",
+    "toolCallId",
+    "principalId",
+    "agentId",
+    "resource",
+    "purpose",
+    "amount",
+    "asset",
+    "serverId",
+    "toolName",
+    "arguments",
+    "paymentReference"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "__schema0": {
+      "anyOf": [
+        { "type": "string" },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "null" },
+        { "type": "array", "items": { "$ref": "#/$defs/__schema0" } },
+        {
+          "type": "object",
+          "propertyNames": { "type": "string" },
+          "additionalProperties": { "$ref": "#/$defs/__schema0" }
+        }
+      ]
+    }
+  }
+}

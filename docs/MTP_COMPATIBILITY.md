@@ -16,7 +16,7 @@ The existing MTP request action hash and `inntris-action-v1` serve different pur
 
 The MTP request hash authenticates an agent request envelope containing agent, action type, payload
 hash, nonce and timestamp. The new action hash binds the complete policy subject, including
-principal, transaction and x402 protocol references.
+principal, transaction and the versioned rail-specific protocol reference.
 
 This repository does not redefine an old MTP signing version. It introduces an explicitly named
 `inntris-action-v1` contract for portable decisions.

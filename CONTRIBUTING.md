@@ -10,6 +10,7 @@ pnpm format:check
 pnpm lint
 pnpm typecheck
 pnpm test
+pnpm conformance
 pnpm evidence:verify
 ```
 
@@ -22,7 +23,8 @@ contracts.
 2. Preserve historical fixture verification.
 3. Update Zod schemas, generated JSON schemas, documentation and negative vectors together.
 4. Add explicit invariant tests.
-5. Do not add AP2, card, wallet or other rail semantics to `decision-core`.
+5. Keep rail binding and execution logic in its rail package. Register only the strict, versioned
+   protocol-reference variant needed for the shared action and decision schemas in `decision-core`.
 
 ## Pull requests
 

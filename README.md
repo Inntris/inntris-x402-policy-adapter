@@ -102,16 +102,17 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for trust boundaries and the fingerprint 
 
 ## Packages
 
-| Package                        | Responsibility                                                                         |
-| ------------------------------ | -------------------------------------------------------------------------------------- |
-| `@inntris/decision-core`       | Strict schemas, JCS, SHA 256 hashes, Ed25519, stable reason codes and replay contracts |
-| `@inntris/policy-engine`       | Versioned policy parsing, deterministic evaluation and the local provider              |
-| `@inntris/decision-verifier`   | Offline verification library and `inntris-verify` CLI                                  |
-| `@inntris/x402-adapter`        | Official x402 type binding, remote provider and fail-closed settlement guard           |
-| `@inntris/a2a-settlement-gate` | Finality, consumption, delegate idempotency and signed receipts for paid A2A tasks     |
-| `@inntris/ap2-runtime-gate`    | Official AP2 mandate verification, policy binding, replay control and signed receipts  |
-| `@inntris/wallet-signing-gate` | Exact EVM transaction binding, decision consumption, injected signing and broadcast    |
-| `@inntris/demo-api`            | Fastify reference API, key discovery, verification and consumption                     |
+| Package                           | Responsibility                                                                         |
+| --------------------------------- | -------------------------------------------------------------------------------------- |
+| `@inntris/decision-core`          | Strict schemas, JCS, SHA 256 hashes, Ed25519, stable reason codes and replay contracts |
+| `@inntris/policy-engine`          | Versioned policy parsing, deterministic evaluation and the local provider              |
+| `@inntris/decision-verifier`      | Offline verification library and `inntris-verify` CLI                                  |
+| `@inntris/x402-adapter`           | Official x402 type binding, remote provider and fail-closed settlement guard           |
+| `@inntris/a2a-settlement-gate`    | Finality, consumption, delegate idempotency and signed receipts for paid A2A tasks     |
+| `@inntris/ap2-runtime-gate`       | Official AP2 mandate verification, policy binding, replay control and signed receipts  |
+| `@inntris/wallet-signing-gate`    | Exact EVM transaction binding, decision consumption, injected signing and broadcast    |
+| `@inntris/multi-rail-conformance` | One policy and verifier across x402, AP2, EVM, mock card and paid MCP                  |
+| `@inntris/demo-api`               | Fastify reference API, key discovery, verification and consumption                     |
 
 The adapter pins `@x402/core` `2.20.0`. It imports `PaymentRequirements` and `PaymentPayload` from
 `@x402/core/types` and validates them with the official runtime schemas.
@@ -177,6 +178,14 @@ an injected wallet. Inntris never receives the wallet key. An atomic execution c
 second decision from signing and broadcasting the same unsigned transaction.
 
 See [`packages/wallet-signing-gate/README.md`](packages/wallet-signing-gate/README.md).
+
+## Multi-rail conformance
+
+Run `pnpm conformance` to evaluate x402, AP2, EVM, mock corporate card and paid MCP actions through
+one policy provider and one offline verifier. Every rail must produce the same top-level Decision
+Envelope contract, and an exact action mutation must invalidate the original decision.
+
+See [`packages/multi-rail-conformance/README.md`](packages/multi-rail-conformance/README.md).
 
 ## Verify the committed evidence offline
 
@@ -299,6 +308,7 @@ pnpm typecheck
 pnpm test:unit
 pnpm test:integration
 pnpm test:ap2-official
+pnpm conformance
 pnpm build
 pnpm evidence:verify
 pnpm audit --prod --audit-level high
@@ -319,11 +329,12 @@ pnpm audit --prod --audit-level high
 4. The public fixture signing identity is intentionally known and must never be used in production.
 5. No claim is made about HSM custody, disaster recovery, production latency, blockchain finality or
    a live hosted deployment.
-6. The `v0.1.0` release remains the x402 Phase 1 release. A2A and AP2 are follow-on packages on
-   `main`; they are not evidence that a production service is deployed.
+6. The `v0.1.0` release remains the x402 Phase 1 release. A2A, AP2, EVM wallet and conformance
+   packages are on `main`; they are not evidence that a production service is deployed.
 7. The AP2 reference gate uses a local Python process and a pinned official SDK revision. Production
    packaging, monitored process isolation and SDK upgrade governance remain operator work.
-8. Full multi-rail conformance remains a separate project.
+8. Card and paid MCP lanes are mock conformance fixtures, not production card-network or MCP billing
+   integrations.
 
 ## Licence
 
