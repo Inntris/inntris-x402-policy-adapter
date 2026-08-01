@@ -62,6 +62,7 @@ export const InntrisPolicyV1Schema = z
       .object({
         x402: RailPolicySchema,
         ap2: RailPolicySchema.optional(),
+        evm: RailPolicySchema.optional(),
       })
       .strict(),
     limits: z

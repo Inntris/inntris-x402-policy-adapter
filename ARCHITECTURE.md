@@ -33,10 +33,18 @@ flowchart LR
     M["Official AP2 Python SDK"] --> R["@inntris/ap2-runtime-gate"]
     R --> C
     R --> Q["Injected AP2 payment delegate"]
+    W["@inntris/wallet-signing-gate"] --> C
+    W --> V
+    W --> K["Injected EVM wallet"]
+    W --> B["Injected transaction broadcaster"]
 ```
 
 `decision-core` has no x402 dependency. Rail-specific packages construct a common `InntrisActionV1`,
 while the decision and verifier remain rail independent.
+
+The wallet gate treats the injected wallet as a separate trust boundary. It passes the exact
+canonical transaction to `signTransaction`, then parses the returned RLP bytes with viem, recovers
+the signer and compares every transaction field before any broadcast.
 
 ## Action hash
 

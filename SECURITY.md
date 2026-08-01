@@ -46,5 +46,9 @@ Changes must preserve:
 15. A valid AP2 mandate still requires a current signed Inntris `ALLOW`.
 16. An AP2 Payment Mandate is atomically claimed for one exact execution before the delegate runs.
 17. AP2 Python dependencies use the committed security override set and pass `pip-audit`.
+18. No EVM transaction reaches `wallet.signTransaction` without a locally verified and consumed
+    `ALLOW` decision bound to every signing field.
+19. Signed EVM bytes are parsed, exact-matched and signer-recovered before broadcast.
+20. Inntris never receives or stores the injected wallet's private key.
 
 The test suite contains direct regression tests for these invariants.
