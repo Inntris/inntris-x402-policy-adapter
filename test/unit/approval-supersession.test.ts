@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import { createPublicDemoSigner } from "@inntris/decision-core";
 import { verifyDecision } from "@inntris/decision-verifier";
 import {
+  InMemoryDecisionStateStore,
   InMemorySpendState,
   LocalPolicyDecisionProvider,
   parsePolicyText,
@@ -133,6 +134,40 @@ describe("human approval supersession", () => {
       reason_code: "APPROVAL_ALREADY_RESOLVED",
     });
     expect(replay.decision).toBeUndefined();
+  });
+
+  it("atomically accepts only one concurrent resolution across provider instances", async () => {
+    const clock = new MutableClock();
+    const decisionStore = new InMemoryDecisionStateStore();
+    const first = await testContext(clock, { decisionStore });
+    const secondProvider = new LocalPolicyDecisionProvider({
+      ...first.provider.options,
+      decisionStore,
+    });
+    const decision = await first.provider.evaluate(actionFromX402(approvalInput));
+
+    const results = await Promise.all([
+      first.provider.resolveApproval({
+        decision_id: decision.decision_id,
+        granted: true,
+        approval_reference: "approval-ticket-concurrent-a",
+        approver_ids: ["user_finance_lead"],
+      }),
+      secondProvider.resolveApproval({
+        decision_id: decision.decision_id,
+        granted: true,
+        approval_reference: "approval-ticket-concurrent-b",
+        approver_ids: ["user_finance_lead"],
+      }),
+    ]);
+
+    expect(results.filter((result) => result.success)).toHaveLength(1);
+    expect(results.filter((result) => !result.success)).toEqual([
+      expect.objectContaining({
+        status: "conflict",
+        reason_code: "APPROVAL_ALREADY_RESOLVED",
+      }),
+    ]);
   });
 
   it("refuses to resolve an approval request after its window closes", async () => {

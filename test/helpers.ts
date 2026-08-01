@@ -8,6 +8,7 @@ import {
   type KeyRegistry,
 } from "@inntris/decision-core";
 import {
+  type DecisionStateStore,
   LocalPolicyDecisionProvider,
   parsePolicyText,
   type SpendState,
@@ -51,7 +52,7 @@ export const bindingInput: X402SettlementInput = {
 
 export async function testContext(
   clock = new MutableClock(),
-  options: { spendState?: SpendState } = {},
+  options: { spendState?: SpendState; decisionStore?: DecisionStateStore } = {},
 ): Promise<{
   clock: MutableClock;
   provider: LocalPolicyDecisionProvider;
@@ -73,6 +74,7 @@ export async function testContext(
     signer,
     clock,
     ...(options.spendState === undefined ? {} : { spendState: options.spendState }),
+    ...(options.decisionStore === undefined ? {} : { decisionStore: options.decisionStore }),
   });
   return {
     clock,
