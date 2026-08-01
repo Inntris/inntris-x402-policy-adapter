@@ -329,8 +329,8 @@ pnpm audit --prod --audit-level high
 4. The public fixture signing identity is intentionally known and must never be used in production.
 5. No claim is made about HSM custody, disaster recovery, production latency, blockchain finality or
    a live hosted deployment.
-6. The `v0.1.0` release remains the x402 Phase 1 release. A2A, AP2, EVM wallet and conformance
-   packages are on `main`; they are not evidence that a production service is deployed.
+6. The `v0.2.0` release includes the reference A2A, AP2, EVM wallet and conformance packages. It is
+   not evidence that a production service is deployed.
 7. The AP2 reference gate uses a local Python process and a pinned official SDK revision. Production
    packaging, monitored process isolation and SDK upgrade governance remain operator work.
 8. Card and paid MCP lanes are mock conformance fixtures, not production card-network or MCP billing

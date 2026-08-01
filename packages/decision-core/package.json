@@ -1,6 +1,6 @@
 {
   "name": "@inntris/decision-core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Rail-independent Inntris action and signed decision primitives.",
   "license": "MIT",
   "type": "module",

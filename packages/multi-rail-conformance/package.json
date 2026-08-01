@@ -1,6 +1,6 @@
 {
   "name": "@inntris/multi-rail-conformance",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Shared Inntris Decision Envelope conformance suite across five payment and tool rails.",
   "license": "MIT",
   "type": "module",
