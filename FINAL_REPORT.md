@@ -219,8 +219,6 @@ Pull request #1 also replaced the placeholder contents of `README.md`. Pull requ
 7. No claims are made for disaster recovery, blockchain finality, HSM-grade custody or Base
    anchoring as a root of trust.
 8. The packages are workspace packages and were not published to npm in Phase 1.
-9. AP2, A2A, wallet and multi-rail work remains deliberately separate in issues
-   [#2](https://github.com/Inntris/inntris-x402-policy-adapter/issues/2),
-   [#3](https://github.com/Inntris/inntris-x402-policy-adapter/issues/3),
-   [#4](https://github.com/Inntris/inntris-x402-policy-adapter/issues/4) and
+9. This report originally scoped A2A, AP2, wallet and multi-rail work into separate issues. Current
+   `main` implements the A2A, AP2 and EVM wallet packages. Full multi-rail conformance remains in
    [#5](https://github.com/Inntris/inntris-x402-policy-adapter/issues/5).

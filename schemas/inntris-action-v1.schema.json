@@ -125,6 +125,71 @@
         "protocol_reference"
       ],
       "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "version": { "type": "string", "const": "inntris-action-v1" },
+        "principal_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "agent_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "action_type": { "type": "string", "const": "financial_transaction" },
+        "transaction": {
+          "type": "object",
+          "properties": {
+            "amount": { "type": "string", "pattern": "^(0|[1-9]\\d*)\\.\\d{2,18}$" },
+            "asset": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "network": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "payee": { "type": "string", "minLength": 1, "maxLength": 512 },
+            "purpose": { "type": "string", "minLength": 1, "maxLength": 128 }
+          },
+          "required": ["amount", "asset", "network", "payee", "purpose"],
+          "additionalProperties": false
+        },
+        "extensions": {
+          "type": "object",
+          "propertyNames": { "type": "string" },
+          "additionalProperties": {}
+        },
+        "rail": { "type": "string", "const": "evm" },
+        "protocol_reference": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "const": "evm" },
+            "resource": { "type": "string", "format": "uri" },
+            "transaction_type": { "type": "string", "enum": ["eip1559", "legacy"] },
+            "chain_id": { "type": "string", "pattern": "^[1-9]\\d*$" },
+            "from": { "type": "string", "pattern": "^0x[0-9a-f]{40}$" },
+            "to": { "type": "string", "pattern": "^0x[0-9a-f]{40}$" },
+            "value_wei": { "type": "string", "pattern": "^(0|[1-9]\\d*)$" },
+            "nonce": { "type": "string", "pattern": "^(0|[1-9]\\d*)$" },
+            "unsigned_transaction_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+            "data_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+          },
+          "required": [
+            "type",
+            "resource",
+            "transaction_type",
+            "chain_id",
+            "from",
+            "to",
+            "value_wei",
+            "nonce",
+            "unsigned_transaction_hash",
+            "data_hash"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "version",
+        "principal_id",
+        "agent_id",
+        "action_type",
+        "transaction",
+        "rail",
+        "protocol_reference"
+      ],
+      "additionalProperties": false
     }
   ]
 }

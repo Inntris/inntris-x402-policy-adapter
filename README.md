@@ -110,6 +110,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for trust boundaries and the fingerprint 
 | `@inntris/x402-adapter`        | Official x402 type binding, remote provider and fail-closed settlement guard           |
 | `@inntris/a2a-settlement-gate` | Finality, consumption, delegate idempotency and signed receipts for paid A2A tasks     |
 | `@inntris/ap2-runtime-gate`    | Official AP2 mandate verification, policy binding, replay control and signed receipts  |
+| `@inntris/wallet-signing-gate` | Exact EVM transaction binding, decision consumption, injected signing and broadcast    |
 | `@inntris/demo-api`            | Fastify reference API, key discovery, verification and consumption                     |
 
 The adapter pins `@x402/core` `2.20.0`. It imports `PaymentRequirements` and `PaymentPayload` from
@@ -167,6 +168,15 @@ separate Intent Mandate. The package commits both open mandate hashes into an ex
 verification hash. TypeScript does not reimplement AP2 cryptography.
 
 See [`packages/ap2-runtime-gate/README.md`](packages/ap2-runtime-gate/README.md).
+
+## EVM wallet signing gate
+
+The `@inntris/wallet-signing-gate` package canonicalises the complete unsigned EVM transaction and
+binds it to an `evm` Decision Envelope. It verifies and consumes an `ALLOW` decision before calling
+an injected wallet. Inntris never receives the wallet key. An atomic execution claim prevents a
+second decision from signing and broadcasting the same unsigned transaction.
+
+See [`packages/wallet-signing-gate/README.md`](packages/wallet-signing-gate/README.md).
 
 ## Verify the committed evidence offline
 
@@ -313,7 +323,7 @@ pnpm audit --prod --audit-level high
    `main`; they are not evidence that a production service is deployed.
 7. The AP2 reference gate uses a local Python process and a pinned official SDK revision. Production
    packaging, monitored process isolation and SDK upgrade governance remain operator work.
-8. Wallet signing and full multi-rail conformance remain separate projects.
+8. Full multi-rail conformance remains a separate project.
 
 ## Licence
 

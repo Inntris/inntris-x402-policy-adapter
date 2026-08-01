@@ -58,12 +58,28 @@ export const AP2ProtocolReferenceSchema = z
   })
   .strict();
 
+export const EVMProtocolReferenceSchema = z
+  .object({
+    type: z.literal("evm"),
+    resource: z.url(),
+    transaction_type: z.enum(["eip1559", "legacy"]),
+    chain_id: z.string().regex(/^[1-9]\d*$/u),
+    from: z.string().regex(/^0x[0-9a-f]{40}$/u),
+    to: z.string().regex(/^0x[0-9a-f]{40}$/u),
+    value_wei: z.string().regex(/^(0|[1-9]\d*)$/u),
+    nonce: z.string().regex(/^(0|[1-9]\d*)$/u),
+    unsigned_transaction_hash: HashSchema,
+    data_hash: HashSchema,
+  })
+  .strict();
+
 export const ProtocolReferenceSchema = z.discriminatedUnion("type", [
   X402ProtocolReferenceSchema,
   AP2ProtocolReferenceSchema,
+  EVMProtocolReferenceSchema,
 ]);
 
-export const RailSchema = z.enum(["x402", "ap2"]);
+export const RailSchema = z.enum(["x402", "ap2", "evm"]);
 
 const ActionBaseShape = {
   version: z.literal("inntris-action-v1"),
@@ -87,6 +103,13 @@ export const InntrisActionV1Schema = z.discriminatedUnion("rail", [
       ...ActionBaseShape,
       rail: z.literal("ap2"),
       protocol_reference: AP2ProtocolReferenceSchema,
+    })
+    .strict(),
+  z
+    .object({
+      ...ActionBaseShape,
+      rail: z.literal("evm"),
+      protocol_reference: EVMProtocolReferenceSchema,
     })
     .strict(),
 ]);
@@ -181,6 +204,13 @@ export const InntrisDecisionV1Schema = z
         ...DecisionBaseShape,
         rail: z.literal("ap2"),
         protocol_reference: AP2ProtocolReferenceSchema,
+      })
+      .strict(),
+    z
+      .object({
+        ...DecisionBaseShape,
+        rail: z.literal("evm"),
+        protocol_reference: EVMProtocolReferenceSchema,
       })
       .strict(),
   ])

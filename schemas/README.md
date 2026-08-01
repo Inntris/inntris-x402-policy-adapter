@@ -14,3 +14,6 @@ from the runtime schemas exported by `@inntris/a2a-settlement-gate`.
 
 The AP2 mandate presentation, official verification evidence and action receipt schemas are
 generated from the runtime schemas exported by `@inntris/ap2-runtime-gate`.
+
+The EVM unsigned transaction and wallet gate input schemas are generated from the runtime schemas
+exported by `@inntris/wallet-signing-gate`.

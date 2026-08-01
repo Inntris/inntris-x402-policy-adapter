@@ -10,6 +10,7 @@
 6. Audit and evidence integrity.
 7. A2A task binding, delegate execution state and action receipts.
 8. AP2 mandate integrity, merchant trust roots, execution claims and action receipts.
+9. EVM unsigned transaction integrity, injected wallet identity and broadcast ordering.
 
 ## Actors
 
@@ -60,6 +61,10 @@ decision only after every local check passes and after the nonce store accepts c
 | AP2 verification becomes stale before execution        | Expired authority reaches the rail             | Verification age and mandate expiry are checked before and after policy evaluation           |
 | AP2 trust registry unavailable                         | Unreviewed keys could be accepted              | Trust resolution fails closed                                                                |
 | AP2 delegate fails after claim                         | Payment outcome is uncertain                   | Keep claim in progress and require reconciliation before retry                               |
+| EVM transaction changes after authorisation            | Wallet signs different value, target or call   | Rebuild the action and verify the decision immediately before signing                        |
+| Injected wallet signs different transaction bytes      | Authorised decision is applied to another tx   | Parse signed RLP, recover signer and compare every authorised field before broadcast         |
+| Same unsigned EVM transaction gets another decision    | Duplicate signing or broadcast                 | Atomic claim keyed by canonical unsigned transaction hash                                    |
+| Wallet or broadcast outcome becomes uncertain          | Automatic retry could duplicate a side effect  | Keep execution in progress and require reconciliation                                        |
 | Log tampering                                          | Misleading operational record                  | Signed portable decision remains independently verifiable                                    |
 | Attacker-controlled key URL in evidence                | Trust-root substitution or SSRF                | Offline default; embedded URLs are ignored; explicit HTTPS URL only                          |
 | Private key leaked in logs or repository               | Decision forgery                               | Explicit key loading, no startup generation, redacted logging and secret scanning            |
@@ -79,6 +84,7 @@ decision only after every local check passes and after the nonce store accepts c
 8. A delegate that ignores the supplied execution reference can still create an external duplicate.
 9. The AP2 Python subprocess and pinned SDK add a deployment and upgrade governance boundary.
 10. The in memory AP2 execution store cannot provide cross process or crash recovery guarantees.
+11. The in-memory EVM execution store cannot provide cross-process or crash-recovery guarantees.
 
 ## Out of scope claims
 

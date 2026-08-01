@@ -18,6 +18,10 @@ import {
   KeyRegistrySchema,
 } from "@inntris/decision-core";
 import { InntrisPolicyV1Schema } from "@inntris/policy-engine";
+import {
+  EvmUnsignedTransactionSchema,
+  EvmWalletGateInputSchema,
+} from "@inntris/wallet-signing-gate";
 import { format } from "prettier";
 import { toJSONSchema, type ZodType } from "zod";
 
@@ -59,6 +63,16 @@ const schemas: [string, string, ZodType][] = [
   ],
   ["inntris-action-v1.schema.json", "Inntris Action v1", InntrisActionV1Schema],
   ["inntris-decision-v1.schema.json", "Inntris Decision v1", InntrisDecisionV1Schema],
+  [
+    "inntris-evm-unsigned-transaction-v1.schema.json",
+    "Inntris EVM Unsigned Transaction v1",
+    EvmUnsignedTransactionSchema,
+  ],
+  [
+    "inntris-evm-wallet-gate-input-v1.schema.json",
+    "Inntris EVM Wallet Gate Input v1",
+    EvmWalletGateInputSchema,
+  ],
   ["inntris-key-registry-v1.schema.json", "Inntris Key Registry v1", KeyRegistrySchema],
   ["inntris-policy-v1.schema.json", "Inntris Policy v1", InntrisPolicyV1Schema],
 ];
