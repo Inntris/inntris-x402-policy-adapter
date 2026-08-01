@@ -1,0 +1,33 @@
+{
+  "$id": "https://schemas.inntris.com/inntris-mock-card-authorisation-input-v1.schema.json",
+  "title": "Inntris Mock Card Authorisation Input v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": { "type": "string", "const": "inntris-mock-card-authorisation-v1" },
+    "authorisationRequestId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "principalId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "agentId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "resource": { "type": "string", "format": "uri" },
+    "purpose": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "amount": { "type": "string", "pattern": "^(0|[1-9]\\d*)\\.\\d{2,18}$" },
+    "asset": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "merchantId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "cardNetwork": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "credentialReference": { "type": "string", "minLength": 1, "maxLength": 256 }
+  },
+  "required": [
+    "version",
+    "authorisationRequestId",
+    "principalId",
+    "agentId",
+    "resource",
+    "purpose",
+    "amount",
+    "asset",
+    "merchantId",
+    "cardNetwork",
+    "credentialReference"
+  ],
+  "additionalProperties": false
+}

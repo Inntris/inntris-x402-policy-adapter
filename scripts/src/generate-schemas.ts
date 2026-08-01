@@ -19,6 +19,10 @@ import {
 } from "@inntris/decision-core";
 import { InntrisPolicyV1Schema } from "@inntris/policy-engine";
 import {
+  MockCardAuthorisationInputSchema,
+  PaidMcpToolCallInputSchema,
+} from "@inntris/multi-rail-conformance";
+import {
   EvmUnsignedTransactionSchema,
   EvmWalletGateInputSchema,
 } from "@inntris/wallet-signing-gate";
@@ -72,6 +76,16 @@ const schemas: [string, string, ZodType][] = [
     "inntris-evm-wallet-gate-input-v1.schema.json",
     "Inntris EVM Wallet Gate Input v1",
     EvmWalletGateInputSchema,
+  ],
+  [
+    "inntris-mock-card-authorisation-input-v1.schema.json",
+    "Inntris Mock Card Authorisation Input v1",
+    MockCardAuthorisationInputSchema,
+  ],
+  [
+    "inntris-paid-mcp-tool-call-input-v1.schema.json",
+    "Inntris Paid MCP Tool Call Input v1",
+    PaidMcpToolCallInputSchema,
   ],
   ["inntris-key-registry-v1.schema.json", "Inntris Key Registry v1", KeyRegistrySchema],
   ["inntris-policy-v1.schema.json", "Inntris Policy v1", InntrisPolicyV1Schema],

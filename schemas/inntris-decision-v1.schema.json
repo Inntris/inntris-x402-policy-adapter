@@ -481,6 +481,318 @@
         "protocol_reference"
       ],
       "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "version": { "type": "string", "const": "inntris-decision-v1" },
+        "decision_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "decision_fingerprint": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "verdict": { "type": "string", "enum": ["ALLOW", "BLOCK", "REQUIRE_APPROVAL"] },
+        "principal_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "agent_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "action_type": { "type": "string", "const": "financial_transaction" },
+        "action_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "transaction": {
+          "type": "object",
+          "properties": {
+            "amount": { "type": "string", "pattern": "^(0|[1-9]\\d*)\\.\\d{2,18}$" },
+            "asset": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "network": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "payee": { "type": "string", "minLength": 1, "maxLength": 512 },
+            "purpose": { "type": "string", "minLength": 1, "maxLength": 128 }
+          },
+          "required": ["amount", "asset", "network", "payee", "purpose"],
+          "additionalProperties": false
+        },
+        "policy": {
+          "type": "object",
+          "properties": {
+            "policy_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+            "policy_version": { "type": "string", "minLength": 1, "maxLength": 64 }
+          },
+          "required": ["policy_hash", "policy_version"],
+          "additionalProperties": false
+        },
+        "approval": {
+          "type": "object",
+          "properties": {
+            "mode": { "type": "string", "enum": ["policy_engine", "human"] },
+            "approval_reference": {
+              "anyOf": [{ "type": "string", "minLength": 1, "maxLength": 256 }, { "type": "null" }]
+            },
+            "approver_ids": {
+              "maxItems": 32,
+              "type": "array",
+              "items": { "type": "string", "minLength": 1, "maxLength": 128 }
+            }
+          },
+          "required": ["mode", "approval_reference", "approver_ids"],
+          "additionalProperties": false
+        },
+        "reason_codes": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "MERCHANT_ALLOWED",
+              "WITHIN_TRANSACTION_LIMIT",
+              "WITHIN_DAILY_LIMIT",
+              "DEFAULT_DENY",
+              "NETWORK_NOT_ALLOWED",
+              "ASSET_NOT_ALLOWED",
+              "PAYEE_NOT_ALLOWED",
+              "RESOURCE_NOT_ALLOWED",
+              "PURPOSE_NOT_ALLOWED",
+              "AMOUNT_EXCEEDS_TRANSACTION_LIMIT",
+              "DAILY_LIMIT_EXCEEDED",
+              "OUTSIDE_ALLOWED_TIME",
+              "HUMAN_APPROVAL_REQUIRED",
+              "HUMAN_APPROVAL_GRANTED",
+              "HUMAN_APPROVAL_REFUSED",
+              "APPROVAL_NOT_PENDING",
+              "APPROVAL_ALREADY_RESOLVED",
+              "POLICY_EXPIRED",
+              "POLICY_VERSION_MISMATCH",
+              "ACTION_HASH_MISMATCH",
+              "PAYMENT_REQUIREMENTS_MISMATCH",
+              "DECISION_BINDING_MISMATCH",
+              "DECISION_EXPIRED",
+              "INVALID_DECISION_SCHEMA",
+              "FINGERPRINT_MISMATCH",
+              "INVALID_SIGNATURE",
+              "UNKNOWN_SIGNING_KEY",
+              "NONCE_ALREADY_CONSUMED",
+              "DECISION_NOT_ALLOW",
+              "DECISION_SERVICE_UNAVAILABLE"
+            ]
+          }
+        },
+        "issued_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "expires_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "nonce": { "type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9_-]+$" },
+        "supersedes_decision_id": {
+          "anyOf": [{ "type": "string", "minLength": 1, "maxLength": 128 }, { "type": "null" }]
+        },
+        "signing": {
+          "type": "object",
+          "properties": {
+            "alg": { "type": "string", "const": "Ed25519" },
+            "key_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "signature": { "type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9_-]+$" }
+          },
+          "required": ["alg", "key_id", "signature"],
+          "additionalProperties": false
+        },
+        "rail": { "type": "string", "const": "card" },
+        "protocol_reference": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "const": "card" },
+            "resource": { "type": "string", "format": "uri" },
+            "authorisation_request_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "merchant_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "card_network": { "type": "string", "minLength": 1, "maxLength": 64 },
+            "credential_reference_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+            "authorisation_request_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+          },
+          "required": [
+            "type",
+            "resource",
+            "authorisation_request_id",
+            "merchant_id",
+            "card_network",
+            "credential_reference_hash",
+            "authorisation_request_hash"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "version",
+        "decision_id",
+        "decision_fingerprint",
+        "verdict",
+        "principal_id",
+        "agent_id",
+        "action_type",
+        "action_hash",
+        "transaction",
+        "policy",
+        "approval",
+        "reason_codes",
+        "issued_at",
+        "expires_at",
+        "nonce",
+        "supersedes_decision_id",
+        "signing",
+        "rail",
+        "protocol_reference"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "version": { "type": "string", "const": "inntris-decision-v1" },
+        "decision_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "decision_fingerprint": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "verdict": { "type": "string", "enum": ["ALLOW", "BLOCK", "REQUIRE_APPROVAL"] },
+        "principal_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "agent_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "action_type": { "type": "string", "const": "financial_transaction" },
+        "action_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "transaction": {
+          "type": "object",
+          "properties": {
+            "amount": { "type": "string", "pattern": "^(0|[1-9]\\d*)\\.\\d{2,18}$" },
+            "asset": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "network": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "payee": { "type": "string", "minLength": 1, "maxLength": 512 },
+            "purpose": { "type": "string", "minLength": 1, "maxLength": 128 }
+          },
+          "required": ["amount", "asset", "network", "payee", "purpose"],
+          "additionalProperties": false
+        },
+        "policy": {
+          "type": "object",
+          "properties": {
+            "policy_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+            "policy_version": { "type": "string", "minLength": 1, "maxLength": 64 }
+          },
+          "required": ["policy_hash", "policy_version"],
+          "additionalProperties": false
+        },
+        "approval": {
+          "type": "object",
+          "properties": {
+            "mode": { "type": "string", "enum": ["policy_engine", "human"] },
+            "approval_reference": {
+              "anyOf": [{ "type": "string", "minLength": 1, "maxLength": 256 }, { "type": "null" }]
+            },
+            "approver_ids": {
+              "maxItems": 32,
+              "type": "array",
+              "items": { "type": "string", "minLength": 1, "maxLength": 128 }
+            }
+          },
+          "required": ["mode", "approval_reference", "approver_ids"],
+          "additionalProperties": false
+        },
+        "reason_codes": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "MERCHANT_ALLOWED",
+              "WITHIN_TRANSACTION_LIMIT",
+              "WITHIN_DAILY_LIMIT",
+              "DEFAULT_DENY",
+              "NETWORK_NOT_ALLOWED",
+              "ASSET_NOT_ALLOWED",
+              "PAYEE_NOT_ALLOWED",
+              "RESOURCE_NOT_ALLOWED",
+              "PURPOSE_NOT_ALLOWED",
+              "AMOUNT_EXCEEDS_TRANSACTION_LIMIT",
+              "DAILY_LIMIT_EXCEEDED",
+              "OUTSIDE_ALLOWED_TIME",
+              "HUMAN_APPROVAL_REQUIRED",
+              "HUMAN_APPROVAL_GRANTED",
+              "HUMAN_APPROVAL_REFUSED",
+              "APPROVAL_NOT_PENDING",
+              "APPROVAL_ALREADY_RESOLVED",
+              "POLICY_EXPIRED",
+              "POLICY_VERSION_MISMATCH",
+              "ACTION_HASH_MISMATCH",
+              "PAYMENT_REQUIREMENTS_MISMATCH",
+              "DECISION_BINDING_MISMATCH",
+              "DECISION_EXPIRED",
+              "INVALID_DECISION_SCHEMA",
+              "FINGERPRINT_MISMATCH",
+              "INVALID_SIGNATURE",
+              "UNKNOWN_SIGNING_KEY",
+              "NONCE_ALREADY_CONSUMED",
+              "DECISION_NOT_ALLOW",
+              "DECISION_SERVICE_UNAVAILABLE"
+            ]
+          }
+        },
+        "issued_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "expires_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "nonce": { "type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9_-]+$" },
+        "supersedes_decision_id": {
+          "anyOf": [{ "type": "string", "minLength": 1, "maxLength": 128 }, { "type": "null" }]
+        },
+        "signing": {
+          "type": "object",
+          "properties": {
+            "alg": { "type": "string", "const": "Ed25519" },
+            "key_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "signature": { "type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9_-]+$" }
+          },
+          "required": ["alg", "key_id", "signature"],
+          "additionalProperties": false
+        },
+        "rail": { "type": "string", "const": "mcp" },
+        "protocol_reference": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "const": "mcp" },
+            "resource": { "type": "string", "format": "uri" },
+            "server_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "tool_name": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "tool_call_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "tool_arguments_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+            "payment_reference_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+          },
+          "required": [
+            "type",
+            "resource",
+            "server_id",
+            "tool_name",
+            "tool_call_id",
+            "tool_arguments_hash",
+            "payment_reference_hash"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "version",
+        "decision_id",
+        "decision_fingerprint",
+        "verdict",
+        "principal_id",
+        "agent_id",
+        "action_type",
+        "action_hash",
+        "transaction",
+        "policy",
+        "approval",
+        "reason_codes",
+        "issued_at",
+        "expires_at",
+        "nonce",
+        "supersedes_decision_id",
+        "signing",
+        "rail",
+        "protocol_reference"
+      ],
+      "additionalProperties": false
     }
   ]
 }

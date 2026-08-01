@@ -220,5 +220,5 @@ Pull request #1 also replaced the placeholder contents of `README.md`. Pull requ
    anchoring as a root of trust.
 8. The packages are workspace packages and were not published to npm in Phase 1.
 9. This report originally scoped A2A, AP2, wallet and multi-rail work into separate issues. Current
-   `main` implements the A2A, AP2 and EVM wallet packages. Full multi-rail conformance remains in
-   [#5](https://github.com/Inntris/inntris-x402-policy-adapter/issues/5).
+   `main` implements those follow-on packages. The card and MCP lanes in conformance remain mock
+   fixtures rather than production integrations.

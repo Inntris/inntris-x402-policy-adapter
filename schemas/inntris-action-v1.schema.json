@@ -190,6 +190,124 @@
         "protocol_reference"
       ],
       "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "version": { "type": "string", "const": "inntris-action-v1" },
+        "principal_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "agent_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "action_type": { "type": "string", "const": "financial_transaction" },
+        "transaction": {
+          "type": "object",
+          "properties": {
+            "amount": { "type": "string", "pattern": "^(0|[1-9]\\d*)\\.\\d{2,18}$" },
+            "asset": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "network": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "payee": { "type": "string", "minLength": 1, "maxLength": 512 },
+            "purpose": { "type": "string", "minLength": 1, "maxLength": 128 }
+          },
+          "required": ["amount", "asset", "network", "payee", "purpose"],
+          "additionalProperties": false
+        },
+        "extensions": {
+          "type": "object",
+          "propertyNames": { "type": "string" },
+          "additionalProperties": {}
+        },
+        "rail": { "type": "string", "const": "card" },
+        "protocol_reference": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "const": "card" },
+            "resource": { "type": "string", "format": "uri" },
+            "authorisation_request_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "merchant_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "card_network": { "type": "string", "minLength": 1, "maxLength": 64 },
+            "credential_reference_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+            "authorisation_request_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+          },
+          "required": [
+            "type",
+            "resource",
+            "authorisation_request_id",
+            "merchant_id",
+            "card_network",
+            "credential_reference_hash",
+            "authorisation_request_hash"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "version",
+        "principal_id",
+        "agent_id",
+        "action_type",
+        "transaction",
+        "rail",
+        "protocol_reference"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "version": { "type": "string", "const": "inntris-action-v1" },
+        "principal_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "agent_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "action_type": { "type": "string", "const": "financial_transaction" },
+        "transaction": {
+          "type": "object",
+          "properties": {
+            "amount": { "type": "string", "pattern": "^(0|[1-9]\\d*)\\.\\d{2,18}$" },
+            "asset": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "network": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "payee": { "type": "string", "minLength": 1, "maxLength": 512 },
+            "purpose": { "type": "string", "minLength": 1, "maxLength": 128 }
+          },
+          "required": ["amount", "asset", "network", "payee", "purpose"],
+          "additionalProperties": false
+        },
+        "extensions": {
+          "type": "object",
+          "propertyNames": { "type": "string" },
+          "additionalProperties": {}
+        },
+        "rail": { "type": "string", "const": "mcp" },
+        "protocol_reference": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "const": "mcp" },
+            "resource": { "type": "string", "format": "uri" },
+            "server_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "tool_name": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "tool_call_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "tool_arguments_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+            "payment_reference_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+          },
+          "required": [
+            "type",
+            "resource",
+            "server_id",
+            "tool_name",
+            "tool_call_id",
+            "tool_arguments_hash",
+            "payment_reference_hash"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "version",
+        "principal_id",
+        "agent_id",
+        "action_type",
+        "transaction",
+        "rail",
+        "protocol_reference"
+      ],
+      "additionalProperties": false
     }
   ]
 }

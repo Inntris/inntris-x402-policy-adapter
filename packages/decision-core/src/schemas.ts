@@ -73,13 +73,39 @@ export const EVMProtocolReferenceSchema = z
   })
   .strict();
 
+export const CardProtocolReferenceSchema = z
+  .object({
+    type: z.literal("card"),
+    resource: z.url(),
+    authorisation_request_id: IdentifierSchema,
+    merchant_id: IdentifierSchema,
+    card_network: z.string().min(1).max(64),
+    credential_reference_hash: HashSchema,
+    authorisation_request_hash: HashSchema,
+  })
+  .strict();
+
+export const MCPProtocolReferenceSchema = z
+  .object({
+    type: z.literal("mcp"),
+    resource: z.url(),
+    server_id: IdentifierSchema,
+    tool_name: IdentifierSchema,
+    tool_call_id: IdentifierSchema,
+    tool_arguments_hash: HashSchema,
+    payment_reference_hash: HashSchema,
+  })
+  .strict();
+
 export const ProtocolReferenceSchema = z.discriminatedUnion("type", [
   X402ProtocolReferenceSchema,
   AP2ProtocolReferenceSchema,
   EVMProtocolReferenceSchema,
+  CardProtocolReferenceSchema,
+  MCPProtocolReferenceSchema,
 ]);
 
-export const RailSchema = z.enum(["x402", "ap2", "evm"]);
+export const RailSchema = z.enum(["x402", "ap2", "evm", "card", "mcp"]);
 
 const ActionBaseShape = {
   version: z.literal("inntris-action-v1"),
@@ -110,6 +136,20 @@ export const InntrisActionV1Schema = z.discriminatedUnion("rail", [
       ...ActionBaseShape,
       rail: z.literal("evm"),
       protocol_reference: EVMProtocolReferenceSchema,
+    })
+    .strict(),
+  z
+    .object({
+      ...ActionBaseShape,
+      rail: z.literal("card"),
+      protocol_reference: CardProtocolReferenceSchema,
+    })
+    .strict(),
+  z
+    .object({
+      ...ActionBaseShape,
+      rail: z.literal("mcp"),
+      protocol_reference: MCPProtocolReferenceSchema,
     })
     .strict(),
 ]);
@@ -211,6 +251,20 @@ export const InntrisDecisionV1Schema = z
         ...DecisionBaseShape,
         rail: z.literal("evm"),
         protocol_reference: EVMProtocolReferenceSchema,
+      })
+      .strict(),
+    z
+      .object({
+        ...DecisionBaseShape,
+        rail: z.literal("card"),
+        protocol_reference: CardProtocolReferenceSchema,
+      })
+      .strict(),
+    z
+      .object({
+        ...DecisionBaseShape,
+        rail: z.literal("mcp"),
+        protocol_reference: MCPProtocolReferenceSchema,
       })
       .strict(),
   ])

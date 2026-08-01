@@ -11,6 +11,7 @@
 7. A2A task binding, delegate execution state and action receipts.
 8. AP2 mandate integrity, merchant trust roots, execution claims and action receipts.
 9. EVM unsigned transaction integrity, injected wallet identity and broadcast ordering.
+10. Mock card and paid MCP action-binding integrity in the conformance suite.
 
 ## Actors
 
@@ -65,6 +66,8 @@ decision only after every local check passes and after the nonce store accepts c
 | Injected wallet signs different transaction bytes      | Authorised decision is applied to another tx   | Parse signed RLP, recover signer and compare every authorised field before broadcast         |
 | Same unsigned EVM transaction gets another decision    | Duplicate signing or broadcast                 | Atomic claim keyed by canonical unsigned transaction hash                                    |
 | Wallet or broadcast outcome becomes uncertain          | Automatic retry could duplicate a side effect  | Keep execution in progress and require reconciliation                                        |
+| Card credential leaks into portable evidence           | Sensitive payment data is exposed              | Bind only an opaque credential-reference hash; reject unknown input fields                   |
+| Paid MCP arguments change after policy evaluation      | A different tool action uses the decision      | Bind canonical tool-argument and payment-reference hashes                                    |
 | Log tampering                                          | Misleading operational record                  | Signed portable decision remains independently verifiable                                    |
 | Attacker-controlled key URL in evidence                | Trust-root substitution or SSRF                | Offline default; embedded URLs are ignored; explicit HTTPS URL only                          |
 | Private key leaked in logs or repository               | Decision forgery                               | Explicit key loading, no startup generation, redacted logging and secret scanning            |
@@ -85,6 +88,8 @@ decision only after every local check passes and after the nonce store accepts c
 9. The AP2 Python subprocess and pinned SDK add a deployment and upgrade governance boundary.
 10. The in memory AP2 execution store cannot provide cross process or crash recovery guarantees.
 11. The in-memory EVM execution store cannot provide cross-process or crash-recovery guarantees.
+12. Mock card and MCP conformance proves envelope portability, not live processor or server
+    enforcement.
 
 ## Out of scope claims
 

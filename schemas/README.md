@@ -17,3 +17,6 @@ generated from the runtime schemas exported by `@inntris/ap2-runtime-gate`.
 
 The EVM unsigned transaction and wallet gate input schemas are generated from the runtime schemas
 exported by `@inntris/wallet-signing-gate`.
+
+The mock card authorisation and paid MCP tool-call input schemas are generated from the conformance
+bindings exported by `@inntris/multi-rail-conformance`.

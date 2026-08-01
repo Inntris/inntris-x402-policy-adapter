@@ -23,6 +23,9 @@ importers:
       '@inntris/decision-verifier':
         specifier: workspace:*
         version: link:packages/decision-verifier
+      '@inntris/multi-rail-conformance':
+        specifier: workspace:*
+        version: link:packages/multi-rail-conformance
       '@inntris/policy-engine':
         specifier: workspace:*
         version: link:packages/policy-engine
@@ -156,6 +159,30 @@ importers:
         specifier: 15.0.0
         version: 15.0.0
 
+  packages/multi-rail-conformance:
+    dependencies:
+      '@inntris/ap2-runtime-gate':
+        specifier: workspace:*
+        version: link:../ap2-runtime-gate
+      '@inntris/decision-core':
+        specifier: workspace:*
+        version: link:../decision-core
+      '@inntris/decision-verifier':
+        specifier: workspace:*
+        version: link:../decision-verifier
+      '@inntris/policy-engine':
+        specifier: workspace:*
+        version: link:../policy-engine
+      '@inntris/wallet-signing-gate':
+        specifier: workspace:*
+        version: link:../wallet-signing-gate
+      '@inntris/x402-adapter':
+        specifier: workspace:*
+        version: link:../x402-adapter
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+
   packages/policy-engine:
     dependencies:
       '@inntris/decision-core':
@@ -215,6 +242,9 @@ importers:
       '@inntris/decision-verifier':
         specifier: workspace:*
         version: link:../packages/decision-verifier
+      '@inntris/multi-rail-conformance':
+        specifier: workspace:*
+        version: link:../packages/multi-rail-conformance
       '@inntris/policy-engine':
         specifier: workspace:*
         version: link:../packages/policy-engine

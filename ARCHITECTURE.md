@@ -37,6 +37,10 @@ flowchart LR
     W --> V
     W --> K["Injected EVM wallet"]
     W --> B["Injected transaction broadcaster"]
+    N["@inntris/multi-rail-conformance"] --> A
+    N --> R
+    N --> W
+    N --> V
 ```
 
 `decision-core` has no x402 dependency. Rail-specific packages construct a common `InntrisActionV1`,
@@ -45,6 +49,9 @@ while the decision and verifier remain rail independent.
 The wallet gate treats the injected wallet as a separate trust boundary. It passes the exact
 canonical transaction to `signTransaction`, then parses the returned RLP bytes with viem, recovers
 the signer and compares every transaction field before any broadcast.
+
+The conformance package adds mock card and paid MCP bindings without adding execution authority. It
+uses the same policy engine, Decision Envelope and verifier as the production-oriented rail gates.
 
 ## Action hash
 

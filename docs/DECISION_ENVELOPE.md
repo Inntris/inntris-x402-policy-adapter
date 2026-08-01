@@ -3,8 +3,8 @@
 ## Canonical action
 
 `InntrisActionV1` is the rail-independent policy input. The `v0.1.0` Phase 1 release supports the
-`x402` rail. Current `main` also supports AP2 actions through the follow-on runtime gate. The core
-package remains independent of both protocol SDKs.
+`x402` rail. Current `main` registers AP2, EVM wallet, mock card and paid MCP protocol-reference
+variants while keeping their binding and execution logic in separate rail packages.
 
 Unknown fields are rejected. A versioned top-level `extensions` object is the only extension point.
 
@@ -29,6 +29,9 @@ The following values are bound:
 5. For x402, the complete payment-requirements digest.
 6. For x402, the payment-payload digest when a payload is available.
 7. For AP2, the open intent, closed Checkout, closed Payment, checkout JWT and transaction hashes.
+8. For EVM, the canonical unsigned transaction hash plus signer, chain, recipient, value and nonce.
+9. For mock card, opaque credential and authorisation-request hashes without card credentials.
+10. For paid MCP, the server, tool call, canonical argument hash and payment-reference hash.
 
 ## Policy hash
 

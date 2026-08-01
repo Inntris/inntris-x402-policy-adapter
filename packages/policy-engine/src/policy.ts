@@ -63,6 +63,8 @@ export const InntrisPolicyV1Schema = z
         x402: RailPolicySchema,
         ap2: RailPolicySchema.optional(),
         evm: RailPolicySchema.optional(),
+        card: RailPolicySchema.optional(),
+        mcp: RailPolicySchema.optional(),
       })
       .strict(),
     limits: z
