@@ -1,6 +1,6 @@
 {
   "name": "inntris-x402-policy-adapter",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "A rail-independent Inntris Decision Envelope and fail-closed x402 policy adapter.",
   "license": "MIT",

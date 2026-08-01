@@ -1,6 +1,6 @@
 {
   "name": "@inntris/x402-adapter",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Fail-closed Inntris policy guard for the official x402 TypeScript SDK.",
   "license": "MIT",
   "type": "module",

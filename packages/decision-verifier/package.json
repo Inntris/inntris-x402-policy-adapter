@@ -1,6 +1,6 @@
 {
   "name": "@inntris/decision-verifier",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Offline verifier and inntris-verify command for Inntris decisions.",
   "license": "MIT",
   "type": "module",
