@@ -20,12 +20,8 @@ import {
 } from "@inntris/decision-core";
 
 import { evaluatePolicy, spendDayKey, ZeroSpendState, type SpendState } from "./evaluate.js";
+import { InMemoryDecisionStateStore, type DecisionStateStore } from "./decision-store.js";
 import { DEFAULT_APPROVAL_REQUEST_TTL_SECONDS, type InntrisPolicyV1 } from "./policy.js";
-
-interface IssuedDecision {
-  decision: InntrisDecisionV1;
-  action: InntrisActionV1;
-}
 
 export interface LocalPolicyDecisionProviderOptions {
   policy: InntrisPolicyV1;
@@ -33,6 +29,7 @@ export interface LocalPolicyDecisionProviderOptions {
   clock?: Clock;
   spendState?: SpendState;
   nonceStore?: NonceStore;
+  decisionStore?: DecisionStateStore;
   metrics?: MetricsRecorder;
 }
 
@@ -41,15 +38,15 @@ export class LocalPolicyDecisionProvider implements DecisionProvider {
   readonly #clock: Clock;
   readonly #spendState: SpendState;
   readonly #nonceStore: NonceStore;
+  readonly #decisionStore: DecisionStateStore;
   readonly #metrics: MetricsRecorder;
-  readonly #decisions = new Map<string, IssuedDecision>();
-  readonly #resolvedApprovals = new Set<string>();
 
   constructor(readonly options: LocalPolicyDecisionProviderOptions) {
     this.policyHash = hashPolicyObject(options.policy);
     this.#clock = options.clock ?? systemClock;
     this.#spendState = options.spendState ?? new ZeroSpendState();
     this.#nonceStore = options.nonceStore ?? new InMemoryNonceStore();
+    this.#decisionStore = options.decisionStore ?? new InMemoryDecisionStateStore();
     this.#metrics = options.metrics ?? noOpMetrics;
   }
 
@@ -68,7 +65,7 @@ export class LocalPolicyDecisionProvider implements DecisionProvider {
       clock: this.#clock,
       ...(supersedesDecisionId === undefined ? {} : { supersedesDecisionId }),
     });
-    this.#decisions.set(decision.decision_id, { decision, action });
+    await this.#decisionStore.save({ decision, action });
     return decision;
   }
 
@@ -99,10 +96,7 @@ export class LocalPolicyDecisionProvider implements DecisionProvider {
       reason_code: reasonCode,
     });
 
-    if (this.#resolvedApprovals.has(input.decision_id)) {
-      return rejection("APPROVAL_ALREADY_RESOLVED");
-    }
-    const issued = this.#decisions.get(input.decision_id);
+    const issued = await this.#decisionStore.get(input.decision_id);
     if (issued?.decision.verdict !== "REQUIRE_APPROVAL") {
       return rejection("APPROVAL_NOT_PENDING");
     }
@@ -112,6 +106,11 @@ export class LocalPolicyDecisionProvider implements DecisionProvider {
     const closesAt = Date.parse(issued.decision.issued_at) + requestTtlSeconds * 1_000;
     if (this.#clock.now().getTime() >= closesAt) {
       return rejection("DECISION_EXPIRED");
+    }
+
+    const claim = await this.#decisionStore.claimApproval(input.decision_id);
+    if (claim === "already_claimed") {
+      return rejection("APPROVAL_ALREADY_RESOLVED");
     }
 
     const started = performance.now();
@@ -142,7 +141,6 @@ export class LocalPolicyDecisionProvider implements DecisionProvider {
       };
     }
 
-    this.#resolvedApprovals.add(input.decision_id);
     const decision = await this.#sign(issued.action, evaluation, issued.decision.decision_id);
     this.#metrics.decision(decision.verdict, decision.rail, performance.now() - started);
     return {
@@ -154,7 +152,7 @@ export class LocalPolicyDecisionProvider implements DecisionProvider {
   }
 
   async consume(input: ConsumeDecisionInput): Promise<ConsumeDecisionResult> {
-    const decision = this.#decisions.get(input.decision_id)?.decision;
+    const decision = (await this.#decisionStore.get(input.decision_id))?.decision;
     if (decision?.verdict !== "ALLOW") {
       return {
         success: false,

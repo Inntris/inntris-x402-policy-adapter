@@ -296,8 +296,9 @@ pnpm audit --prod --audit-level high
 
 ## Known limitations
 
-1. The local nonce, decision and approval stores are in-memory reference implementations. A
-   deployment must use a durable, atomic store shared by every executor instance.
+1. The default nonce and decision-state stores are in-memory reference implementations. A deployment
+   must inject durable, atomic stores shared by every executor instance. In particular,
+   `DecisionStateStore.claimApproval` must be implemented as an atomic compare-and-set operation.
 2. Generic consumption cannot be atomic with every external payment rail. The executor must retain
    the same execution reference, use facilitator idempotency and reconcile a consume-success,
    settlement-unknown outcome.
