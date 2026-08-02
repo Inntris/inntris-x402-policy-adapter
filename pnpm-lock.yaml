@@ -23,6 +23,9 @@ importers:
       '@inntris/decision-verifier':
         specifier: workspace:*
         version: link:packages/decision-verifier
+      '@inntris/mtp-authority':
+        specifier: workspace:*
+        version: link:packages/mtp-authority
       '@inntris/multi-rail-conformance':
         specifier: workspace:*
         version: link:packages/multi-rail-conformance
@@ -83,6 +86,9 @@ importers:
       '@inntris/decision-verifier':
         specifier: workspace:*
         version: link:../../packages/decision-verifier
+      '@inntris/mtp-authority':
+        specifier: workspace:*
+        version: link:../../packages/mtp-authority
       '@inntris/policy-engine':
         specifier: workspace:*
         version: link:../../packages/policy-engine
@@ -174,6 +180,15 @@ importers:
         specifier: 15.0.0
         version: 15.0.0
 
+  packages/mtp-authority:
+    dependencies:
+      '@inntris/decision-core':
+        specifier: workspace:*
+        version: link:../decision-core
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+
   packages/multi-rail-conformance:
     dependencies:
       '@inntris/ap2-runtime-gate':
@@ -218,6 +233,9 @@ importers:
       '@inntris/decision-core':
         specifier: workspace:*
         version: link:../decision-core
+      '@inntris/mtp-authority':
+        specifier: workspace:*
+        version: link:../mtp-authority
       '@inntris/policy-engine':
         specifier: workspace:*
         version: link:../policy-engine

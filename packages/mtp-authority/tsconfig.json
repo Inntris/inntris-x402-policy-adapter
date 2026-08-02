@@ -6,9 +6,5 @@
     "tsBuildInfoFile": "dist/.tsbuildinfo"
   },
   "include": ["src/**/*.ts"],
-  "references": [
-    { "path": "../decision-core" },
-    { "path": "../mtp-authority" },
-    { "path": "../policy-engine" }
-  ]
+  "references": [{ "path": "../decision-core" }]
 }

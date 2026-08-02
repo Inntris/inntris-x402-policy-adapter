@@ -6,10 +6,20 @@ import {
   InMemoryMetrics,
   buildKeyRegistryEntry,
   createPublicDemoSigner,
+  type DecisionProvider,
   type SigningProvider,
 } from "@inntris/decision-core";
+import {
+  assertSeparateSigningIdentities,
+  MtpAuthorityClient,
+  MtpCompositeDecisionProvider,
+} from "@inntris/mtp-authority";
 import { LocalPolicyDecisionProvider, loadPolicyFile } from "@inntris/policy-engine";
-import { assertPostgresStoreReady, PostgresPolicyStateStore } from "@inntris/postgres-store";
+import {
+  assertPostgresStoreReady,
+  PostgresMtpAuthorityStateStore,
+  PostgresPolicyStateStore,
+} from "@inntris/postgres-store";
 import { Pool } from "pg";
 
 import { buildDemoApi } from "./app.js";
@@ -41,6 +51,28 @@ async function loadSigner(): Promise<SigningProvider> {
   );
 }
 
+async function loadMtpSigner(): Promise<SigningProvider> {
+  const direct = process.env.INNTRIS_MTP_SIGNING_SEED_BASE64URL;
+  const file = process.env.INNTRIS_MTP_SIGNING_SEED_FILE;
+  if ((direct === undefined) === (file === undefined)) {
+    throw new Error(
+      "Configure exactly one MTP signing source: seed environment variable or mounted file",
+    );
+  }
+  let seed: string;
+  if (direct !== undefined) {
+    seed = direct;
+  } else if (file !== undefined) {
+    seed = (await readFile(resolve(file), "utf8")).trim();
+  } else {
+    throw new Error("No MTP signing seed source was configured");
+  }
+  return Ed25519SigningProvider.fromBase64UrlSeed(
+    process.env.INNTRIS_MTP_SIGNING_KEY_ID ?? "mtp-agent-key-1",
+    seed,
+  );
+}
+
 const signer = await loadSigner();
 const metrics = new InMemoryMetrics();
 const policy = await loadPolicyFile(
@@ -56,12 +88,35 @@ const pool =
 if (pool !== undefined) {
   await assertPostgresStoreReady(pool);
 }
-const provider = new LocalPolicyDecisionProvider({
+const localProvider = new LocalPolicyDecisionProvider({
   policy,
   signer,
   metrics,
   ...(pool === undefined ? {} : { stateStore: new PostgresPolicyStateStore(pool) }),
 });
+const mtpApiUrl = process.env.INNTRIS_MTP_API_URL?.trim();
+let provider: DecisionProvider = localProvider;
+if (mtpApiUrl !== undefined && mtpApiUrl !== "") {
+  const mtpAgentId = process.env.INNTRIS_MTP_AGENT_ID?.trim();
+  if (mtpAgentId === undefined || mtpAgentId === "") {
+    throw new Error("INNTRIS_MTP_AGENT_ID is required when MTP authority is enabled");
+  }
+  if (pool === undefined) {
+    throw new Error("INNTRIS_POSTGRES_URL is required when MTP authority is enabled");
+  }
+  const mtpSigner = await loadMtpSigner();
+  assertSeparateSigningIdentities(signer, mtpSigner);
+  provider = new MtpCompositeDecisionProvider({
+    provider: localProvider,
+    client: new MtpAuthorityClient({
+      apiUrl: mtpApiUrl,
+      agentId: mtpAgentId,
+      signer: mtpSigner,
+      policyHash: process.env.INNTRIS_MTP_POLICY_HASH,
+    }),
+    stateStore: new PostgresMtpAuthorityStateStore(pool),
+  });
+}
 const keyRegistry = {
   version: "inntris-key-registry-v1" as const,
   keys: [

@@ -6,6 +6,10 @@ The store persists immutable signed decisions, atomically claims human approvals
 decision consumption with its cumulative spend increment in one database transaction. The daily
 limit is rechecked under the database write lock, so concurrent decisions cannot overrun it.
 
+It also supplies `PostgresMtpAuthorityStateStore` for the cross-service MTP bridge. That store
+persists authority before a decision is returned, claims one stable execution reference, checkpoints
+the MTP consumption receipt and records completion of local decision consumption.
+
 ```ts
 import { Pool } from "pg";
 import { PostgresPolicyStateStore, migratePostgresStore } from "@inntris/postgres-store";
@@ -23,11 +27,15 @@ Apply migrations before the service starts:
 INNTRIS_POSTGRES_URL=postgresql://... pnpm postgres:migrate
 ```
 
-When `INNTRIS_POSTGRES_URL` is set, `@inntris/demo-api` requires the migration and injects the
-durable store automatically. Without that setting it retains the in-memory demo behaviour.
+When `INNTRIS_POSTGRES_URL` is set, `@inntris/demo-api` requires every migration and injects the
+durable policy store automatically. Enabling `INNTRIS_MTP_API_URL` additionally injects the durable
+MTP bridge and refuses to start without PostgreSQL. Without those settings the service retains the
+in-memory demo behaviour.
 
 The caller owns the pool and must close it during shutdown. Use a dedicated database role whose
 permissions are limited to the `inntris` schema. Run migrations with a separate deployment role when
 runtime schema creation is not permitted.
 
+The MTP approval token is short lived but remains bearer authority until consumed. Limit table
+access to the runtime role, protect database backups and never include table rows in normal logs.
 `INNTRIS_POSTGRES_URL` is used by the repository integration tests. It is never logged.
