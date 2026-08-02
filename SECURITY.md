@@ -16,6 +16,9 @@ and observed result. Do not include production credentials, signing seeds or cus
    the seed.
 4. The committed fixture identity is deliberately public and is not a secret.
 5. Production deployments should use a managed Ed25519 signer or HSM-backed provider when available.
+6. A managed signer must use a pinned public key and an explicit reviewed key registry.
+7. Treat the signing broker bearer credential as secret material and rotate it independently of the
+   Ed25519 key.
 
 Do not reuse the existing Inntris offline evidence-pack seed, live request-signing key or anchor
 worker key for this reference service.
@@ -60,5 +63,11 @@ Changes must preserve:
 25. MTP response loss must retry the same token and execution reference; a different reference must
     conflict.
 26. The MTP agent signing key must not reuse the Decision Envelope, evidence-pack or anchor keys.
+27. A remote signer response is accepted only when its key identity and Ed25519 signature match the
+    locally pinned public key.
+28. Managed signing has no local-key or unsigned fallback when the broker is unavailable.
+29. A retired key requires an explicit cutover boundary and remains usable only for decisions issued
+    inside its published validity window.
+30. A revoked key invalidates historical trust and must never be selected for new signing.
 
 The test suite contains direct regression tests for these invariants.

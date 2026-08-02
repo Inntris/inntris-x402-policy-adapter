@@ -7,6 +7,7 @@
   "include": ["./**/*.ts"],
   "references": [
     { "path": "../packages/ap2-runtime-gate" },
+    { "path": "../packages/managed-signing" },
     { "path": "../packages/mtp-authority" },
     { "path": "../packages/postgres-store" }
   ]

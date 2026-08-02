@@ -13,6 +13,7 @@
 9. EVM unsigned transaction integrity, injected wallet identity and broadcast ordering.
 10. Mock card and paid MCP action-binding integrity in the conformance suite.
 11. MTP agent signing identity, approval token and cross-service consumption checkpoint.
+12. Managed signing broker credential, pinned public key and rotation registry.
 
 ## Actors
 
@@ -23,6 +24,7 @@
 5. Compromised decision service.
 6. Compromised or stale key registry.
 7. Faulty or malicious executor.
+8. Faulty, unavailable or compromised remote signing broker.
 
 ## Trust boundaries
 
@@ -77,6 +79,10 @@ decision only after every local check passes and after the nonce store accepts c
 | MTP token or receipt is substituted                    | Wrong authority could unlock settlement         | Exact request hash, agent, action hash, execution reference and receipt fields are cross-checked |
 | MTP is unavailable or rejects the action               | Secondary controls could be bypassed            | Composition fails closed before local consumption or settlement                                  |
 | MTP agent key is reused as the decision signer         | One compromise crosses two trust boundaries     | Separate configuration and startup public-key equality rejection                                 |
+| Remote signer substitutes a key or signature           | Forged or unverifiable decisions                | Pin key identity and public key; verify every returned signature locally                         |
+| Remote signer is unavailable or returns malformed data | Signing control could be bypassed               | Fail closed with no local-key or unsigned fallback                                               |
+| Retired key signs after the rotation boundary          | Old custody authority remains live              | Startup registry validation requires an active key inside its validity window                    |
+| Key is compromised after historical use                | Earlier decisions may no longer be trustworthy  | Explicit `revoked` status invalidates historical verification; `retired` preserves it            |
 
 ## Residual risks
 
@@ -100,6 +106,8 @@ decision only after every local check passes and after the nonce store accepts c
     consumed MTP authority with no payment and requires operational reconciliation.
 14. Composite human approval is not yet crash recoverable across the local and MTP services, so the
     first MTP composition release exposes automatic `ALLOW` only.
+15. The managed signing adapter verifies broker output but cannot prove that the downstream key is
+    held by certified hardware or that the operator's custody controls are effective.
 
 ## Out of scope claims
 

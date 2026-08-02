@@ -107,6 +107,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for trust boundaries and the fingerprint 
 | `@inntris/decision-core`          | Strict schemas, JCS, SHA 256 hashes, Ed25519, stable reason codes and replay contracts |
 | `@inntris/policy-engine`          | Versioned policy parsing, deterministic evaluation and the local provider              |
 | `@inntris/postgres-store`         | Durable decisions, atomic approvals, consumption and cumulative spend                  |
+| `@inntris/managed-signing`        | Provider-neutral remote Ed25519 signing and controlled public-key rotation             |
 | `@inntris/decision-verifier`      | Offline verification library and `inntris-verify` CLI                                  |
 | `@inntris/x402-adapter`           | Official x402 type binding, remote provider and fail-closed settlement guard           |
 | `@inntris/mtp-authority`          | Composed MTP authority, safe execution retries and recoverable consumption ordering    |
@@ -160,6 +161,32 @@ The same package provides `PostgresMtpAuthorityStateStore`. It checkpoints the s
 short-lived approval token, stable execution reference, MTP consumption receipt and completed local
 consumption. The approval token is never logged and the table must be restricted to the runtime
 service and migration roles.
+
+## Managed signing and key rotation
+
+`@inntris/managed-signing` lets the reference API use an operator-controlled HTTPS signing broker
+backed by a KMS, HSM, Vault or custody service. The private key never enters this process. Every
+returned Ed25519 signature is verified locally against a configured public key before a Decision
+Envelope is returned. An unavailable signer, changed key identity, malformed response or invalid
+signature fails closed.
+
+Managed Decision Envelope signing requires:
+
+```text
+INNTRIS_MANAGED_SIGNER_URL
+INNTRIS_MANAGED_SIGNER_BEARER_TOKEN
+INNTRIS_MANAGED_SIGNER_PUBLIC_KEY_BASE64URL
+INNTRIS_SIGNING_KEY_ID
+INNTRIS_KEY_REGISTRY_FILE
+```
+
+The registry is validated at startup and the configured signer must match an active key and its
+validity window. Rotation is an explicit registry update and controlled restart. Retired public keys
+remain available for historical verification; revoked keys do not. The MTP agent can use a separate
+managed signer through the corresponding `INNTRIS_MTP_MANAGED_SIGNER_*` variables.
+
+See [`packages/managed-signing/README.md`](packages/managed-signing/README.md) for the broker
+contract and [`docs/KEY_ROTATION.md`](docs/KEY_ROTATION.md) for the operator runbook.
 
 ## Existing MTP authority
 

@@ -14,6 +14,8 @@ It keeps policy evaluation, evidence verification and payment settlement separat
 4. The nonce store is trusted to provide atomic single-use consumption.
 5. The payment executor is the final enforcement boundary.
 6. The facilitator and settlement rail remain outside Inntris.
+7. A remote signing broker is a separate custody boundary. Its output is untrusted until locally
+   verified against the operator-selected public key registry.
 
 ## Module boundaries
 
@@ -25,6 +27,9 @@ flowchart LR
     V["@inntris/decision-verifier"] --> C
     API["Fastify demo API"] --> P
     API --> V
+    API --> MS["@inntris/managed-signing"]
+    MS --> KMS["Operator signing broker and managed key"]
+    MS --> C
     A --> E["Injected settlement executor"]
     T["Official A2A Task type"] --> G["@inntris/a2a-settlement-gate"]
     G --> A
@@ -96,6 +101,12 @@ The signed decision is immutable. A human approval produces a new decision whose
 re-evaluates current organisational policy when the approval is resolved, so the superseding
 decision is a signed `BLOCK` whenever policy now denies the same action. Resolution is single use
 and is bounded by `approval.request_ttl_seconds` rather than by the decision TTL.
+
+The signing provider can hold an in-process development seed or call the managed signing broker. The
+managed path sends only the canonical signing payload, its SHA 256 digest and the requested key
+identity. The response is accepted only after local Ed25519 verification. Key rotation uses a static
+provider selected at startup plus a registry that preserves old public keys and validity windows. A
+controlled restart makes the cutover atomic from the application's point of view.
 
 ## Evaluation precedence
 
