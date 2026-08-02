@@ -7,6 +7,12 @@
 2. Made decision consumption, cumulative spend recording and the final daily limit check one
    transaction for PostgreSQL backed providers.
 3. Added migration tooling, reference API wiring and database concurrency and rollback tests.
+4. Added `@inntris/mtp-authority` to compose signed decisions with the existing MTP execution
+   authority while keeping both evidence formats distinct.
+5. Added durable MTP authorization, execution claim, receipt checkpoint and completion state to the
+   PostgreSQL store.
+6. Added fail-closed recovery tests for lost MTP responses, substituted evidence, changed execution
+   references and exact x402 settlement ordering.
 
 ## v0.2.0
 

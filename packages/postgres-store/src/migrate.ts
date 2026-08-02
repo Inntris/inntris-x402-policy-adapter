@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 
 import type { Pool } from "pg";
 
-const MIGRATION_VERSION = "001_initial";
+const MIGRATION_VERSIONS = ["001_initial", "002_mtp_authority"] as const;
 const MIGRATION_LOCK_ID = 1_661_437_315;
 
 export async function assertPostgresStoreReady(pool: Pool): Promise<void> {
@@ -13,19 +13,17 @@ export async function assertPostgresStoreReady(pool: Pool): Promise<void> {
     throw new Error("Inntris PostgreSQL migrations have not been applied");
   }
   const applied = await pool.query<{ version: string }>(
-    "SELECT version FROM inntris.schema_migrations WHERE version = $1",
-    [MIGRATION_VERSION],
+    "SELECT version FROM inntris.schema_migrations WHERE version = ANY($1::text[])",
+    [MIGRATION_VERSIONS],
   );
-  if (applied.rowCount !== 1) {
-    throw new Error(`Required Inntris PostgreSQL migration ${MIGRATION_VERSION} is missing`);
+  const appliedVersions = new Set(applied.rows.map((row) => row.version));
+  const missing = MIGRATION_VERSIONS.filter((version) => !appliedVersions.has(version));
+  if (missing.length > 0) {
+    throw new Error(`Required Inntris PostgreSQL migrations are missing: ${missing.join(", ")}`);
   }
 }
 
 export async function migratePostgresStore(pool: Pool): Promise<void> {
-  const sql = await readFile(
-    new URL(`../migrations/${MIGRATION_VERSION}.sql`, import.meta.url),
-    "utf8",
-  );
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -37,15 +35,21 @@ export async function migratePostgresStore(pool: Pool): Promise<void> {
         applied_at timestamptz NOT NULL DEFAULT now()
       )
     `);
-    const applied = await client.query<{ version: string }>(
-      "SELECT version FROM inntris.schema_migrations WHERE version = $1",
-      [MIGRATION_VERSION],
-    );
-    if (applied.rowCount === 0) {
-      await client.query(sql);
-      await client.query("INSERT INTO inntris.schema_migrations (version) VALUES ($1)", [
-        MIGRATION_VERSION,
-      ]);
+    for (const version of MIGRATION_VERSIONS) {
+      const applied = await client.query<{ version: string }>(
+        "SELECT version FROM inntris.schema_migrations WHERE version = $1",
+        [version],
+      );
+      if (applied.rowCount === 0) {
+        const sql = await readFile(
+          new URL(`../migrations/${version}.sql`, import.meta.url),
+          "utf8",
+        );
+        await client.query(sql);
+        await client.query("INSERT INTO inntris.schema_migrations (version) VALUES ($1)", [
+          version,
+        ]);
+      }
     }
     await client.query("COMMIT");
   } catch (error) {

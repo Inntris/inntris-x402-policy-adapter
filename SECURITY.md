@@ -55,5 +55,10 @@ Changes must preserve:
 22. Mock card fixtures contain only opaque credential-reference hashes, never card credentials.
 23. Production policy state commits nonce consumption and spend atomically and rechecks cumulative
     limits during the transaction.
+24. MTP composition must consume and checkpoint matching MTP authority before local decision
+    consumption and settlement.
+25. MTP response loss must retry the same token and execution reference; a different reference must
+    conflict.
+26. The MTP agent signing key must not reuse the Decision Envelope, evidence-pack or anchor keys.
 
 The test suite contains direct regression tests for these invariants.

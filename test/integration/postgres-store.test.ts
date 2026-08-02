@@ -2,8 +2,13 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 import { createPublicDemoSigner } from "@inntris/decision-core";
+import type { MtpAuthorizationRecord } from "@inntris/mtp-authority";
 import { LocalPolicyDecisionProvider, parsePolicyText } from "@inntris/policy-engine";
-import { migratePostgresStore, PostgresPolicyStateStore } from "@inntris/postgres-store";
+import {
+  migratePostgresStore,
+  PostgresMtpAuthorityStateStore,
+  PostgresPolicyStateStore,
+} from "@inntris/postgres-store";
 import { actionFromX402 } from "@inntris/x402-adapter";
 import { Pool } from "pg";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
@@ -30,6 +35,7 @@ postgres("PostgreSQL policy state", () => {
     await pool.query("DROP FUNCTION IF EXISTS inntris.fail_spend() CASCADE");
     await pool.query(`
       TRUNCATE TABLE
+        inntris.mtp_authorisations,
         inntris.approval_claims,
         inntris.consumptions,
         inntris.daily_spend,
@@ -206,5 +212,68 @@ postgres("PostgreSQL policy state", () => {
         reason_code: "APPROVAL_ALREADY_RESOLVED",
       }),
     ]);
+  });
+
+  it("persists the MTP bridge state and recovers each consumption checkpoint", async () => {
+    const store = new PostgresMtpAuthorityStateStore(pool);
+    const record: MtpAuthorizationRecord = {
+      decisionId: "mtp-postgres-decision",
+      actionHash: `sha256:${"a".repeat(64)}`,
+      request: {
+        agent_id: "00000000-0000-4000-8000-000000000123",
+        action_type: "financial_transaction",
+        payload: { amount: "4.50" },
+        nonce: "postgres-mtp-nonce",
+        timestamp: "2026-07-29T12:00:00.000Z",
+        signature: "dGVzdC1zaWduYXR1cmU=",
+        sig_version: 3,
+      },
+      mtpActionHash: "b".repeat(64),
+      approvalToken: "short-lived-test-token",
+      authorizationAuditId: "00000000-0000-4000-8000-000000000124",
+      authorizedAt: "2026-07-29T12:00:00.000Z",
+    };
+
+    await store.saveAuthorization(record);
+    await expect(store.saveAuthorization(record)).resolves.toBeUndefined();
+    expect(await store.getAuthorization(record.decisionId)).toEqual(record);
+
+    expect(
+      await store.claimExecution(record.decisionId, record.actionHash, "postgres-mtp-execution"),
+    ).toBe("claimed");
+    expect(
+      await store.claimExecution(record.decisionId, record.actionHash, "postgres-mtp-execution"),
+    ).toBe("idempotent");
+    expect(
+      await store.claimExecution(record.decisionId, record.actionHash, "different-execution"),
+    ).toBe("conflict");
+
+    const second = { ...record, decisionId: "mtp-postgres-decision-two" };
+    await store.saveAuthorization(second);
+    expect(
+      await store.claimExecution(second.decisionId, second.actionHash, "postgres-mtp-execution"),
+    ).toBe("conflict");
+
+    await store.markMtpConsumed(record.decisionId, "postgres-mtp-execution", {
+      executionRef: "postgres-mtp-execution",
+      consumptionAuditId: "00000000-0000-4000-8000-000000000125",
+      status: "consumed",
+    });
+    await store.markComplete(
+      record.decisionId,
+      "postgres-mtp-execution",
+      "2026-07-29T12:00:01.000Z",
+    );
+
+    expect(await store.getAuthorization(record.decisionId)).toMatchObject({
+      executionRef: "postgres-mtp-execution",
+      consumptionAuditId: "00000000-0000-4000-8000-000000000125",
+      consumptionStatus: "consumed",
+      completedAt: "2026-07-29T12:00:01.000Z",
+    });
+
+    await expect(
+      store.saveAuthorization({ ...record, approvalToken: "changed-token" }),
+    ).rejects.toThrow("immutable");
   });
 });

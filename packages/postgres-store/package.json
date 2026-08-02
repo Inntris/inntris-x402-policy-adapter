@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@inntris/decision-core": "workspace:*",
+    "@inntris/mtp-authority": "workspace:*",
     "@inntris/policy-engine": "workspace:*",
     "decimal.js": "10.6.0",
     "pg": "8.22.0"

@@ -109,6 +109,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for trust boundaries and the fingerprint 
 | `@inntris/postgres-store`         | Durable decisions, atomic approvals, consumption and cumulative spend                  |
 | `@inntris/decision-verifier`      | Offline verification library and `inntris-verify` CLI                                  |
 | `@inntris/x402-adapter`           | Official x402 type binding, remote provider and fail-closed settlement guard           |
+| `@inntris/mtp-authority`          | Composed MTP authority, safe execution retries and recoverable consumption ordering    |
 | `@inntris/a2a-settlement-gate`    | Finality, consumption, delegate idempotency and signed receipts for paid A2A tasks     |
 | `@inntris/ap2-runtime-gate`       | Official AP2 mandate verification, policy binding, replay control and signed receipts  |
 | `@inntris/wallet-signing-gate`    | Exact EVM transaction binding, decision consumption, injected signing and broadcast    |
@@ -154,6 +155,44 @@ lock, so two independently issued decisions cannot overrun the limit concurrentl
 The in-memory stores remain the default for the zero-configuration demo. A production deployment
 must inject `PostgresPolicyStateStore` or another implementation with equivalent durability and
 transaction semantics. See [`packages/postgres-store/README.md`](packages/postgres-store/README.md).
+
+The same package provides `PostgresMtpAuthorityStateStore`. It checkpoints the signed MTP request,
+short-lived approval token, stable execution reference, MTP consumption receipt and completed local
+consumption. The approval token is never logged and the table must be restricted to the runtime
+service and migration roles.
+
+## Existing MTP authority
+
+`@inntris/mtp-authority` composes two independent controls without creating a second public decision
+format. The signed Decision Envelope remains the exact, offline-verifiable x402 policy proof. MTP
+adds registered-agent policy, trust, rate and spend controls.
+
+For an automatic local `ALLOW`, the provider signs an MTP `sig_version: 3` request whose payload
+contains the complete `inntris-action-v1`, action hash, decision ID, decision fingerprint and policy
+identity. It returns the Decision Envelope only after MTP approves and the bridge state is durable.
+
+At execution it claims one reference, consumes MTP, persists the MTP receipt, consumes the local
+decision with the same reference and only then allows the x402 guard to settle. A lost MTP response
+is retried safely. A changed reference, malformed receipt, sandbox token or unavailable service
+fails closed.
+
+Enable this mode on the reference API with:
+
+```text
+INNTRIS_POSTGRES_URL
+INNTRIS_MTP_API_URL
+INNTRIS_MTP_AGENT_ID
+INNTRIS_MTP_SIGNING_SEED_BASE64URL or INNTRIS_MTP_SIGNING_SEED_FILE
+INNTRIS_MTP_SIGNING_KEY_ID
+INNTRIS_MTP_POLICY_HASH optional
+```
+
+MTP mode requires the PostgreSQL migrations and a dedicated registered MTP agent key. Startup
+rejects reuse of the Decision Envelope signing key. The first composite release covers automatic
+`ALLOW` decisions; cross-service human approval recovery is deliberately not exposed yet.
+
+See [`packages/mtp-authority/README.md`](packages/mtp-authority/README.md) and
+[`docs/MTP_COMPATIBILITY.md`](docs/MTP_COMPATIBILITY.md).
 
 ## A2A settlement gate
 

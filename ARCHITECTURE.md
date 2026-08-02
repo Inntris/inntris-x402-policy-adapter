@@ -41,6 +41,10 @@ flowchart LR
     N --> R
     N --> W
     N --> V
+    X402["x402 executor"] --> H["@inntris/mtp-authority"]
+    H --> P
+    H --> MTP["Existing MTP verify and token authority"]
+    H --> PG["Durable MTP bridge state"]
 ```
 
 `decision-core` has no x402 dependency. Rail-specific packages construct a common `InntrisActionV1`,
@@ -163,6 +167,13 @@ consumption to overrun the shared limit. A rejected limit check rolls the nonce 
 No generic library can make a database nonce write atomic with every external facilitator. A
 production executor must use the same execution reference as the facilitator idempotency key and
 reconcile an unknown settlement outcome instead of creating a new execution.
+
+When MTP composition is enabled, the execution sequence is MTP consumption, durable MTP receipt
+checkpoint, local Decision Envelope consumption, then settlement. A lost MTP response is retried
+with the same reference and returns the original receipt. A process stop after the checkpoint
+resumes local consumption. MTP is placed first because a rejected secondary authority must not
+consume local daily spend. A local rejection after MTP consumption leaves a non-settled authority
+receipt for reconciliation but cannot move funds.
 
 The A2A gate deliberately places consumption after confirmed settlement and before delegate
 execution. This protects the paid task rather than using a payment submission as authority. A
