@@ -120,6 +120,17 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for trust boundaries and the fingerprint 
 The adapter pins `@x402/core` `2.20.0`. It imports `PaymentRequirements` and `PaymentPayload` from
 `@x402/core/types` and validates them with the official runtime schemas.
 
+## Official x402 sandbox
+
+`pnpm test:x402-sandbox` connects through the pinned official SDK to the x402 Foundation's public
+test facilitator. It requires x402 v2 `exact` support on Base Sepolia and proves the `/verify`
+boundary rejects a deliberately invalid EIP 3009 signature. The probe never calls `/settle`, holds
+no buyer key and moves no asset.
+
+A weekly, no-secret GitHub workflow detects facilitator compatibility drift. See
+[`docs/X402_SANDBOX.md`](docs/X402_SANDBOX.md) for the precise evidence boundary and the separate
+requirements for an operator-controlled funded testnet settlement.
+
 ## Human approval and supersession
 
 A signed decision is never mutated. `REQUIRE_APPROVAL` is an immutable statement that policy needed
@@ -412,6 +423,8 @@ pnpm audit --prod --audit-level high
    packaging, monitored process isolation and SDK upgrade governance remain operator work.
 8. Card and paid MCP lanes are mock conformance fixtures, not production card-network or MCP billing
    integrations.
+9. The public x402 sandbox probe proves current SDK connectivity and fail-closed verification only.
+   It does not claim a successful onchain settlement.
 
 ## Licence
 
