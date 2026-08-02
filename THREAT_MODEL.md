@@ -39,6 +39,7 @@ decision only after every local check passes and after the nonce store accepts c
 | Changed amount                                         | Overspend                                      | Canonical decimal amount and atomic x402 amount are both bound                               |
 | Changed settlement network                             | Wrong-chain settlement                         | Network is in the action and requirements digest                                             |
 | Replayed decision                                      | Duplicate settlement                           | Short TTL, nonce and atomic single-use store                                                 |
+| Concurrent decisions exceed the daily limit            | Cumulative policy overspend                    | PostgreSQL rechecks the limit under a write lock and commits consumption with spend          |
 | Same retry creates a duplicate                         | Duplicate execution                            | Stable execution reference, idempotent consumption and facilitator idempotency requirement   |
 | Stale policy                                           | Old control set authorises payment             | Expected policy version and signed policy hash                                               |
 | Expired approval                                       | Old authority is reused                        | Issued-at and expires-at checks at execution time, plus a bounded approval-resolution window |

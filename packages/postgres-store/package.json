@@ -1,0 +1,35 @@
+{
+  "name": "@inntris/postgres-store",
+  "version": "0.2.0",
+  "description": "Durable PostgreSQL policy state with atomic decision consumption and spend accounting.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./src/index.ts",
+  "bin": {
+    "inntris-postgres-migrate": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "migrations",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@inntris/decision-core": "workspace:*",
+    "@inntris/policy-engine": "workspace:*",
+    "decimal.js": "10.6.0",
+    "pg": "8.22.0"
+  },
+  "devDependencies": {
+    "@types/pg": "8.20.3"
+  }
+}

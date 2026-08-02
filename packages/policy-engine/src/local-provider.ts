@@ -22,6 +22,7 @@ import {
 import { evaluatePolicy, spendDayKey, ZeroSpendState, type SpendState } from "./evaluate.js";
 import { InMemoryDecisionStateStore, type DecisionStateStore } from "./decision-store.js";
 import { DEFAULT_APPROVAL_REQUEST_TTL_SECONDS, type InntrisPolicyV1 } from "./policy.js";
+import type { AtomicPolicyStateStore } from "./state-store.js";
 
 export interface LocalPolicyDecisionProviderOptions {
   policy: InntrisPolicyV1;
@@ -30,6 +31,7 @@ export interface LocalPolicyDecisionProviderOptions {
   spendState?: SpendState;
   nonceStore?: NonceStore;
   decisionStore?: DecisionStateStore;
+  stateStore?: AtomicPolicyStateStore;
   metrics?: MetricsRecorder;
 }
 
@@ -39,14 +41,25 @@ export class LocalPolicyDecisionProvider implements DecisionProvider {
   readonly #spendState: SpendState;
   readonly #nonceStore: NonceStore;
   readonly #decisionStore: DecisionStateStore;
+  readonly #stateStore: AtomicPolicyStateStore | undefined;
   readonly #metrics: MetricsRecorder;
 
   constructor(readonly options: LocalPolicyDecisionProviderOptions) {
+    if (
+      options.stateStore !== undefined &&
+      (options.spendState !== undefined ||
+        options.nonceStore !== undefined ||
+        options.decisionStore !== undefined)
+    ) {
+      throw new Error("stateStore cannot be combined with spendState, nonceStore or decisionStore");
+    }
     this.policyHash = hashPolicyObject(options.policy);
     this.#clock = options.clock ?? systemClock;
-    this.#spendState = options.spendState ?? new ZeroSpendState();
+    this.#stateStore = options.stateStore;
+    this.#spendState = options.stateStore ?? options.spendState ?? new ZeroSpendState();
     this.#nonceStore = options.nonceStore ?? new InMemoryNonceStore();
-    this.#decisionStore = options.decisionStore ?? new InMemoryDecisionStateStore();
+    this.#decisionStore =
+      options.stateStore ?? options.decisionStore ?? new InMemoryDecisionStateStore();
     this.#metrics = options.metrics ?? noOpMetrics;
   }
 
@@ -181,29 +194,36 @@ export class LocalPolicyDecisionProvider implements DecisionProvider {
         reason_code: "DECISION_EXPIRED",
       };
     }
-    const result = await this.#nonceStore.consume({
+    const consumption = {
       decisionId: decision.decision_id,
       nonce: decision.nonce,
       actionHash: decision.action_hash,
       executionRef: input.execution_ref,
       expiresAt: new Date(decision.expires_at),
       consumedAt: now,
-    });
+    };
+    const spend = {
+      principalId: decision.principal_id,
+      dayKey: spendDayKey(now, this.options.policy.time_windows.timezone),
+      amount: decision.transaction.amount,
+    };
+    const result =
+      this.#stateStore === undefined
+        ? await this.#nonceStore.consume(consumption)
+        : await this.#stateStore.consumeAndRecordSpend({
+            consumption,
+            spend,
+            dailyLimit: this.options.policy.limits.daily,
+          });
     if (result.status === "conflict") {
       this.#metrics.replayAttempt();
     }
-    /**
-     * Only a first, unique consumption adds to the cumulative daily total, so
-     * an idempotent retry never counts twice. The nonce is already burnt at
-     * this point: if recording fails, the error propagates, the executor
-     * blocks settlement and the decision cannot be reused.
+    /** Legacy split stores remain available for reference integrations. Only
+     * a first, unique consumption adds to their cumulative daily total. The
+     * atomic state store performs both operations inside its own transaction.
      */
-    if (result.status === "consumed") {
-      await this.#spendState.recordSpend({
-        principalId: decision.principal_id,
-        dayKey: spendDayKey(now, this.options.policy.time_windows.timezone),
-        amount: decision.transaction.amount,
-      });
+    if (this.#stateStore === undefined && result.status === "consumed") {
+      await this.#spendState.recordSpend(spend);
     }
     return result;
   }

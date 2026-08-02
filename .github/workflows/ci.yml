@@ -13,6 +13,20 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      INNTRIS_TEST_POSTGRES_URL: postgresql://inntris:inntris-test@localhost:5432/inntris_test
+    services:
+      postgres:
+        image: postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15
+        env:
+          POSTGRES_USER: inntris
+          POSTGRES_PASSWORD: inntris-test
+          POSTGRES_DB: inntris_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U inntris -d inntris_test" --health-interval 5s --health-timeout
+          5s --health-retries 10
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

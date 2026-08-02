@@ -12,3 +12,8 @@ current policy, and it records cumulative spend on a decision's first consumptio
 resolution. The default `InMemoryDecisionStateStore` is safe against concurrent resolution within
 one process. Production deployments must inject a durable shared implementation whose
 `claimApproval` operation uses database compare-and-set or equivalent transactional semantics.
+
+`AtomicPolicyStateStore` combines decision state, spend state and consumption. Its
+`consumeAndRecordSpend` operation must consume the nonce, increment cumulative spend and recheck the
+daily limit in one transaction. `@inntris/postgres-store` provides the production-oriented reference
+implementation while the original split stores remain available for compatibility and demos.

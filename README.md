@@ -106,6 +106,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for trust boundaries and the fingerprint 
 | --------------------------------- | -------------------------------------------------------------------------------------- |
 | `@inntris/decision-core`          | Strict schemas, JCS, SHA 256 hashes, Ed25519, stable reason codes and replay contracts |
 | `@inntris/policy-engine`          | Versioned policy parsing, deterministic evaluation and the local provider              |
+| `@inntris/postgres-store`         | Durable decisions, atomic approvals, consumption and cumulative spend                  |
 | `@inntris/decision-verifier`      | Offline verification library and `inntris-verify` CLI                                  |
 | `@inntris/x402-adapter`           | Official x402 type binding, remote provider and fail-closed settlement guard           |
 | `@inntris/a2a-settlement-gate`    | Finality, consumption, delegate idempotency and signed receipts for paid A2A tasks     |
@@ -142,6 +143,17 @@ repeat returns `APPROVAL_ALREADY_RESOLVED`.
 
 The approval window is `approval.request_ttl_seconds` (default 900), measured from the original
 decision's `issued_at` and independent of the much shorter `decision_ttl_seconds`.
+
+## Durable PostgreSQL state
+
+`@inntris/postgres-store` implements the local provider's atomic policy state contract. It persists
+immutable decisions, claims each approval once and commits nonce consumption with the cumulative
+spend increment in one PostgreSQL transaction. The daily limit is rechecked under the database write
+lock, so two independently issued decisions cannot overrun the limit concurrently.
+
+The in-memory stores remain the default for the zero-configuration demo. A production deployment
+must inject `PostgresPolicyStateStore` or another implementation with equivalent durability and
+transaction semantics. See [`packages/postgres-store/README.md`](packages/postgres-store/README.md).
 
 ## A2A settlement gate
 
@@ -316,16 +328,15 @@ pnpm audit --prod --audit-level high
 
 ## Known limitations
 
-1. The default nonce and decision-state stores are in-memory reference implementations. A deployment
-   must inject durable, atomic stores shared by every executor instance. In particular,
-   `DecisionStateStore.claimApproval` must be implemented as an atomic compare-and-set operation.
+1. The default stores remain in-memory reference implementations. The optional PostgreSQL store
+   supplies durable decisions, atomic approval claims and atomic consumption with spend accounting,
+   but deployments still need database provisioning, backups, access controls and monitoring.
 2. Generic consumption cannot be atomic with every external payment rail. The executor must retain
    the same execution reference, use facilitator idempotency and reconcile a consume-success,
    settlement-unknown outcome.
-3. `SpendState` accumulates on first consumption, so the reference cumulative limit is only as
-   correct as the injected store. It is not a distributed ledger, and `recordSpend` is not atomic
-   with nonce consumption: if recording fails the nonce is already burnt, so the decision is dead
-   and settlement is refused. Production cumulative limits require an atomic durable spend store.
+3. Legacy split `NonceStore` and `SpendState` implementations cannot make consumption and spend
+   atomic. Production cumulative limits must use `AtomicPolicyStateStore`; the PostgreSQL
+   implementation also rechecks the daily limit during consumption to prevent concurrent overruns.
 4. The public fixture signing identity is intentionally known and must never be used in production.
 5. No claim is made about HSM custody, disaster recovery, production latency, blockchain finality or
    a live hosted deployment.

@@ -53,5 +53,7 @@ Changes must preserve:
 21. Multi-rail conformance uses one policy and one verifier, and every exact action mutation must
     invalidate the original signed decision.
 22. Mock card fixtures contain only opaque credential-reference hashes, never card credentials.
+23. Production policy state commits nonce consumption and spend atomically and rechecks cumulative
+    limits during the transaction.
 
 The test suite contains direct regression tests for these invariants.

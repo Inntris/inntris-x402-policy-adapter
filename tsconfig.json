@@ -5,6 +5,7 @@
     { "path": "./packages/ap2-runtime-gate" },
     { "path": "./packages/decision-core" },
     { "path": "./packages/policy-engine" },
+    { "path": "./packages/postgres-store" },
     { "path": "./packages/decision-verifier" },
     { "path": "./packages/multi-rail-conformance" },
     { "path": "./packages/wallet-signing-gate" },

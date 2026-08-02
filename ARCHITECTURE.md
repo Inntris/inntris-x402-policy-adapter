@@ -155,6 +155,11 @@ instead of risking a second side effect.
 First consumption succeeds. A retry using the same execution reference returns the original
 consumption success. A different reference is a replay conflict.
 
+`AtomicPolicyStateStore` also commits the daily spend increment in the consumption transaction. The
+PostgreSQL implementation locks the cumulative spend row through its atomic upsert and rechecks the
+daily limit there. Decisions can therefore be evaluated concurrently without allowing their later
+consumption to overrun the shared limit. A rejected limit check rolls the nonce insert back.
+
 No generic library can make a database nonce write atomic with every external facilitator. A
 production executor must use the same execution reference as the facilitator idempotency key and
 reconcile an unknown settlement outcome instead of creating a new execution.
