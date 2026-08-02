@@ -120,18 +120,26 @@ export function verifyDecisionSignature(
   decision: InntrisDecisionV1,
   publicKey: Uint8Array,
 ): boolean {
+  return verifyEd25519Signature(
+    canonicalBytes(signableDecisionPayload(decision)),
+    decision.signing.signature,
+    publicKey,
+  );
+}
+
+export function verifyEd25519Signature(
+  payload: Uint8Array,
+  signatureBase64Url: string,
+  publicKey: Uint8Array,
+): boolean {
   if (publicKey.byteLength !== nacl.sign.publicKeyLength) {
     return false;
   }
   try {
-    const signature = Buffer.from(decision.signing.signature, "base64url");
+    const signature = Buffer.from(signatureBase64Url, "base64url");
     return (
       signature.byteLength === nacl.sign.signatureLength &&
-      nacl.sign.detached.verify(
-        canonicalBytes(signableDecisionPayload(decision)),
-        signature,
-        publicKey,
-      )
+      nacl.sign.detached.verify(payload, signature, publicKey)
     );
   } catch {
     return false;

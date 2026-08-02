@@ -13,6 +13,10 @@
    PostgreSQL store.
 6. Added fail-closed recovery tests for lost MTP responses, substituted evidence, changed execution
    references and exact x402 settlement ordering.
+7. Added `@inntris/managed-signing` with an authenticated remote Ed25519 broker contract, pinned
+   local signature verification and no fallback when the service fails.
+8. Added startup key-registry validation, controlled rotation guidance, retired-key continuity and
+   historical distrust for revoked keys.
 
 ## v0.2.0
 

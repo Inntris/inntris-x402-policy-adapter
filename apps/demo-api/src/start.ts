@@ -10,6 +10,12 @@ import {
   type SigningProvider,
 } from "@inntris/decision-core";
 import {
+  RemoteEd25519SigningProvider,
+  assertRotationRegistry,
+  assertSigningProviderRegistered,
+  loadKeyRegistryFile,
+} from "@inntris/managed-signing";
+import {
   assertSeparateSigningIdentities,
   MtpAuthorityClient,
   MtpCompositeDecisionProvider,
@@ -24,18 +30,44 @@ import { Pool } from "pg";
 
 import { buildDemoApi } from "./app.js";
 
+function configuredValue(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed === "" ? undefined : trimmed;
+}
+
 async function loadSigner(): Promise<SigningProvider> {
-  const direct = process.env.INNTRIS_SIGNING_SEED_BASE64URL;
-  const file = process.env.INNTRIS_SIGNING_SEED_FILE;
+  const direct = configuredValue(process.env.INNTRIS_SIGNING_SEED_BASE64URL);
+  const file = configuredValue(process.env.INNTRIS_SIGNING_SEED_FILE);
   const demoMode = process.env.INNTRIS_DEMO_MODE === "true";
-  const configured = [direct !== undefined, file !== undefined, demoMode].filter(Boolean).length;
+  const managedUrl = configuredValue(process.env.INNTRIS_MANAGED_SIGNER_URL);
+  const configured = [
+    direct !== undefined,
+    file !== undefined,
+    demoMode,
+    managedUrl !== undefined,
+  ].filter(Boolean).length;
   if (configured !== 1) {
     throw new Error(
-      "Configure exactly one signing source: seed environment variable, mounted file or explicit demo mode",
+      "Configure exactly one signing source: seed environment variable, mounted file, managed signer or explicit demo mode",
     );
   }
   if (demoMode) {
     return createPublicDemoSigner();
+  }
+  if (managedUrl !== undefined) {
+    const bearerToken = process.env.INNTRIS_MANAGED_SIGNER_BEARER_TOKEN?.trim();
+    const publicKey = process.env.INNTRIS_MANAGED_SIGNER_PUBLIC_KEY_BASE64URL?.trim();
+    if (bearerToken === undefined || publicKey === undefined) {
+      throw new Error(
+        "Managed signing requires INNTRIS_MANAGED_SIGNER_BEARER_TOKEN and INNTRIS_MANAGED_SIGNER_PUBLIC_KEY_BASE64URL",
+      );
+    }
+    return new RemoteEd25519SigningProvider({
+      endpointUrl: managedUrl,
+      bearerToken,
+      keyId: configuredValue(process.env.INNTRIS_SIGNING_KEY_ID) ?? "decision-key-1",
+      publicKeyBase64Url: publicKey,
+    });
   }
   let seed: string;
   if (direct !== undefined) {
@@ -52,12 +84,29 @@ async function loadSigner(): Promise<SigningProvider> {
 }
 
 async function loadMtpSigner(): Promise<SigningProvider> {
-  const direct = process.env.INNTRIS_MTP_SIGNING_SEED_BASE64URL;
-  const file = process.env.INNTRIS_MTP_SIGNING_SEED_FILE;
-  if ((direct === undefined) === (file === undefined)) {
+  const direct = configuredValue(process.env.INNTRIS_MTP_SIGNING_SEED_BASE64URL);
+  const file = configuredValue(process.env.INNTRIS_MTP_SIGNING_SEED_FILE);
+  const managedUrl = configuredValue(process.env.INNTRIS_MTP_MANAGED_SIGNER_URL);
+  const configured = [direct !== undefined, file !== undefined, managedUrl !== undefined].filter(
+    Boolean,
+  ).length;
+  if (configured !== 1) {
     throw new Error(
-      "Configure exactly one MTP signing source: seed environment variable or mounted file",
+      "Configure exactly one MTP signing source: seed environment variable, mounted file or managed signer",
     );
+  }
+  if (managedUrl !== undefined) {
+    const bearerToken = process.env.INNTRIS_MTP_MANAGED_SIGNER_BEARER_TOKEN?.trim();
+    const publicKey = process.env.INNTRIS_MTP_MANAGED_SIGNER_PUBLIC_KEY_BASE64URL?.trim();
+    if (bearerToken === undefined || publicKey === undefined) {
+      throw new Error("Managed MTP signing requires its bearer token and public key configuration");
+    }
+    return new RemoteEd25519SigningProvider({
+      endpointUrl: managedUrl,
+      bearerToken,
+      keyId: configuredValue(process.env.INNTRIS_MTP_SIGNING_KEY_ID) ?? "mtp-agent-key-1",
+      publicKeyBase64Url: publicKey,
+    });
   }
   let seed: string;
   if (direct !== undefined) {
@@ -117,14 +166,24 @@ if (mtpApiUrl !== undefined && mtpApiUrl !== "") {
     stateStore: new PostgresMtpAuthorityStateStore(pool),
   });
 }
-const keyRegistry = {
-  version: "inntris-key-registry-v1" as const,
-  keys: [
-    buildKeyRegistryEntry(signer, {
-      notBefore: new Date("2026-01-01T00:00:00.000Z"),
-    }),
-  ],
-};
+const registryFile = process.env.INNTRIS_KEY_REGISTRY_FILE?.trim();
+if (configuredValue(process.env.INNTRIS_MANAGED_SIGNER_URL) !== undefined && !registryFile) {
+  throw new Error("INNTRIS_KEY_REGISTRY_FILE is required with managed Decision Envelope signing");
+}
+const keyRegistry =
+  registryFile === undefined || registryFile === ""
+    ? {
+        version: "inntris-key-registry-v1" as const,
+        keys: [
+          buildKeyRegistryEntry(signer, {
+            notBefore: new Date("2026-01-01T00:00:00.000Z"),
+          }),
+        ],
+      }
+    : assertSigningProviderRegistered(
+        signer,
+        assertRotationRegistry(await loadKeyRegistryFile(resolve(registryFile))),
+      );
 const app = await buildDemoApi({
   provider,
   keyRegistry,

@@ -37,6 +37,7 @@
     "@inntris/ap2-runtime-gate": "workspace:*",
     "@inntris/decision-core": "workspace:*",
     "@inntris/decision-verifier": "workspace:*",
+    "@inntris/managed-signing": "workspace:*",
     "@inntris/multi-rail-conformance": "workspace:*",
     "@inntris/mtp-authority": "workspace:*",
     "@inntris/policy-engine": "workspace:*",
