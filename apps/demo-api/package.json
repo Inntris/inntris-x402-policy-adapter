@@ -13,7 +13,9 @@
     "@inntris/decision-core": "workspace:*",
     "@inntris/decision-verifier": "workspace:*",
     "@inntris/policy-engine": "workspace:*",
+    "@inntris/postgres-store": "workspace:*",
     "fastify": "5.10.0",
+    "pg": "8.22.0",
     "zod": "4.4.3"
   }
 }

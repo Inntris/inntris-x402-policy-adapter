@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+1. Added an optional PostgreSQL policy state package with durable immutable decisions and atomic
+   approval claims.
+2. Made decision consumption, cumulative spend recording and the final daily limit check one
+   transaction for PostgreSQL backed providers.
+3. Added migration tooling, reference API wiring and database concurrency and rollback tests.
+
 ## v0.2.0
 
 1. Added fail-closed A2A settlement and AP2 runtime gates.

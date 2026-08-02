@@ -9,6 +9,8 @@ import {
   type SigningProvider,
 } from "@inntris/decision-core";
 import { LocalPolicyDecisionProvider, loadPolicyFile } from "@inntris/policy-engine";
+import { assertPostgresStoreReady, PostgresPolicyStateStore } from "@inntris/postgres-store";
+import { Pool } from "pg";
 
 import { buildDemoApi } from "./app.js";
 
@@ -44,7 +46,22 @@ const metrics = new InMemoryMetrics();
 const policy = await loadPolicyFile(
   resolve(process.env.INNTRIS_POLICY_FILE ?? "policies/demo-x402-policy.yml"),
 );
-const provider = new LocalPolicyDecisionProvider({ policy, signer, metrics });
+const postgresUrl = process.env.INNTRIS_POSTGRES_URL?.trim();
+const pool =
+  postgresUrl === undefined || postgresUrl === ""
+    ? undefined
+    : new Pool({
+        connectionString: postgresUrl,
+      });
+if (pool !== undefined) {
+  await assertPostgresStoreReady(pool);
+}
+const provider = new LocalPolicyDecisionProvider({
+  policy,
+  signer,
+  metrics,
+  ...(pool === undefined ? {} : { stateStore: new PostgresPolicyStateStore(pool) }),
+});
 const keyRegistry = {
   version: "inntris-key-registry-v1" as const,
   keys: [
@@ -61,6 +78,11 @@ const app = await buildDemoApi({
     process.env.INNTRIS_SERVICE_API_KEY === "" ? undefined : process.env.INNTRIS_SERVICE_API_KEY,
   metrics,
 });
+if (pool !== undefined) {
+  app.addHook("onClose", async () => {
+    await pool.end();
+  });
+}
 
 await app.listen({
   host: process.env.INNTRIS_API_HOST ?? "127.0.0.1",
