@@ -17,6 +17,9 @@
    local signature verification and no fallback when the service fails.
 8. Added startup key-registry validation, controlled rotation guidance, retired-key continuity and
    historical distrust for revoked keys.
+9. Added a no-secret official x402 test-facilitator probe for advertised Base Sepolia exact support
+   and fail-closed invalid-signature verification.
+10. Added a weekly sandbox compatibility workflow and explicit non-settlement evidence boundary.
 
 ## v0.2.0
 

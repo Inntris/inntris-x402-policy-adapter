@@ -83,6 +83,8 @@ decision only after every local check passes and after the nonce store accepts c
 | Remote signer is unavailable or returns malformed data | Signing control could be bypassed               | Fail closed with no local-key or unsigned fallback                                               |
 | Retired key signs after the rotation boundary          | Old custody authority remains live              | Startup registry validation requires an active key inside its validity window                    |
 | Key is compromised after historical use                | Earlier decisions may no longer be trustworthy  | Explicit `revoked` status invalidates historical verification; `retired` preserves it            |
+| Sandbox probe accidentally settles                     | Test assets move or a key enters CI             | Public probe calls only `/supported` and `/verify`; it has no buyer key                          |
+| Facilitator compatibility drifts                       | Production integration fails unexpectedly       | Weekly official-SDK probe requires Base Sepolia exact support and structured rejection           |
 
 ## Residual risks
 
@@ -108,6 +110,8 @@ decision only after every local check passes and after the nonce store accepts c
     first MTP composition release exposes automatic `ALLOW` only.
 15. The managed signing adapter verifies broker output but cannot prove that the downstream key is
     held by certified hardware or that the operator's custody controls are effective.
+16. The public sandbox probe is negative-path operating evidence. A funded testnet settlement and
+    production facilitator behaviour remain separate operator validations.
 
 ## Out of scope claims
 

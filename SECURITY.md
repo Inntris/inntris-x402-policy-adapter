@@ -69,5 +69,9 @@ Changes must preserve:
 29. A retired key requires an explicit cutover boundary and remains usable only for decisions issued
     inside its published validity window.
 30. A revoked key invalidates historical trust and must never be selected for new signing.
+31. The public x402 sandbox probe may call `/supported` and `/verify`, but never `/settle` and never
+    loads a buyer private key.
+32. A funded sandbox run must keep its dedicated buyer key outside Git, chat, fixtures and normal
+    logs.
 
 The test suite contains direct regression tests for these invariants.
