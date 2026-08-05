@@ -22,7 +22,7 @@
   "dependencies": {
     "@inntris/decision-core": "workspace:*",
     "@inntris/decision-verifier": "workspace:*",
-    "viem": "2.55.8",
+    "viem": "2.55.10",
     "zod": "4.4.3"
   }
 }
