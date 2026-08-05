@@ -45,7 +45,7 @@
     "@inntris/postgres-store": "workspace:*",
     "@inntris/wallet-signing-gate": "workspace:*",
     "@inntris/x402-adapter": "workspace:*",
-    "@types/node": "24.10.13",
+    "@types/node": "26.1.2",
     "eslint": "10.8.0",
     "prettier": "3.9.6",
     "pg": "8.22.0",
