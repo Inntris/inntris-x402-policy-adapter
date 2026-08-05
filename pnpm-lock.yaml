@@ -132,8 +132,8 @@ importers:
   packages/a2a-settlement-gate:
     dependencies:
       '@a2a-js/sdk':
-        specifier: 1.0.0
-        version: 1.0.0
+        specifier: 1.0.1
+        version: 1.0.1
       '@inntris/decision-core':
         specifier: workspace:*
         version: link:../decision-core
@@ -330,8 +330,8 @@ importers:
 
 packages:
 
-  '@a2a-js/sdk@1.0.0':
-    resolution: {integrity: sha512-xKZLyPZxoaYZG9f/Axff2JaDHuZyiG11n+Fc8E3zb8x0nivbBE4Ni/wA0MEB1TuWw3ws8Xl1wT9qoDDTA3lTFA==}
+  '@a2a-js/sdk@1.0.1':
+    resolution: {integrity: sha512-CJQdh3Wzwo8qIx5UUkSJ7+7BEI16PB+MXMHHNSmx8JQsQed2HlQgvx1ENOiKUfYA3PlcEvxIwv14dBblhDuPmw==}
     engines: {node: '>=20'}
     peerDependencies:
       '@bufbuild/protobuf': ^2.10.2
@@ -1113,8 +1113,8 @@ packages:
     peerDependencies:
       ws: '*'
 
-  jose@6.2.5:
-    resolution: {integrity: sha512-2E5L2yRp03FnwreJLJX8/r7mHiZICCf8kG7fAsTWkSQTDAcc46NIZoQLKy+EJ8sPoJlxyS4OQR5H70LjIZZlIQ==}
+  jose@6.2.8:
+    resolution: {integrity: sha512-Bsdjwm3Qsd/P0jR+BHDe3LytDfY7WBq2HmCCLIwuVRHMuEC9ae7/R474GIUdF1NgCyZjzVo/A9DOiOBtXq8ZoQ==}
 
   json-buffer@3.0.1:
     resolution: {integrity: sha512-4bV5BfR2mqfQTJm+V5tPPdf+ZpuhiIvTuAB5g8kcrXOZpTT/QwwVRWBywX1ozr6lEuPdbHxwaJlm9G6mI2sfSQ==}
@@ -1644,9 +1644,9 @@ packages:
 
 snapshots:
 
-  '@a2a-js/sdk@1.0.0':
+  '@a2a-js/sdk@1.0.1':
     dependencies:
-      jose: 6.2.5
+      jose: 6.2.8
       uuid: 11.1.1
 
   '@adraffy/ens-normalize@1.11.1': {}
@@ -2361,7 +2361,7 @@ snapshots:
     dependencies:
       ws: 8.21.0
 
-  jose@6.2.5: {}
+  jose@6.2.8: {}
 
   json-buffer@3.0.1: {}
 
