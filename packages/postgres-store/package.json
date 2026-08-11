@@ -1,6 +1,6 @@
 {
   "name": "@inntris/postgres-store",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Durable PostgreSQL policy state with atomic decision consumption and spend accounting.",
   "license": "MIT",
   "type": "module",
@@ -26,6 +26,7 @@
   "dependencies": {
     "@inntris/decision-core": "workspace:*",
     "@inntris/execution-reconciliation": "workspace:*",
+    "@inntris/kya-os-authority": "workspace:*",
     "@inntris/mtp-authority": "workspace:*",
     "@inntris/policy-engine": "workspace:*",
     "decimal.js": "10.6.0",

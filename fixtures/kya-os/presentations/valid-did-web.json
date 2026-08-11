@@ -1,0 +1,115 @@
+{
+  "profile": "entity-card-v1",
+  "request": {
+    "method": "tools/call",
+    "params": {
+      "name": "payments.transfer",
+      "arguments": {
+        "to": "did:web:merchant.example",
+        "amount": "42.00",
+        "currency": "USD",
+        "resource": "did:web:api.example:payments"
+      }
+    }
+  },
+  "request_proof": {
+    "prf": "org.kya-os/proof.v1",
+    "alg": "EdDSA",
+    "did": "did:web:agent.example",
+    "kid": "did:web:agent.example#key-1",
+    "audience": "did:web:inntris.example:verifier",
+    "nonce": "AQIDBAUGBwgJCgsMDQ4PNA",
+    "created": 1786442400,
+    "expires": 1786442460,
+    "requestHash": "sha-256=:EDAeXoReX07SgmLF+U2Mmfgp7I8YeDA9jTxKuGAy4XA=:",
+    "cnf": { "jkt": "m8n6Addvmu2YupHKgzUXsuiZOMJJlOTy8y7fvOPF-Vg" },
+    "jws": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6YWdlbnQuZXhhbXBsZSNrZXktMSJ9..jfOvSO1fe8LrIvodETefWvDUxtQwdJ_lIavtpg4-kVGwY4IV_cGYC7J3tDGt9adaIj80axs4MVdI_3-MkQihCw",
+    "httpSig": "RM5BEi5izahyBtvypBGUYrs7hZZn_BwgYjBrtOc9yIJKtdAxV0-BcyS-TeaBDn3z3xxyUvPKjiGNPyOnWNbjDw"
+  },
+  "delegation_chain": [
+    {
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://w3id.org/security/zcap/v1",
+        "https://kya-os.org/ns/delegation/v1"
+      ],
+      "id": "urn:uuid:00000000-0000-4000-8000-000000000041",
+      "type": ["VerifiableCredential", "DelegationCredential"],
+      "issuer": "did:key:z6MkwJFpvJVFe15ygGgYLTYuiPwfhkkDRkMG4eKQFT8g65yE",
+      "validFrom": "2026-08-11T09:59:00.000Z",
+      "validUntil": "2026-08-11T10:05:00.000Z",
+      "credentialSubject": {
+        "id": "urn:zcap:kya-root",
+        "invoker": "did:key:z6MkgAnvkP45uNxwCKeNdt6wrYkEjpYX4f7Nrd8MQqFL8Fbn",
+        "parentCapability": "did:web:api.example:payments",
+        "invocationTarget": "did:web:api.example:payments",
+        "allowedAction": ["payments.transfer"],
+        "caveats": [
+          { "type": "MaxAmount", "limit": "500.00", "currency": "USD" },
+          { "type": "ValidUntil", "date": "2026-08-11T10:05:00.000Z" }
+        ]
+      },
+      "credentialStatus": {
+        "type": "BitstringStatusListEntry",
+        "statusPurpose": "revocation",
+        "statusListIndex": "41",
+        "statusListCredential": "https://status.example/kya/root"
+      },
+      "proof": {
+        "type": "DataIntegrityProof",
+        "cryptosuite": "eddsa-jcs-2022",
+        "created": "2026-08-11T10:00:00.000Z",
+        "verificationMethod": "did:key:z6MkwJFpvJVFe15ygGgYLTYuiPwfhkkDRkMG4eKQFT8g65yE#z6MkwJFpvJVFe15ygGgYLTYuiPwfhkkDRkMG4eKQFT8g65yE",
+        "proofPurpose": "assertionMethod",
+        "@context": [
+          "https://www.w3.org/ns/credentials/v2",
+          "https://w3id.org/security/zcap/v1",
+          "https://kya-os.org/ns/delegation/v1"
+        ],
+        "proofValue": "z3RgVs4QqvY88scQBhzXX4ECy2tdi8nYuTLzPVHimt1povwmeDur8SRuBfeWcG5cVEQYb5wr8N1CsPLG5486cJGxy"
+      }
+    },
+    {
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://w3id.org/security/zcap/v1",
+        "https://kya-os.org/ns/delegation/v1"
+      ],
+      "id": "urn:uuid:00000000-0000-4000-8000-000000000042",
+      "type": ["VerifiableCredential", "DelegationCredential"],
+      "issuer": "did:key:z6MkgAnvkP45uNxwCKeNdt6wrYkEjpYX4f7Nrd8MQqFL8Fbn",
+      "validFrom": "2026-08-11T09:59:30.000Z",
+      "validUntil": "2026-08-11T10:04:00.000Z",
+      "credentialSubject": {
+        "id": "urn:zcap:kya-leaf",
+        "invoker": "did:web:agent.example",
+        "parentCapability": "urn:zcap:kya-root",
+        "invocationTarget": "did:web:api.example:payments",
+        "allowedAction": ["payments.transfer"],
+        "caveats": [
+          { "type": "MaxAmount", "limit": "400.00", "currency": "USD" },
+          { "type": "ValidUntil", "date": "2026-08-11T10:04:00.000Z" }
+        ]
+      },
+      "credentialStatus": {
+        "type": "BitstringStatusListEntry",
+        "statusPurpose": "revocation",
+        "statusListIndex": "42",
+        "statusListCredential": "https://status.example/kya/leaf"
+      },
+      "proof": {
+        "type": "DataIntegrityProof",
+        "cryptosuite": "eddsa-jcs-2022",
+        "created": "2026-08-11T10:00:00.000Z",
+        "verificationMethod": "did:key:z6MkgAnvkP45uNxwCKeNdt6wrYkEjpYX4f7Nrd8MQqFL8Fbn#z6MkgAnvkP45uNxwCKeNdt6wrYkEjpYX4f7Nrd8MQqFL8Fbn",
+        "proofPurpose": "assertionMethod",
+        "@context": [
+          "https://www.w3.org/ns/credentials/v2",
+          "https://w3id.org/security/zcap/v1",
+          "https://kya-os.org/ns/delegation/v1"
+        ],
+        "proofValue": "z2mBALALBEaretWpAD8YchJxD2DWkgkDQnQyp4LckFUYjMVzKdgdGc4Wvc97eyJE4szB2QKjjSA8Rf2Xp1WSxKzua"
+      }
+    }
+  ]
+}

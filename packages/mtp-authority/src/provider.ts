@@ -1,16 +1,22 @@
 import type {
   ConsumeDecisionInput,
   ConsumeDecisionResult,
+  BlockDecisionIssuer,
+  BoundApprovalDecisionProvider,
   DecisionProvider,
   InntrisActionV1,
   InntrisDecisionV1,
+  ReasonCode,
+  ResolveApprovalInput,
+  ResolveApprovalResult,
 } from "@inntris/decision-core";
+import { InntrisActionV1Schema } from "@inntris/decision-core";
 
 import { MtpAuthorityClient, MtpConsumptionRejectedError } from "./client.js";
 import type { MtpAuthorityStateStore } from "./types.js";
 
 export interface MtpCompositeDecisionProviderOptions {
-  provider: DecisionProvider;
+  provider: DecisionProvider & BlockDecisionIssuer & BoundApprovalDecisionProvider;
   client: MtpAuthorityClient;
   stateStore: MtpAuthorityStateStore;
   clock?: { now(): Date } | undefined;
@@ -38,7 +44,9 @@ function reject(
  * MTP is consumed first and checkpointed before the local decision is consumed.
  * Settlement remains outside this class and is called only by the rail guard.
  */
-export class MtpCompositeDecisionProvider implements DecisionProvider {
+export class MtpCompositeDecisionProvider
+  implements DecisionProvider, BlockDecisionIssuer, BoundApprovalDecisionProvider
+{
   readonly #clock: { now(): Date };
 
   constructor(readonly options: MtpCompositeDecisionProviderOptions) {
@@ -51,6 +59,53 @@ export class MtpCompositeDecisionProvider implements DecisionProvider {
     const authorization = await this.options.client.authorize(action, decision);
     await this.options.stateStore.saveAuthorization(authorization);
     return decision;
+  }
+
+  async issueBlock(action: InntrisActionV1, reasonCodes: ReasonCode[]): Promise<InntrisDecisionV1> {
+    return this.options.provider.issueBlock(action, reasonCodes);
+  }
+
+  async #authoriseApprovalResult(
+    action: InntrisActionV1,
+    result: ResolveApprovalResult,
+  ): Promise<ResolveApprovalResult> {
+    if (result.decision?.verdict === "ALLOW") {
+      const authorization = await this.options.client.authorize(action, result.decision);
+      await this.options.stateStore.saveAuthorization(authorization);
+    }
+    return result;
+  }
+
+  async resolveApproval(input: ResolveApprovalInput): Promise<ResolveApprovalResult> {
+    const result = await this.options.provider.resolveApproval?.(input);
+    if (result === undefined) {
+      return {
+        success: false,
+        status: "rejected",
+        decision_id: input.decision_id,
+        reason_code: "APPROVAL_NOT_PENDING",
+      };
+    }
+    const decision = result.decision;
+    if (decision === undefined) return result;
+    const action = InntrisActionV1Schema.parse({
+      version: "inntris-action-v1",
+      principal_id: decision.principal_id,
+      agent_id: decision.agent_id,
+      action_type: decision.action_type,
+      rail: decision.rail,
+      protocol_reference: decision.protocol_reference,
+      transaction: decision.transaction,
+    });
+    return this.#authoriseApprovalResult(action, result);
+  }
+
+  async resolveApprovalWithAction(
+    input: ResolveApprovalInput,
+    action: InntrisActionV1,
+  ): Promise<ResolveApprovalResult> {
+    const result = await this.options.provider.resolveApprovalWithAction(input, action);
+    return this.#authoriseApprovalResult(action, result);
   }
 
   async consume(input: ConsumeDecisionInput): Promise<ConsumeDecisionResult> {

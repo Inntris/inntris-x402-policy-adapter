@@ -1,6 +1,6 @@
 {
   "name": "@inntris/mtp-authority",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Fail-closed composition of signed Inntris decisions with MTP execution authority.",
   "license": "MIT",
   "type": "module",

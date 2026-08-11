@@ -1,0 +1,27 @@
+version: 1
+policy_id: demo-kya-authority
+policy_version: "1"
+mode: required
+profiles:
+  - entity-card-v1
+  - legacy-v1
+expected_audiences:
+  - did:web:inntris.example:verifier
+accepted_did_methods:
+  - did:key
+  - did:web
+responsible_parties:
+  - did:key:z6MkvDqGT54cXesYGvABpF1UapVNwjCqRcafi4Px6Thv5T3Z
+allowed_actions:
+  - payments.transfer
+min_proof_assurance: L3-minus
+require_fresh_revocation: true
+require_max_amount: true
+max_delegation_depth: 10
+principal_source: responsible_party
+resource_bindings:
+  - inntris_resource: https://merchant.example/api/data
+    kya_invocation_target: did:web:api.example:payments
+currency_bindings:
+  - inntris_asset: USDC
+    kya_currency: USD

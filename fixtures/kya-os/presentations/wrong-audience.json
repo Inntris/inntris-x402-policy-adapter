@@ -1,0 +1,6 @@
+{
+  "version": "inntris-kya-mutation-vector-v1",
+  "base": "valid-two-hop.json",
+  "mutation": "wrong-audience",
+  "expected_reason_code": "KYA_AUDIENCE_MISMATCH"
+}

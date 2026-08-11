@@ -23,3 +23,7 @@ Every decision fixture contains:
 | `stale-policy-version`    | Expected policy version mismatch        |
 | `replayed-decision`       | Second unique execution conflicts       |
 | `x402-challenge-mismatch` | Payment requirements mismatch           |
+
+The `kya-os/` subtree contains genuine signed KYA request proofs and delegation credentials plus
+named mutation vectors for delegated authority checks. All identities are deterministic TEST ONLY
+identities and are separate from every production or Inntris signing key.

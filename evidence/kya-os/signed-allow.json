@@ -1,0 +1,40 @@
+{
+  "version": "inntris-decision-v1",
+  "decision_id": "018f0000-0000-7000-8000-000000000401",
+  "decision_fingerprint": "sha256:88e20a32a9920d02e9afc39a63b8b262408bc7ef9ad3e0426baeb3c0e56edf41",
+  "verdict": "ALLOW",
+  "principal_id": "did:key:z6MkwJFpvJVFe15ygGgYLTYuiPwfhkkDRkMG4eKQFT8g65yE",
+  "agent_id": "did:key:z6Mkj6joiZPz3kKe5PpGNLjCrTphanK4S5PXgpwVQPkyrvVk",
+  "action_type": "financial_transaction",
+  "action_hash": "sha256:beed43f8842b4b9f556eeb3ed3075adf3637c67105d82bcfb247667842706753",
+  "transaction": {
+    "amount": "42.00",
+    "asset": "USDC",
+    "network": "eip155:8453",
+    "payee": "did:web:merchant.example",
+    "purpose": "research_api"
+  },
+  "policy": {
+    "policy_hash": "sha256:ff1bfd36449ecb0982f040e5bf5fa5f4343639238521661745a05b90c09c088d",
+    "policy_version": "1"
+  },
+  "approval": { "mode": "policy_engine", "approval_reference": null, "approver_ids": [] },
+  "reason_codes": ["MERCHANT_ALLOWED", "WITHIN_TRANSACTION_LIMIT", "WITHIN_DAILY_LIMIT"],
+  "issued_at": "2026-08-11T10:00:00.000Z",
+  "expires_at": "2026-08-11T10:01:00.000Z",
+  "nonce": "a3lhLWV2aWRlbmNlLWFsbG93",
+  "supersedes_decision_id": null,
+  "signing": {
+    "alg": "Ed25519",
+    "key_id": "test-key-1",
+    "signature": "AlyKnOARp48SwGD7cE9qmUh7m3qfv3pRdF-B4UZdspVodBW_p0OYLilLhUrk7psaMjvWMEp2o52EfNETdsK1Ag"
+  },
+  "rail": "x402",
+  "protocol_reference": {
+    "type": "x402",
+    "resource": "https://merchant.example/api/data",
+    "scheme": "exact",
+    "payment_requirements_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "payment_payload_hash": null
+  }
+}

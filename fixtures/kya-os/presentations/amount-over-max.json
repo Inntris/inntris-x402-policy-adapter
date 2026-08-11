@@ -1,0 +1,6 @@
+{
+  "version": "inntris-kya-mutation-vector-v1",
+  "base": "valid-two-hop.json",
+  "mutation": "amount-over-max",
+  "expected_reason_code": "KYA_AMOUNT_EXCEEDS_DELEGATION"
+}

@@ -11,3 +11,8 @@ durable state before consumption, claims one settlement attempt and records succ
 or unknown outcome. An unresolved earlier attempt blocks automatic retry. A settlement error is
 unknown by default; use `classifySettlementError` only for rail errors that prove no side effect
 occurred. See [`docs/RECONCILIATION.md`](../../docs/RECONCILIATION.md).
+
+`actionFromKyaX402` is the higher level KYA reference binding. It derives only provisional identity
+from the presentation, rejects the reserved KYA extension and must always feed the result through
+`KyaAuthorityGate`, which cryptographically recomputes both identities and every financial join
+before organisational policy runs.

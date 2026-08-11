@@ -6,9 +6,19 @@ import {
   InMemoryMetrics,
   buildKeyRegistryEntry,
   createPublicDemoSigner,
+  type BlockDecisionIssuer,
+  type BoundApprovalDecisionProvider,
   type DecisionProvider,
   type SigningProvider,
 } from "@inntris/decision-core";
+import {
+  createProductionKyaAuthorityVerifier,
+  InMemoryKyaAuthorityStateStore,
+  InMemoryKyaMetrics,
+  InMemoryKyaNonceStore,
+  KyaAuthorityGate,
+  loadKyaAuthorityPolicyFile,
+} from "@inntris/kya-os-authority";
 import {
   RemoteEd25519SigningProvider,
   assertRotationRegistry,
@@ -24,6 +34,8 @@ import { LocalPolicyDecisionProvider, loadPolicyFile } from "@inntris/policy-eng
 import {
   assertPostgresStoreReady,
   PostgresExecutionReconciliationStore,
+  PostgresKyaAuthorityStateStore,
+  PostgresKyaNonceStore,
   PostgresMtpAuthorityStateStore,
   PostgresPolicyStateStore,
 } from "@inntris/postgres-store";
@@ -145,7 +157,8 @@ const localProvider = new LocalPolicyDecisionProvider({
   ...(pool === undefined ? {} : { stateStore: new PostgresPolicyStateStore(pool) }),
 });
 const mtpApiUrl = process.env.INNTRIS_MTP_API_URL?.trim();
-let provider: DecisionProvider = localProvider;
+let provider: DecisionProvider & BlockDecisionIssuer & BoundApprovalDecisionProvider =
+  localProvider;
 if (mtpApiUrl !== undefined && mtpApiUrl !== "") {
   const mtpAgentId = process.env.INNTRIS_MTP_AGENT_ID?.trim();
   if (mtpAgentId === undefined || mtpAgentId === "") {
@@ -185,12 +198,67 @@ const keyRegistry =
         signer,
         assertRotationRegistry(await loadKeyRegistryFile(resolve(registryFile))),
       );
+
+const kyaMode = configuredValue(process.env.INNTRIS_KYA_MODE) ?? "disabled";
+if (kyaMode !== "disabled" && kyaMode !== "optional" && kyaMode !== "required") {
+  throw new Error("INNTRIS_KYA_MODE must be disabled, optional or required");
+}
+let kya:
+  | {
+      mode: "optional" | "required";
+      policy: Awaited<ReturnType<typeof loadKyaAuthorityPolicyFile>>;
+      gate: KyaAuthorityGate;
+    }
+  | undefined;
+if (kyaMode !== "disabled") {
+  const policyFile = configuredValue(process.env.INNTRIS_KYA_POLICY_FILE);
+  if (policyFile === undefined) {
+    throw new Error("INNTRIS_KYA_POLICY_FILE is required when KYA authority is enabled");
+  }
+  const authorityPolicy = await loadKyaAuthorityPolicyFile(resolve(policyFile));
+  if (authorityPolicy.mode !== kyaMode) {
+    throw new Error("INNTRIS_KYA_MODE must match the configured KYA authority policy mode");
+  }
+  if (authorityPolicy.principal_source === "card_principal") {
+    throw new Error(
+      "This reference startup does not configure a trusted Entity Card principal verifier",
+    );
+  }
+  if (kyaMode === "required" && pool === undefined) {
+    throw new Error("INNTRIS_POSTGRES_URL is required when KYA authority is required");
+  }
+  const nonceStore =
+    pool === undefined ? new InMemoryKyaNonceStore() : new PostgresKyaNonceStore(pool);
+  const authorityStateStore =
+    pool === undefined
+      ? new InMemoryKyaAuthorityStateStore()
+      : new PostgresKyaAuthorityStateStore(pool);
+  const kyaMetrics = new InMemoryKyaMetrics();
+  if (
+    kyaMode === "required" &&
+    (nonceStore.durability !== "durable" || authorityStateStore.durability !== "durable")
+  ) {
+    throw new Error("KYA required mode needs atomic durable authority state");
+  }
+  kya = {
+    mode: kyaMode,
+    policy: authorityPolicy,
+    gate: new KyaAuthorityGate({
+      provider,
+      verifier: createProductionKyaAuthorityVerifier({ nonceStore }),
+      authorityPolicy,
+      stateStore: authorityStateStore,
+      metrics: kyaMetrics,
+    }),
+  };
+}
 const app = await buildDemoApi({
   provider,
   keyRegistry,
   expectedPolicyVersion: policy.policy_version,
   serviceApiKey: configuredValue(process.env.INNTRIS_SERVICE_API_KEY),
   metrics,
+  ...(kya === undefined ? {} : { kya }),
   ...(pool === undefined
     ? {}
     : { reconciliationStore: new PostgresExecutionReconciliationStore(pool) }),

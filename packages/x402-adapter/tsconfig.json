@@ -9,6 +9,7 @@
   "references": [
     { "path": "../decision-core" },
     { "path": "../decision-verifier" },
-    { "path": "../execution-reconciliation" }
+    { "path": "../execution-reconciliation" },
+    { "path": "../kya-os-authority" }
   ]
 }

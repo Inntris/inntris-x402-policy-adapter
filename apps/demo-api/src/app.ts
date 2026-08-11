@@ -9,6 +9,19 @@ import {
 } from "@inntris/decision-core";
 import { verifyDecision } from "@inntris/decision-verifier";
 import type { ExecutionReconciliationStore } from "@inntris/execution-reconciliation";
+import {
+  hashKyaAuthorityPolicy,
+  KyaAuthorityPresentationSchema,
+  type KyaAuthorityPolicyV1,
+  type KyaConsumeInput,
+  type KyaEvaluateInput,
+  type KyaResolveApprovalInput,
+} from "@inntris/kya-os-authority";
+import {
+  actionFromKyaX402,
+  type PaymentPayload,
+  type PaymentRequirements,
+} from "@inntris/x402-adapter";
 import rateLimit from "@fastify/rate-limit";
 import { timingSafeEqual } from "node:crypto";
 import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from "fastify";
@@ -37,6 +50,23 @@ const ApproveBodySchema = z
     approver_ids: z.array(z.string().min(1).max(128)).min(1).max(32),
   })
   .strict();
+const KyaX402EvaluateBodySchema = z
+  .object({
+    payment_requirements: z.unknown(),
+    payment_payload: z.unknown().optional(),
+    resource: z.url(),
+    purpose: z.string().min(1).max(128),
+    asset_decimals: z.number().int().min(0).max(18),
+    presentation: KyaAuthorityPresentationSchema,
+    extensions: z.record(z.string(), z.unknown()).optional(),
+  })
+  .strict();
+const KyaApproveBodySchema = ApproveBodySchema.extend({
+  presentation: KyaAuthorityPresentationSchema,
+}).strict();
+const KyaConsumeBodySchema = ConsumeBodySchema.extend({
+  presentation: KyaAuthorityPresentationSchema,
+}).strict();
 const ReconciliationQuerySchema = z
   .object({
     updated_before: z.iso.datetime({ offset: true }).optional(),
@@ -53,6 +83,24 @@ export interface DemoApiOptions {
   clock?: Clock | undefined;
   logger?: boolean | undefined;
   reconciliationStore?: ExecutionReconciliationStore | undefined;
+  kya?:
+    | {
+        mode: "optional" | "required";
+        policy: KyaAuthorityPolicyV1;
+        gate: {
+          evaluate(
+            input: KyaEvaluateInput,
+          ): Promise<import("@inntris/decision-core").InntrisDecisionV1>;
+          resolveApproval(
+            input: KyaResolveApprovalInput,
+          ): Promise<import("@inntris/decision-core").ResolveApprovalResult>;
+          consume(
+            input: KyaConsumeInput,
+          ): Promise<import("@inntris/decision-core").ConsumeDecisionResult>;
+          protectsDecision(decisionId: string): Promise<boolean>;
+        };
+      }
+    | undefined;
 }
 
 function parseFailure(reply: FastifyReply, error: unknown): void {
@@ -99,6 +147,23 @@ export async function buildDemoApi(options: DemoApiOptions): Promise<FastifyInst
   }));
 
   app.get("/.well-known/inntris-keys.json", async () => options.keyRegistry);
+
+  app.get("/v1/kya/config", async () => {
+    if (options.kya === undefined) return { enabled: false };
+    return {
+      enabled: true,
+      mode: options.kya.mode,
+      authority_policy: {
+        policy_id: options.kya.policy.policy_id,
+        policy_version: options.kya.policy.policy_version,
+        policy_hash: hashKyaAuthorityPolicy(options.kya.policy),
+        profiles: options.kya.policy.profiles,
+        accepted_did_methods: options.kya.policy.accepted_did_methods,
+        min_proof_assurance: options.kya.policy.min_proof_assurance,
+        require_fresh_revocation: options.kya.policy.require_fresh_revocation,
+      },
+    };
+  });
 
   app.get(
     "/v1/operations/unresolved",
@@ -152,7 +217,16 @@ export async function buildDemoApi(options: DemoApiOptions): Promise<FastifyInst
         return;
       }
       try {
-        const decision = await options.provider.evaluate(body.action);
+        const kya = options.kya;
+        const protectedByRequiredKya =
+          kya?.mode === "required" &&
+          kya.policy.resource_bindings.some(
+            (binding) => binding.inntris_resource === body.action.protocol_reference.resource,
+          );
+        const decision =
+          protectedByRequiredKya && kya !== undefined
+            ? await kya.gate.evaluate({ action: body.action })
+            : await options.provider.evaluate(body.action);
         request.log.info({
           request_id: request.id,
           decision_id: decision.decision_id,
@@ -167,6 +241,120 @@ export async function buildDemoApi(options: DemoApiOptions): Promise<FastifyInst
           error: "decision_service_unavailable",
         });
       }
+    },
+  );
+
+  app.post(
+    "/v1/kya/x402/evaluate",
+    {
+      preHandler: authenticate,
+      config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+    },
+    async (request, reply) => {
+      if (options.kya === undefined) {
+        await reply.status(503).send({ error: "kya_authority_disabled" });
+        return;
+      }
+      let body: z.infer<typeof KyaX402EvaluateBodySchema>;
+      try {
+        body = KyaX402EvaluateBodySchema.parse(request.body);
+      } catch (error) {
+        parseFailure(reply, error);
+        return;
+      }
+      let action;
+      try {
+        action = actionFromKyaX402(
+          {
+            paymentRequirements: body.payment_requirements as PaymentRequirements,
+            ...(body.payment_payload === undefined
+              ? {}
+              : { paymentPayload: body.payment_payload as PaymentPayload }),
+            resource: body.resource,
+            purpose: body.purpose,
+            assetDecimals: body.asset_decimals,
+            presentation: body.presentation,
+            ...(body.extensions === undefined ? {} : { extensions: body.extensions }),
+          },
+          options.kya.policy,
+        );
+      } catch (error) {
+        parseFailure(reply, error);
+        return;
+      }
+      try {
+        const decision = await options.kya.gate.evaluate({
+          action,
+          presentation: body.presentation,
+        });
+        await reply.status(200).send({ decision });
+      } catch {
+        await reply.status(503).send({ error: "kya_authority_state_unavailable" });
+      }
+    },
+  );
+
+  app.post(
+    "/v1/kya/decisions/approve",
+    {
+      preHandler: authenticate,
+      config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+    },
+    async (request, reply) => {
+      if (options.kya === undefined) {
+        await reply.status(503).send({ error: "kya_authority_disabled" });
+        return;
+      }
+      let body: z.infer<typeof KyaApproveBodySchema>;
+      try {
+        body = KyaApproveBodySchema.parse(request.body);
+      } catch (error) {
+        parseFailure(reply, error);
+        return;
+      }
+      const { presentation, ...approval } = body;
+      let result;
+      try {
+        result = await options.kya.gate.resolveApproval({ approval, presentation });
+      } catch {
+        await reply.status(503).send({ error: "kya_authority_state_unavailable" });
+        return;
+      }
+      await reply
+        .status(result.success ? 200 : result.status === "conflict" ? 409 : 422)
+        .send(result);
+    },
+  );
+
+  app.post(
+    "/v1/kya/decisions/consume",
+    {
+      preHandler: authenticate,
+      config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+    },
+    async (request, reply) => {
+      if (options.kya === undefined) {
+        await reply.status(503).send({ error: "kya_authority_disabled" });
+        return;
+      }
+      let body: z.infer<typeof KyaConsumeBodySchema>;
+      try {
+        body = KyaConsumeBodySchema.parse(request.body);
+      } catch (error) {
+        parseFailure(reply, error);
+        return;
+      }
+      const { presentation, ...consumption } = body;
+      let result;
+      try {
+        result = await options.kya.gate.consume({ consumption, presentation });
+      } catch {
+        await reply.status(503).send({ error: "kya_authority_state_unavailable" });
+        return;
+      }
+      await reply
+        .status(result.status === "conflict" ? 409 : result.success ? 200 : 422)
+        .send(result);
     },
   );
 
@@ -224,6 +412,15 @@ export async function buildDemoApi(options: DemoApiOptions): Promise<FastifyInst
       }
       let result;
       try {
+        if (await options.kya?.gate.protectsDecision(body.decision_id)) {
+          await reply.status(422).send({
+            success: false,
+            status: "rejected",
+            decision_id: body.decision_id,
+            reason_code: "KYA_AUTHORITY_REQUIRED",
+          });
+          return;
+        }
         result = await options.provider.resolveApproval(body);
       } catch {
         await reply.status(503).send({ error: "approval_service_unavailable" });
@@ -258,6 +455,16 @@ export async function buildDemoApi(options: DemoApiOptions): Promise<FastifyInst
       }
       let result;
       try {
+        if (await options.kya?.gate.protectsDecision(body.decision_id)) {
+          await reply.status(422).send({
+            success: false,
+            status: "rejected",
+            decision_id: body.decision_id,
+            execution_ref: body.execution_ref,
+            reason_code: "KYA_AUTHORITY_REQUIRED",
+          });
+          return;
+        }
         result = await options.provider.consume(body);
       } catch {
         await reply.status(503).send({ error: "consumption_service_unavailable" });

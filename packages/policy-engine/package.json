@@ -1,6 +1,6 @@
 {
   "name": "@inntris/policy-engine",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Deterministic local policy evaluation and signed decision provider.",
   "license": "MIT",
   "type": "module",

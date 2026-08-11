@@ -1,0 +1,6 @@
+{
+  "version": "inntris-kya-mutation-vector-v1",
+  "base": "valid-two-hop.json",
+  "mutation": "chain-depth-11",
+  "expected_reason_code": "KYA_DELEGATION_INVALID"
+}

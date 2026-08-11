@@ -15,6 +15,7 @@
 11. MTP agent signing identity, approval token and cross-service consumption checkpoint.
 12. Managed signing broker credential, pinned public key and rotation registry.
 13. External side-effect claim, outcome evidence and reconciliation history.
+14. KYA agent identity, delegation chain, revocation freshness, proof nonce and authority history.
 
 ## Actors
 
@@ -35,61 +36,67 @@ decision only after every local check passes and after the nonce store accepts c
 
 ## Attack scenarios and mitigations
 
-| Scenario                                               | Impact                                          | Mitigation                                                                                       |
-| ------------------------------------------------------ | ----------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Prompt-injected agent requests an unauthorised payment | Funds could move outside policy                 | Strict policy checks, exact action binding and fail-closed settlement                            |
-| Malicious or altered 402 challenge                     | Payment terms change after approval             | Official SDK validation plus requirements digest and action hash                                 |
-| Changed payee                                          | Redirected payment                              | Payee is in both the action and requirements digest                                              |
-| Changed amount                                         | Overspend                                       | Canonical decimal amount and atomic x402 amount are both bound                                   |
-| Changed settlement network                             | Wrong-chain settlement                          | Network is in the action and requirements digest                                                 |
-| Replayed decision                                      | Duplicate settlement                            | Short TTL, nonce and atomic single-use store                                                     |
-| Concurrent decisions exceed the daily limit            | Cumulative policy overspend                     | PostgreSQL rechecks the limit under a write lock and commits consumption with spend              |
-| Same retry creates a duplicate                         | Duplicate execution                             | Stable execution reference, idempotent consumption and facilitator idempotency requirement       |
-| Stale policy                                           | Old control set authorises payment              | Expected policy version and signed policy hash                                                   |
-| Expired approval                                       | Old authority is reused                         | Issued-at and expires-at checks at execution time, plus a bounded approval-resolution window     |
-| Approval resolved twice                                | Two live decisions for one approval request     | Resolution is single use and returns `APPROVAL_ALREADY_RESOLVED`                                 |
-| Approval granted after policy turned against it        | Human authority overrides current policy        | Policy is re-evaluated at resolution; a grant can still produce a signed `BLOCK`                 |
-| Issuer restates a subject it did not hash              | Genuine signature over inconsistent evidence    | Verifier cross-checks the decision's restated subject against the supplied action                |
-| Compromised or unknown signing key                     | Forged decisions                                | Explicit registry, key fingerprint, validity window and local Ed25519 verification               |
-| Changed verdict or reason                              | Evidence misrepresents the decision             | Fingerprint and signature cover verdict and reason codes                                         |
-| Inntris unavailable                                    | Policy bypass                                   | Remote errors fail closed with `DECISION_SERVICE_UNAVAILABLE` and never fall back to allow       |
-| Nonce store unavailable                                | Replay window                                   | Consumption failure blocks settlement                                                            |
-| Partial failure after consume                          | Decision consumed but settlement state unknown  | Reconcile by execution reference; never create a second reference                                |
-| `PAYMENT_SUBMITTED` treated as settlement              | Delegate runs before payment is final           | Require explicit settled state and configured finality                                           |
-| Settlement for task A is replayed for task B           | Paid authority unlocks the wrong task           | Bind task, context, resource, submission and settlement into action and execution hashes         |
-| Unknown A2A settlement state                           | Delegate runs while payment outcome is unclear  | Pause execution and require confirmation or reconciliation                                       |
-| A2A delegate retry executes twice                      | Duplicate external side effect                  | Atomic execution claim, stable execution reference and completed-result replay                   |
-| Process fails after delegate claim                     | Delegate outcome is unresolved                  | Keep the claim in progress and block automatic retry pending reconciliation                      |
-| Forged or altered AP2 mandate chain                    | Unauthorised payment                            | Pinned official SDK verifies every chain hop, disclosure and key binding                         |
-| Valid AP2 mandate violates current policy              | Protocol authority bypasses organisation        | Exact mandate hashes feed a new policy decision and only `ALLOW` can execute                     |
-| AP2 merchant, amount or checkout substitution          | Funds or terms are redirected                   | Exact merchant, payee, amount, currency and checkout hash checks                                 |
-| AP2 Payment Mandate replayed for another action        | Duplicate or substituted execution              | Atomic claim keyed by Payment Mandate hash and exact execution binding                           |
-| AP2 verification becomes stale before execution        | Expired authority reaches the rail              | Verification age and mandate expiry are checked before and after policy evaluation               |
-| AP2 trust registry unavailable                         | Unreviewed keys could be accepted               | Trust resolution fails closed                                                                    |
-| AP2 delegate fails after claim                         | Payment outcome is uncertain                    | Keep claim in progress and require reconciliation before retry                                   |
-| EVM transaction changes after authorisation            | Wallet signs different value, target or call    | Rebuild the action and verify the decision immediately before signing                            |
-| Injected wallet signs different transaction bytes      | Authorised decision is applied to another tx    | Parse signed RLP, recover signer and compare every authorised field before broadcast             |
-| Same unsigned EVM transaction gets another decision    | Duplicate signing or broadcast                  | Atomic claim keyed by canonical unsigned transaction hash                                        |
-| Wallet or broadcast outcome becomes uncertain          | Automatic retry could duplicate a side effect   | Keep execution in progress and require reconciliation                                            |
-| Card credential leaks into portable evidence           | Sensitive payment data is exposed               | Bind only an opaque credential-reference hash; reject unknown input fields                       |
-| Paid MCP arguments change after policy evaluation      | A different tool action uses the decision       | Bind canonical tool-argument and payment-reference hashes                                        |
-| Log tampering                                          | Misleading operational record                   | Signed portable decision remains independently verifiable                                        |
-| Attacker-controlled key URL in evidence                | Trust-root substitution or SSRF                 | Offline default; embedded URLs are ignored; explicit HTTPS URL only                              |
-| Private key leaked in logs or repository               | Decision forgery                                | Explicit key loading, no startup generation, redacted logging and secret scanning                |
-| MTP response is lost after token consumption           | Executor cannot tell whether authority was used | Stable execution reference returns the original receipt and resumes the state machine            |
-| MTP token or receipt is substituted                    | Wrong authority could unlock settlement         | Exact request hash, agent, action hash, execution reference and receipt fields are cross-checked |
-| MTP is unavailable or rejects the action               | Secondary controls could be bypassed            | Composition fails closed before local consumption or settlement                                  |
-| MTP agent key is reused as the decision signer         | One compromise crosses two trust boundaries     | Separate configuration and startup public-key equality rejection                                 |
-| Remote signer substitutes a key or signature           | Forged or unverifiable decisions                | Pin key identity and public key; verify every returned signature locally                         |
-| Remote signer is unavailable or returns malformed data | Signing control could be bypassed               | Fail closed with no local-key or unsigned fallback                                               |
-| Retired key signs after the rotation boundary          | Old custody authority remains live              | Startup registry validation requires an active key inside its validity window                    |
-| Key is compromised after historical use                | Earlier decisions may no longer be trustworthy  | Explicit `revoked` status invalidates historical verification; `retired` preserves it            |
-| Sandbox probe accidentally settles                     | Test assets move or a key enters CI             | Public probe calls only `/supported` and `/verify`; it has no buyer key                          |
-| Facilitator compatibility drifts                       | Production integration fails unexpectedly       | Weekly official-SDK probe requires Base Sepolia exact support and structured rejection           |
-| Settlement times out after reaching the facilitator    | Automatic retry may duplicate a payment         | Persist outcome-unknown, block retry and require authoritative reconciliation                    |
-| Execution reference is rebound to changed evidence     | Idempotency key authorises a substituted action | Operation identity and binding cover rail, kind, decision, action and execution reference        |
-| Process stops after the external side effect           | Journal cannot prove the outcome                | Keep in-progress state, expose the authenticated unresolved queue and reconcile before retry     |
-| Operator resolves from weak evidence                   | Incorrect final state hides or duplicates work  | Require resolver identity, outcome reference and resolution note from an authoritative source    |
+| Scenario                                               | Impact                                                         | Mitigation                                                                                                     |
+| ------------------------------------------------------ | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Prompt-injected agent requests an unauthorised payment | Funds could move outside policy                                | Strict policy checks, exact action binding and fail-closed settlement                                          |
+| Malicious or altered 402 challenge                     | Payment terms change after approval                            | Official SDK validation plus requirements digest and action hash                                               |
+| Changed payee                                          | Redirected payment                                             | Payee is in both the action and requirements digest                                                            |
+| Changed amount                                         | Overspend                                                      | Canonical decimal amount and atomic x402 amount are both bound                                                 |
+| Changed settlement network                             | Wrong-chain settlement                                         | Network is in the action and requirements digest                                                               |
+| Replayed decision                                      | Duplicate settlement                                           | Short TTL, nonce and atomic single-use store                                                                   |
+| Concurrent decisions exceed the daily limit            | Cumulative policy overspend                                    | PostgreSQL rechecks the limit under a write lock and commits consumption with spend                            |
+| Same retry creates a duplicate                         | Duplicate execution                                            | Stable execution reference, idempotent consumption and facilitator idempotency requirement                     |
+| Stale policy                                           | Old control set authorises payment                             | Expected policy version and signed policy hash                                                                 |
+| Expired approval                                       | Old authority is reused                                        | Issued-at and expires-at checks at execution time, plus a bounded approval-resolution window                   |
+| Approval resolved twice                                | Two live decisions for one approval request                    | Resolution is single use and returns `APPROVAL_ALREADY_RESOLVED`                                               |
+| Approval granted after policy turned against it        | Human authority overrides current policy                       | Policy is re-evaluated at resolution; a grant can still produce a signed `BLOCK`                               |
+| Issuer restates a subject it did not hash              | Genuine signature over inconsistent evidence                   | Verifier cross-checks the decision's restated subject against the supplied action                              |
+| Compromised or unknown signing key                     | Forged decisions                                               | Explicit registry, key fingerprint, validity window and local Ed25519 verification                             |
+| Changed verdict or reason                              | Evidence misrepresents the decision                            | Fingerprint and signature cover verdict and reason codes                                                       |
+| Inntris unavailable                                    | Policy bypass                                                  | Remote errors fail closed with `DECISION_SERVICE_UNAVAILABLE` and never fall back to allow                     |
+| Nonce store unavailable                                | Replay window                                                  | Consumption failure blocks settlement                                                                          |
+| Partial failure after consume                          | Decision consumed but settlement state unknown                 | Reconcile by execution reference; never create a second reference                                              |
+| `PAYMENT_SUBMITTED` treated as settlement              | Delegate runs before payment is final                          | Require explicit settled state and configured finality                                                         |
+| Settlement for task A is replayed for task B           | Paid authority unlocks the wrong task                          | Bind task, context, resource, submission and settlement into action and execution hashes                       |
+| Unknown A2A settlement state                           | Delegate runs while payment outcome is unclear                 | Pause execution and require confirmation or reconciliation                                                     |
+| A2A delegate retry executes twice                      | Duplicate external side effect                                 | Atomic execution claim, stable execution reference and completed-result replay                                 |
+| Process fails after delegate claim                     | Delegate outcome is unresolved                                 | Keep the claim in progress and block automatic retry pending reconciliation                                    |
+| Forged or altered AP2 mandate chain                    | Unauthorised payment                                           | Pinned official SDK verifies every chain hop, disclosure and key binding                                       |
+| Valid AP2 mandate violates current policy              | Protocol authority bypasses organisation                       | Exact mandate hashes feed a new policy decision and only `ALLOW` can execute                                   |
+| AP2 merchant, amount or checkout substitution          | Funds or terms are redirected                                  | Exact merchant, payee, amount, currency and checkout hash checks                                               |
+| AP2 Payment Mandate replayed for another action        | Duplicate or substituted execution                             | Atomic claim keyed by Payment Mandate hash and exact execution binding                                         |
+| AP2 verification becomes stale before execution        | Expired authority reaches the rail                             | Verification age and mandate expiry are checked before and after policy evaluation                             |
+| AP2 trust registry unavailable                         | Unreviewed keys could be accepted                              | Trust resolution fails closed                                                                                  |
+| AP2 delegate fails after claim                         | Payment outcome is uncertain                                   | Keep claim in progress and require reconciliation before retry                                                 |
+| EVM transaction changes after authorisation            | Wallet signs different value, target or call                   | Rebuild the action and verify the decision immediately before signing                                          |
+| Injected wallet signs different transaction bytes      | Authorised decision is applied to another tx                   | Parse signed RLP, recover signer and compare every authorised field before broadcast                           |
+| Same unsigned EVM transaction gets another decision    | Duplicate signing or broadcast                                 | Atomic claim keyed by canonical unsigned transaction hash                                                      |
+| Wallet or broadcast outcome becomes uncertain          | Automatic retry could duplicate a side effect                  | Keep execution in progress and require reconciliation                                                          |
+| Card credential leaks into portable evidence           | Sensitive payment data is exposed                              | Bind only an opaque credential-reference hash; reject unknown input fields                                     |
+| Paid MCP arguments change after policy evaluation      | A different tool action uses the decision                      | Bind canonical tool-argument and payment-reference hashes                                                      |
+| Log tampering                                          | Misleading operational record                                  | Signed portable decision remains independently verifiable                                                      |
+| Attacker-controlled key URL in evidence                | Trust-root substitution or SSRF                                | Offline default; embedded URLs are ignored; explicit HTTPS URL only                                            |
+| Private key leaked in logs or repository               | Decision forgery                                               | Explicit key loading, no startup generation, redacted logging and secret scanning                              |
+| MTP response is lost after token consumption           | Executor cannot tell whether authority was used                | Stable execution reference returns the original receipt and resumes the state machine                          |
+| MTP token or receipt is substituted                    | Wrong authority could unlock settlement                        | Exact request hash, agent, action hash, execution reference and receipt fields are cross-checked               |
+| MTP is unavailable or rejects the action               | Secondary controls could be bypassed                           | Composition fails closed before local consumption or settlement                                                |
+| MTP agent key is reused as the decision signer         | One compromise crosses two trust boundaries                    | Separate configuration and startup public-key equality rejection                                               |
+| Remote signer substitutes a key or signature           | Forged or unverifiable decisions                               | Pin key identity and public key; verify every returned signature locally                                       |
+| Remote signer is unavailable or returns malformed data | Signing control could be bypassed                              | Fail closed with no local-key or unsigned fallback                                                             |
+| Retired key signs after the rotation boundary          | Old custody authority remains live                             | Startup registry validation requires an active key inside its validity window                                  |
+| Key is compromised after historical use                | Earlier decisions may no longer be trustworthy                 | Explicit `revoked` status invalidates historical verification; `retired` preserves it                          |
+| Sandbox probe accidentally settles                     | Test assets move or a key enters CI                            | Public probe calls only `/supported` and `/verify`; it has no buyer key                                        |
+| Facilitator compatibility drifts                       | Production integration fails unexpectedly                      | Weekly official-SDK probe requires Base Sepolia exact support and structured rejection                         |
+| Settlement times out after reaching the facilitator    | Automatic retry may duplicate a payment                        | Persist outcome-unknown, block retry and require authoritative reconciliation                                  |
+| Execution reference is rebound to changed evidence     | Idempotency key authorises a substituted action                | Operation identity and binding cover rail, kind, decision, action and execution reference                      |
+| Process stops after the external side effect           | Journal cannot prove the outcome                               | Keep in-progress state, expose the authenticated unresolved queue and reconcile before retry                   |
+| Operator resolves from weak evidence                   | Incorrect final state hides or duplicates work                 | Require resolver identity, outcome reference and resolution note from an authoritative source                  |
+| Forged or replayed KYA proof                           | An unauthorised agent reaches policy                           | DID membership, signature, audience, request hash, proof window and atomic nonce consume                       |
+| Broadened or revoked KYA delegation                    | Agent exceeds delegated authority                              | Verify every signature, monotone attenuation, continuity, time and fresh ancestor revocation                   |
+| KYA payment differs from x402 action                   | Authority is applied to other terms                            | Exact amount, payee, target, resource and explicit currency mapping before policy                              |
+| KYA is bypassed through ordinary routes                | Protected action reaches policy or execution without authority | Required mode blocks protected evaluation and KYA decisions cannot use ordinary approval or consumption routes |
+| Approval or consume uses stale KYA authority           | Revoked authority remains executable                           | Fresh proof and delegation revalidation at both lifecycle stages                                               |
+| did:web or status URL targets internal infrastructure  | SSRF or metadata disclosure                                    | Pinned upstream safe fetch with HTTPS, public IP, redirect, size and timeout controls                          |
 
 ## Residual risks
 
@@ -121,6 +128,10 @@ decision only after every local check passes and after the nonce store accepts c
     execution-store contracts and require durable production adapters at their side-effect boundary.
 18. An authoritative resolver can still record incorrect evidence. Access control, separation of
     duties and external evidence retention remain operator responsibilities.
+19. KYA status and DID publishers remain external trust and availability dependencies. Required
+    freshness deliberately blocks valid work when those dependencies cannot be verified.
+20. `card_principal` depends on an operator supplied trusted identity attestation verifier. The
+    reference service rejects that policy feature unless the verifier is configured.
 
 ## Out of scope claims
 

@@ -1,0 +1,117 @@
+{
+  "$id": "https://schemas.inntris.com/inntris-kya-authority-binding-v1.schema.json",
+  "title": "Inntris KYA Authority Binding v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "version": { "type": "string", "const": "inntris-kya-authority-binding-v1" },
+        "status": { "type": "string", "const": "verified" },
+        "profile": { "type": "string", "enum": ["entity-card-v1", "legacy-v1"] },
+        "protocol_version": { "type": "string", "const": "1.0.0" },
+        "reference_implementation": {
+          "type": "object",
+          "properties": {
+            "package": { "type": "string", "const": "@kya-os/mcp" },
+            "version": { "type": "string", "const": "1.12.0" }
+          },
+          "required": ["package", "version"],
+          "additionalProperties": false
+        },
+        "authority_policy_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "presentation_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "proof_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "request_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "delegation_chain_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "entity_card_hash": {
+          "anyOf": [{ "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }, { "type": "null" }]
+        },
+        "agent_did": { "type": "string", "minLength": 1 },
+        "responsible_party_did": { "type": "string", "minLength": 1 },
+        "principal_did": { "anyOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }] },
+        "proof_assurance": { "type": "string", "enum": ["L3-minus", "L3"] },
+        "invocation_target": { "type": "string", "minLength": 1 },
+        "allowed_action": { "type": "string", "const": "payments.transfer" },
+        "max_amount": {
+          "anyOf": [
+            { "type": "string", "pattern": "^(0|[1-9]\\d*)\\.\\d{2,6}$" },
+            { "type": "null" }
+          ]
+        },
+        "currency": { "anyOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }] },
+        "delegation_depth": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "revocation_fresh": { "type": "boolean" },
+        "signatures_verified": { "type": "boolean", "const": true },
+        "verified_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "authority_expires_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "authority_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      },
+      "required": [
+        "version",
+        "status",
+        "profile",
+        "protocol_version",
+        "reference_implementation",
+        "authority_policy_hash",
+        "presentation_hash",
+        "proof_hash",
+        "request_hash",
+        "delegation_chain_hash",
+        "entity_card_hash",
+        "agent_did",
+        "responsible_party_did",
+        "principal_did",
+        "proof_assurance",
+        "invocation_target",
+        "allowed_action",
+        "max_amount",
+        "currency",
+        "delegation_depth",
+        "revocation_fresh",
+        "signatures_verified",
+        "verified_at",
+        "authority_expires_at",
+        "authority_hash"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "version": { "type": "string", "const": "inntris-kya-authority-binding-v1" },
+        "status": { "type": "string", "const": "rejected" },
+        "profile": { "type": "string", "enum": ["entity-card-v1", "legacy-v1"] },
+        "authority_policy_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "presentation_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "failure_stage": {
+          "type": "string",
+          "enum": [
+            "presentation",
+            "request_proof",
+            "delegation_signature",
+            "delegation",
+            "revocation",
+            "financial_join",
+            "state"
+          ]
+        }
+      },
+      "required": [
+        "version",
+        "status",
+        "profile",
+        "authority_policy_hash",
+        "presentation_hash",
+        "failure_stage"
+      ],
+      "additionalProperties": false
+    }
+  ]
+}

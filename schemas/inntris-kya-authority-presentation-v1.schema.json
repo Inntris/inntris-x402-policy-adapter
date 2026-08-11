@@ -1,0 +1,53 @@
+{
+  "$id": "https://schemas.inntris.com/inntris-kya-authority-presentation-v1.schema.json",
+  "title": "Inntris KYA Authority Presentation v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "profile": { "type": "string", "const": "entity-card-v1" },
+        "request": {
+          "type": "object",
+          "properties": {
+            "method": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "params": {}
+          },
+          "required": ["method"],
+          "additionalProperties": false
+        },
+        "request_proof": {},
+        "delegation_chain": { "minItems": 1, "maxItems": 10, "type": "array", "items": {} },
+        "entity_card": {},
+        "token_cnf_jkt": { "type": "string", "minLength": 1 }
+      },
+      "required": ["profile", "request", "request_proof", "delegation_chain"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "profile": { "type": "string", "const": "legacy-v1" },
+        "request": {
+          "type": "object",
+          "properties": {
+            "method": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "params": {}
+          },
+          "required": ["method"],
+          "additionalProperties": false
+        },
+        "credential": {
+          "anyOf": [
+            { "type": "string", "minLength": 1 },
+            { "type": "object", "propertyNames": { "type": "string" }, "additionalProperties": {} }
+          ]
+        },
+        "audience": { "type": "string", "minLength": 1 },
+        "proof": {}
+      },
+      "required": ["profile", "request", "credential", "audience"],
+      "additionalProperties": false
+    }
+  ]
+}

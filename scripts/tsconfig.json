@@ -13,6 +13,7 @@
     { "path": "../packages/policy-engine" },
     { "path": "../packages/decision-verifier" },
     { "path": "../packages/execution-reconciliation" },
+    { "path": "../packages/kya-os-authority" },
     { "path": "../packages/multi-rail-conformance" },
     { "path": "../packages/wallet-signing-gate" },
     { "path": "../packages/x402-adapter" }

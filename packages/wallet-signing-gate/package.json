@@ -1,6 +1,6 @@
 {
   "name": "@inntris/wallet-signing-gate",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Fail-closed Inntris authorisation gate for injected EVM wallets.",
   "license": "MIT",
   "type": "module",

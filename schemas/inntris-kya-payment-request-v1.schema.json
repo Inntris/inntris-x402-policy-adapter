@@ -1,0 +1,30 @@
+{
+  "$id": "https://schemas.inntris.com/inntris-kya-payment-request-v1.schema.json",
+  "title": "Inntris KYA Payment Request v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "method": { "type": "string", "const": "tools/call" },
+    "params": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "const": "payments.transfer" },
+        "arguments": {
+          "type": "object",
+          "properties": {
+            "to": { "type": "string", "minLength": 1, "maxLength": 512 },
+            "amount": { "type": "string", "pattern": "^(0|[1-9]\\d*)\\.\\d{2,6}$" },
+            "currency": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "resource": { "type": "string", "minLength": 1, "maxLength": 1024 }
+          },
+          "required": ["to", "amount", "currency", "resource"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["name", "arguments"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["method", "params"],
+  "additionalProperties": false
+}

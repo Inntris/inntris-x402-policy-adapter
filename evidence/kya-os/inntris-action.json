@@ -1,0 +1,50 @@
+{
+  "version": "inntris-action-v1",
+  "principal_id": "did:key:z6MkwJFpvJVFe15ygGgYLTYuiPwfhkkDRkMG4eKQFT8g65yE",
+  "agent_id": "did:key:z6Mkj6joiZPz3kKe5PpGNLjCrTphanK4S5PXgpwVQPkyrvVk",
+  "action_type": "financial_transaction",
+  "transaction": {
+    "amount": "42.00",
+    "asset": "USDC",
+    "network": "eip155:8453",
+    "payee": "did:web:merchant.example",
+    "purpose": "research_api"
+  },
+  "extensions": {
+    "org.inntris/kya-os": {
+      "version": "inntris-kya-authority-binding-v1",
+      "status": "verified",
+      "profile": "entity-card-v1",
+      "protocol_version": "1.0.0",
+      "reference_implementation": { "package": "@kya-os/mcp", "version": "1.12.0" },
+      "authority_policy_hash": "sha256:9803915bc7e535bd6603ca84d15c5edf7388367b25220874539de5f94e2f09bf",
+      "presentation_hash": "sha256:c0efaa1d56b63a2a5adae6b3d77aeeee8a8fe59e2bbeef668df0c22f1e79710c",
+      "proof_hash": "sha256:4c84a77a18c35f17fd2771b9b7c9089f656431d2a94c8166d2d26e51d676235f",
+      "request_hash": "sha256:10301e5e845e5f4ed28262c5f94d8c99f829ec8f1878303d8d3c4ab86032e170",
+      "delegation_chain_hash": "sha256:0f22b56f9ad12317f53f0c69cbb1c26dc59da587bd18ec7cd250dd76ecb859b3",
+      "entity_card_hash": null,
+      "agent_did": "did:key:z6Mkj6joiZPz3kKe5PpGNLjCrTphanK4S5PXgpwVQPkyrvVk",
+      "responsible_party_did": "did:key:z6MkwJFpvJVFe15ygGgYLTYuiPwfhkkDRkMG4eKQFT8g65yE",
+      "principal_did": null,
+      "proof_assurance": "L3-minus",
+      "invocation_target": "did:web:api.example:payments",
+      "allowed_action": "payments.transfer",
+      "max_amount": "400.00",
+      "currency": "USD",
+      "delegation_depth": 2,
+      "revocation_fresh": true,
+      "signatures_verified": true,
+      "verified_at": "2026-08-11T10:00:00.000Z",
+      "authority_expires_at": "2026-08-11T10:01:00.000Z",
+      "authority_hash": "sha256:90b5726b3cafdb6ff0f3de0ff2a034fcd0c663d5363e69104a7439142b1212e9"
+    }
+  },
+  "rail": "x402",
+  "protocol_reference": {
+    "type": "x402",
+    "resource": "https://merchant.example/api/data",
+    "scheme": "exact",
+    "payment_requirements_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "payment_payload_hash": null
+  }
+}

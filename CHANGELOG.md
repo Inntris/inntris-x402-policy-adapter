@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.4.0
+
+1. Added `@inntris/kya-os-authority` as an upstream delegated authority gate without adding KYA to
+   the rail schema.
+2. Added stateless KYA request proof verification with DID membership, exact audience and request
+   binding, bounded proof lifetime and atomic nonce replay control.
+3. Added official `eddsa-jcs-2022` verification for every modern VC2/ZCAP delegation hop, monotone
+   chain attenuation and fail closed live revocation.
+4. Added exact amount, payee, resource, currency, agent, principal and delegated MaxAmount joins
+   before ordinary Inntris organisational policy evaluation.
+5. Added signed KYA failure blocks plus fresh authority revalidation for human approval and decision
+   consumption, including safe same execution reference retries.
+6. Added PostgreSQL KYA nonce, immutable decision authority and append only revalidation state.
+7. Added KYA x402 evaluation, approval, consumption and non secret configuration routes, with
+   ordinary route bypass protection across evaluation, approval and consumption.
+8. Added strict schemas, deterministic signed fixtures, independently verified evidence, a separate
+   KYA authority conformance runner and explicit pinned upstream compatibility coverage.
+
 ## v0.3.0
 
 1. Added an optional PostgreSQL policy state package with durable immutable decisions and atomic

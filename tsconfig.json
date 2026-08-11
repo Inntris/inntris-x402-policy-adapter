@@ -5,6 +5,7 @@
     { "path": "./packages/ap2-runtime-gate" },
     { "path": "./packages/decision-core" },
     { "path": "./packages/execution-reconciliation" },
+    { "path": "./packages/kya-os-authority" },
     { "path": "./packages/managed-signing" },
     { "path": "./packages/mtp-authority" },
     { "path": "./packages/policy-engine" },

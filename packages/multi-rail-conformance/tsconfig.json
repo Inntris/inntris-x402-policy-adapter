@@ -10,6 +10,7 @@
     { "path": "../ap2-runtime-gate" },
     { "path": "../decision-core" },
     { "path": "../decision-verifier" },
+    { "path": "../kya-os-authority" },
     { "path": "../policy-engine" },
     { "path": "../wallet-signing-gate" },
     { "path": "../x402-adapter" }

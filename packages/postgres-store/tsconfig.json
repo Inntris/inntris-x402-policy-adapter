@@ -9,6 +9,7 @@
   "references": [
     { "path": "../decision-core" },
     { "path": "../execution-reconciliation" },
+    { "path": "../kya-os-authority" },
     { "path": "../mtp-authority" },
     { "path": "../policy-engine" }
   ]

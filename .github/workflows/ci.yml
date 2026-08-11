@@ -80,19 +80,28 @@ jobs:
       - name: Integration tests
         run: pnpm test:integration
 
+      - name: KYA authority tests
+        run: pnpm test:kya
+
       - name: Multi-rail conformance
         run: pnpm conformance
+
+      - name: KYA authority conformance
+        run: pnpm conformance:kya
 
       - name: Build
         run: pnpm build
 
       - name: Verify committed evidence
-        run: pnpm evidence:verify
+        run: |
+          pnpm evidence:verify
+          pnpm evidence:kya:verify
 
       - name: Reproduce schemas and evidence
         run: |
           pnpm schemas:generate
           pnpm evidence:generate
+          pnpm evidence:kya:generate
           git diff --exit-code -- schemas fixtures evidence
 
       - name: Dependency audit

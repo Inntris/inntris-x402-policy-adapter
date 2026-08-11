@@ -23,3 +23,7 @@ bindings exported by `@inntris/multi-rail-conformance`.
 
 The execution operation schema is generated from the durable reconciliation record exported by
 `@inntris/execution-reconciliation`.
+
+The KYA authority policy, normalised binding, strict payment request and top level presentation
+wrapper schemas are generated from `@inntris/kya-os-authority`. Raw KYA credentials and proofs are
+validated by the pinned `@kya-os/mcp` package and are intentionally not copied into Inntris schemas.

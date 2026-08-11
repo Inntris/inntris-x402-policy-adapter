@@ -14,6 +14,11 @@ the MTP consumption receipt and records completion of local decision consumption
 execution reference to the rail, operation kind, decision and action, atomically claims one attempt,
 records an unknown outcome without retrying and accepts evidence-bearing authoritative resolution.
 
+`PostgresKyaNonceStore` atomically consumes each KYA proof DID and nonce pair.
+`PostgresKyaAuthorityStateStore` preserves immutable decision authority and append only approval and
+consumption revalidation history. A successful consumption revalidation is unique for one decision,
+action hash and execution reference.
+
 ```ts
 import { Pool } from "pg";
 import {
@@ -41,6 +46,9 @@ durable policy and reconciliation stores automatically. It also requires `INNTRI
 before exposing the authenticated unresolved-operation queue. Enabling `INNTRIS_MTP_API_URL`
 additionally injects the durable MTP bridge and refuses to start without PostgreSQL. Without those
 settings the service retains the in-memory demo behaviour.
+
+KYA required mode also refuses to start without PostgreSQL. KYA tables contain minimised verified
+facts and hashes, not private keys, bearer tokens, raw proofs or full credential chains.
 
 The caller owns the pool and must close it during shutdown. Use a dedicated database role whose
 permissions are limited to the `inntris` schema. Run migrations with a separate deployment role when

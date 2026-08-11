@@ -1,6 +1,6 @@
 {
   "name": "@inntris/execution-reconciliation",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Fail-closed execution outcome journal and operator reconciliation state machine.",
   "license": "MIT",
   "type": "module",

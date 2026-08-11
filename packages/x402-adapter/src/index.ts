@@ -1,5 +1,6 @@
 export * from "./binding.js";
 export * from "./guard.js";
+export * from "./kya.js";
 export * from "./remote-provider.js";
 export * from "./sandbox.js";
 
