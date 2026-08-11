@@ -1,7 +1,10 @@
 [extend]
 useDefault = true
 
-[[allowlists]]
+[[rules]]
+id = "generic-api-key"
+
+[[rules.allowlists]]
 description = "Exact public KYA DID identifiers and public JWK thumbprint"
 regexTarget = "secret"
 regexes = [

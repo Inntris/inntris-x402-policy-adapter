@@ -148,22 +148,26 @@ export async function buildDemoApi(options: DemoApiOptions): Promise<FastifyInst
 
   app.get("/.well-known/inntris-keys.json", async () => options.keyRegistry);
 
-  app.get("/v1/kya/config", async () => {
-    if (options.kya === undefined) return { enabled: false };
-    return {
-      enabled: true,
-      mode: options.kya.mode,
-      authority_policy: {
-        policy_id: options.kya.policy.policy_id,
-        policy_version: options.kya.policy.policy_version,
-        policy_hash: hashKyaAuthorityPolicy(options.kya.policy),
-        profiles: options.kya.policy.profiles,
-        accepted_did_methods: options.kya.policy.accepted_did_methods,
-        min_proof_assurance: options.kya.policy.min_proof_assurance,
-        require_fresh_revocation: options.kya.policy.require_fresh_revocation,
-      },
-    };
-  });
+  app.get(
+    "/v1/kya/config",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async () => {
+      if (options.kya === undefined) return { enabled: false };
+      return {
+        enabled: true,
+        mode: options.kya.mode,
+        authority_policy: {
+          policy_id: options.kya.policy.policy_id,
+          policy_version: options.kya.policy.policy_version,
+          policy_hash: hashKyaAuthorityPolicy(options.kya.policy),
+          profiles: options.kya.policy.profiles,
+          accepted_did_methods: options.kya.policy.accepted_did_methods,
+          min_proof_assurance: options.kya.policy.min_proof_assurance,
+          require_fresh_revocation: options.kya.policy.require_fresh_revocation,
+        },
+      };
+    },
+  );
 
   app.get(
     "/v1/operations/unresolved",
