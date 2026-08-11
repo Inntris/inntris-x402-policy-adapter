@@ -20,3 +20,9 @@ must also appear in `allowed_weekdays`.
 `approval.request_ttl_seconds` is optional and controls how long a `REQUIRE_APPROVAL` decision stays
 resolvable, measured from its `issued_at`. Policies that omit it use 900 seconds. Omitting it also
 leaves the hashed policy object unchanged, so adding the field is what changes a policy hash.
+
+## KYA delegated authority
+
+`demo-kya-authority.yml` is a separate authority policy. It does not modify organisational payment
+policy and does not add KYA as a rail. Its allowlist uses a deterministic public test DID only.
+Required mode also needs PostgreSQL for atomic proof replay and durable authority lifecycle state.

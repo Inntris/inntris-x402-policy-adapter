@@ -1,0 +1,17 @@
+[extend]
+useDefault = true
+
+[[rules]]
+id = "generic-api-key"
+
+[[rules.allowlists]]
+description = "Exact public KYA DID identifiers and public JWK thumbprint"
+regexTarget = "secret"
+regexes = [
+  '''^z6MkgAnvkP45uNxwCKeNdt6wrYkEjpYX4f7Nrd8MQqFL8Fbn$''',
+  '''^z6Mkj6joiZPz3kKe5PpGNLjCrTphanK4S5PXgpwVQPkyrvVk$''',
+  '''^z6MkqnwoKGg5VjWaypVSDkp5w9PVjaMwUK4Eszk1d4cejLP8$''',
+  '''^z6MkvDqGT54cXesYGvABpF1UapVNwjCqRcafi4Px6Thv5T3Z$''',
+  '''^z6MkwJFpvJVFe15ygGgYLTYuiPwfhkkDRkMG4eKQFT8g65yE$''',
+  '''^9xMxWqRXVPfwIbyYmGf3GajryGeIOVS2zF65Dh_Inyg$''',
+]

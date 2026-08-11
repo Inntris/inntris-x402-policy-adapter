@@ -1,0 +1,3 @@
+pnpm install --frozen-lockfile
+pnpm evidence:kya:generate
+pnpm evidence:kya:verify

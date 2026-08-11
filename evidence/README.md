@@ -9,3 +9,7 @@ transaction, production signer or blockchain anchor.
 `x402-sandbox-v0.3.0.json` records a hosted no-secret compatibility probe against the official x402
 test facilitator. It proves advertised Base Sepolia exact support and rejection of a deliberately
 invalid signature. It does not represent a funded settlement.
+
+`kya-os/` records reproducible v0.4.0 delegated authority evidence using deterministic public test
+identities. It proves the local cryptographic and binding path only. Verify it with
+`pnpm evidence:kya:verify`.

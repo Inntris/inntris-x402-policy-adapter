@@ -1,6 +1,6 @@
 {
   "name": "@inntris/multi-rail-conformance",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Shared Inntris Decision Envelope conformance suite across five payment and tool rails.",
   "license": "MIT",
   "type": "module",
@@ -23,6 +23,7 @@
     "@inntris/ap2-runtime-gate": "workspace:*",
     "@inntris/decision-core": "workspace:*",
     "@inntris/decision-verifier": "workspace:*",
+    "@inntris/kya-os-authority": "workspace:*",
     "@inntris/policy-engine": "workspace:*",
     "@inntris/wallet-signing-gate": "workspace:*",
     "@inntris/x402-adapter": "workspace:*",

@@ -1,0 +1,101 @@
+{
+  "$id": "https://schemas.inntris.com/inntris-kya-authority-policy-v1.schema.json",
+  "title": "Inntris KYA Authority Policy v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": { "type": "number", "const": 1 },
+    "policy_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "policy_version": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "mode": { "type": "string", "enum": ["required", "optional"] },
+    "profiles": {
+      "minItems": 1,
+      "maxItems": 2,
+      "type": "array",
+      "items": { "type": "string", "enum": ["entity-card-v1", "legacy-v1"] }
+    },
+    "expected_audiences": {
+      "minItems": 1,
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "accepted_did_methods": {
+      "minItems": 1,
+      "maxItems": 2,
+      "type": "array",
+      "items": { "type": "string", "enum": ["did:key", "did:web"] }
+    },
+    "responsible_parties": {
+      "minItems": 1,
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "allowed_actions": {
+      "minItems": 1,
+      "type": "array",
+      "items": { "type": "string", "const": "payments.transfer" }
+    },
+    "min_proof_assurance": { "type": "string", "enum": ["L3-minus", "L3"] },
+    "require_fresh_revocation": { "type": "boolean" },
+    "require_max_amount": { "type": "boolean" },
+    "max_delegation_depth": { "type": "integer", "minimum": 1, "maximum": 10 },
+    "principal_source": { "type": "string", "enum": ["responsible_party", "card_principal"] },
+    "resource_bindings": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "inntris_resource": { "type": "string", "format": "uri" },
+          "kya_invocation_target": { "type": "string", "minLength": 1, "maxLength": 1024 }
+        },
+        "required": ["inntris_resource", "kya_invocation_target"],
+        "additionalProperties": false
+      }
+    },
+    "currency_bindings": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "inntris_asset": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "kya_currency": { "type": "string", "minLength": 1, "maxLength": 128 }
+        },
+        "required": ["inntris_asset", "kya_currency"],
+        "additionalProperties": false
+      }
+    },
+    "payee_bindings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "inntris_payee": { "type": "string", "minLength": 1, "maxLength": 512 },
+          "kya_payee": { "type": "string", "minLength": 1, "maxLength": 512 }
+        },
+        "required": ["inntris_payee", "kya_payee"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "version",
+    "policy_id",
+    "policy_version",
+    "mode",
+    "profiles",
+    "expected_audiences",
+    "accepted_did_methods",
+    "responsible_parties",
+    "allowed_actions",
+    "min_proof_assurance",
+    "require_fresh_revocation",
+    "require_max_amount",
+    "max_delegation_depth",
+    "principal_source",
+    "resource_bindings",
+    "currency_bindings"
+  ],
+  "additionalProperties": false
+}

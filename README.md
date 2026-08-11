@@ -6,6 +6,10 @@
 This repository is a public Phase 1 reference implementation of a rail-independent Inntris Decision
 Envelope and a fail-closed adapter for the official x402 TypeScript SDK.
 
+Version 0.4.0 adds a separate KYA OS delegated authority gate above those rails. KYA establishes
+agent identity and delegated scope; Inntris still makes and signs the organisational policy
+decision. Verified authority is exact-bound in the reserved `org.inntris/kya-os` action extension.
+
 Inntris evaluates organisational policy, signs an immutable `ALLOW`, `BLOCK` or `REQUIRE_APPROVAL`
 decision, binds it to the exact proposed payment and lets a separate executor consume that decision
 once before settlement.
@@ -110,6 +114,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for trust boundaries and the fingerprint 
 | `@inntris/execution-reconciliation` | Side-effect claims, unknown outcomes and authoritative resolution                      |
 | `@inntris/managed-signing`          | Provider-neutral remote Ed25519 signing and controlled public-key rotation             |
 | `@inntris/decision-verifier`        | Offline verification library and `inntris-verify` CLI                                  |
+| `@inntris/kya-os-authority`         | KYA proof, delegation, revocation, financial joins and lifecycle revalidation          |
 | `@inntris/x402-adapter`             | Official x402 type binding, remote provider and fail-closed settlement guard           |
 | `@inntris/mtp-authority`            | Composed MTP authority, safe execution retries and recoverable consumption ordering    |
 | `@inntris/a2a-settlement-gate`      | Finality, consumption, delegate idempotency and signed receipts for paid A2A tasks     |
@@ -120,6 +125,10 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for trust boundaries and the fingerprint 
 
 The adapter pins `@x402/core` `2.20.0`. It imports `PaymentRequirements` and `PaymentPayload` from
 `@x402/core/types` and validates them with the official runtime schemas.
+
+The authority package pins `@kya-os/mcp` `1.12.0` and the official Digital Bazaar `eddsa-jcs-2022`
+cryptosuite `1.0.0`. See [`docs/KYA_OS_INTEGRATION.md`](docs/KYA_OS_INTEGRATION.md) and
+[`docs/KYA_OS_SECURITY.md`](docs/KYA_OS_SECURITY.md).
 
 ## Official x402 sandbox
 

@@ -6,6 +6,7 @@ const MIGRATION_VERSIONS = [
   "001_initial",
   "002_mtp_authority",
   "003_execution_reconciliation",
+  "004_kya_authority",
 ] as const;
 const MIGRATION_LOCK_ID = 1_661_437_315;
 

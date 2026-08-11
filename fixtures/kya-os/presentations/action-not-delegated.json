@@ -1,0 +1,6 @@
+{
+  "version": "inntris-kya-mutation-vector-v1",
+  "base": "valid-two-hop.json",
+  "mutation": "action-not-delegated",
+  "expected_reason_code": "KYA_ACTION_NOT_DELEGATED"
+}

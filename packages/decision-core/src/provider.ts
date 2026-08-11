@@ -46,6 +46,21 @@ export interface DecisionProvider {
   resolveApproval?(input: ResolveApprovalInput): Promise<ResolveApprovalResult>;
 }
 
+/** Narrow signing seam for upstream authority failures. Implementations may
+ * issue only a signed BLOCK and cannot be used to manufacture an ALLOW. */
+export interface BlockDecisionIssuer {
+  issueBlock(action: InntrisActionV1, reasonCodes: ReasonCode[]): Promise<InntrisDecisionV1>;
+}
+
+/** Trusted composition seam for an authority layer that must replace only its
+ * freshly revalidated action binding before an approval decision is signed. */
+export interface BoundApprovalDecisionProvider {
+  resolveApprovalWithAction(
+    input: ResolveApprovalInput,
+    action: InntrisActionV1,
+  ): Promise<ResolveApprovalResult>;
+}
+
 export interface NonceConsumption {
   decisionId: string;
   nonce: string;

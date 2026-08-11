@@ -81,5 +81,19 @@ Changes must preserve:
     evidence resolves them.
 36. Reconciliation resolution must exact-match the operation binding and record the resolver,
     external outcome reference and evidence note.
+37. KYA remains an authority input above rails and cannot change the public rail schema.
+38. A caller cannot supply the reserved `org.inntris/kya-os` extension.
+39. KYA proof verification must bind DID membership, audience, request hash, time window and one
+    atomically consumed nonce.
+40. Every modern delegation hop uses the pinned official `eddsa-jcs-2022` cryptosuite and the whole
+    chain must preserve attenuation, continuity, target, validity and revocation freshness.
+41. KYA and Inntris amount, payee, resource, asset, agent and principal joins are recomputed before
+    normal policy evaluation.
+42. Required mode needs durable PostgreSQL nonce and authority lifecycle state.
+43. Approval and consumption require fresh KYA authority; only the same successful execution
+    reference may reuse a durable revalidation.
+44. Logs and authority tables must not store private keys, tokens, raw proofs, full credential
+    chains or identity attestations.
+45. KYA protected decisions cannot use the ordinary approval or consumption API routes.
 
 The test suite contains direct regression tests for these invariants.

@@ -9,10 +9,12 @@
   "references": [
     { "path": "../../packages/decision-core" },
     { "path": "../../packages/execution-reconciliation" },
+    { "path": "../../packages/kya-os-authority" },
     { "path": "../../packages/managed-signing" },
     { "path": "../../packages/mtp-authority" },
     { "path": "../../packages/policy-engine" },
     { "path": "../../packages/postgres-store" },
-    { "path": "../../packages/decision-verifier" }
+    { "path": "../../packages/decision-verifier" },
+    { "path": "../../packages/x402-adapter" }
   ]
 }

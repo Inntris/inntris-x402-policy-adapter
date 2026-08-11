@@ -37,6 +37,9 @@ postgres("PostgreSQL policy state", () => {
     await pool.query("DROP FUNCTION IF EXISTS inntris.fail_spend() CASCADE");
     await pool.query(`
       TRUNCATE TABLE
+        inntris.kya_authority_revalidations,
+        inntris.kya_authority_decisions,
+        inntris.kya_proof_nonces,
         inntris.execution_operations,
         inntris.mtp_authorisations,
         inntris.approval_claims,

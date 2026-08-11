@@ -14,6 +14,7 @@ export default tseslint.config(
       "vitest*.config.ts",
       "fixtures/**/*.json",
       "evidence/**/*.json",
+      "types/**/*.d.ts",
     ],
   },
   eslint.configs.recommended,

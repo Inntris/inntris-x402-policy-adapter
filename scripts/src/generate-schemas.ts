@@ -18,6 +18,12 @@ import {
   KeyRegistrySchema,
 } from "@inntris/decision-core";
 import { ExecutionOperationRecordSchema } from "@inntris/execution-reconciliation";
+import {
+  KyaAuthorityBindingV1Schema,
+  KyaAuthorityPolicyV1Schema,
+  KyaAuthorityPresentationSchema,
+  KyaPaymentRequestV1Schema,
+} from "@inntris/kya-os-authority";
 import { InntrisPolicyV1Schema } from "@inntris/policy-engine";
 import {
   MockCardAuthorisationInputSchema,
@@ -31,6 +37,26 @@ import { format } from "prettier";
 import { toJSONSchema, type ZodType } from "zod";
 
 const schemas: [string, string, ZodType][] = [
+  [
+    "inntris-kya-authority-binding-v1.schema.json",
+    "Inntris KYA Authority Binding v1",
+    KyaAuthorityBindingV1Schema,
+  ],
+  [
+    "inntris-kya-authority-policy-v1.schema.json",
+    "Inntris KYA Authority Policy v1",
+    KyaAuthorityPolicyV1Schema,
+  ],
+  [
+    "inntris-kya-authority-presentation-v1.schema.json",
+    "Inntris KYA Authority Presentation v1",
+    KyaAuthorityPresentationSchema,
+  ],
+  [
+    "inntris-kya-payment-request-v1.schema.json",
+    "Inntris KYA Payment Request v1",
+    KyaPaymentRequestV1Schema,
+  ],
   [
     "inntris-a2a-action-binding-v1.schema.json",
     "Inntris A2A Action Binding v1",

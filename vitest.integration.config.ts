@@ -4,5 +4,6 @@ export default defineConfig({
   test: {
     include: ["test/integration/**/*.test.ts"],
     testTimeout: 30_000,
+    fileParallelism: false,
   },
 });

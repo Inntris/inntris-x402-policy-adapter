@@ -1,0 +1,40 @@
+{
+  "version": "inntris-decision-v1",
+  "decision_id": "018f0000-0000-7000-8000-000000000402",
+  "decision_fingerprint": "sha256:74b049f4a769e641d162d731251770a1902d2584bf0d43b106bb32257bd26670",
+  "verdict": "BLOCK",
+  "principal_id": "did:key:z6MkwJFpvJVFe15ygGgYLTYuiPwfhkkDRkMG4eKQFT8g65yE",
+  "agent_id": "did:key:z6Mkj6joiZPz3kKe5PpGNLjCrTphanK4S5PXgpwVQPkyrvVk",
+  "action_type": "financial_transaction",
+  "action_hash": "sha256:68e7e7fe1819a5fc838f7f79209e2f2a576d96c5b127261e402632e1fecc5735",
+  "transaction": {
+    "amount": "401.00",
+    "asset": "USDC",
+    "network": "eip155:8453",
+    "payee": "did:web:merchant.example",
+    "purpose": "research_api"
+  },
+  "policy": {
+    "policy_hash": "sha256:ff1bfd36449ecb0982f040e5bf5fa5f4343639238521661745a05b90c09c088d",
+    "policy_version": "1"
+  },
+  "approval": { "mode": "policy_engine", "approval_reference": null, "approver_ids": [] },
+  "reason_codes": ["KYA_AMOUNT_EXCEEDS_DELEGATION"],
+  "issued_at": "2026-08-11T10:00:00.000Z",
+  "expires_at": "2026-08-11T10:01:00.000Z",
+  "nonce": "a3lhLWV2aWRlbmNlLW92ZXI",
+  "supersedes_decision_id": null,
+  "signing": {
+    "alg": "Ed25519",
+    "key_id": "test-key-1",
+    "signature": "F4f9kf0H8NhW6ZAQECUCfKaeZjURQWmgJFdOg4Nk-Bhi3wfwPHnGgjb0tvqjAqQQs3TH4k8e9SbKOd8gjMmIDw"
+  },
+  "rail": "x402",
+  "protocol_reference": {
+    "type": "x402",
+    "resource": "https://merchant.example/api/data",
+    "scheme": "exact",
+    "payment_requirements_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "payment_payload_hash": null
+  }
+}

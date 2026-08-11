@@ -126,3 +126,23 @@ The response contains `in_progress` and `outcome_unknown` operation records orde
 newest. It does not expose a state-changing resolution route. Production resolution must use the
 store contract from an authenticated operator service that has obtained authoritative rail evidence.
 See [`RECONCILIATION.md`](RECONCILIATION.md).
+
+## KYA delegated authority
+
+`GET /v1/kya/config` returns enabled mode, authority policy identity and hash, accepted profiles and
+DID methods, minimum proof assurance and fresh revocation requirement. It exposes no keys, tokens or
+private network configuration.
+
+`POST /v1/kya/x402/evaluate` accepts x402 payment requirements, the resource, purpose, asset decimal
+count and a KYA presentation. It does not accept `agent_id` or `principal_id`; both are derived from
+verified authority. Caller supplied `org.inntris/kya-os` extensions are rejected.
+
+`POST /v1/kya/decisions/approve` adds `presentation` to the ordinary approval fields.
+`POST /v1/kya/decisions/consume` adds `presentation` to the ordinary consumption fields. Both
+perform fresh authority verification. A KYA state failure returns HTTP `503` and no success. The
+ordinary approval and consumption endpoints return `KYA_AUTHORITY_REQUIRED` for a decision already
+registered as KYA protected, so callers cannot skip lifecycle revalidation.
+
+When `INNTRIS_KYA_MODE=required`, the ordinary evaluate endpoint returns a signed
+`KYA_AUTHORITY_REQUIRED` block for resources listed in `INNTRIS_KYA_POLICY_FILE`. Other resources
+retain their existing behaviour.

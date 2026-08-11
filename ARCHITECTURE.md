@@ -16,6 +16,9 @@ It keeps policy evaluation, evidence verification and payment settlement separat
 6. The facilitator and settlement rail remain outside Inntris.
 7. A remote signing broker is a separate custody boundary. Its output is untrusted until locally
    verified against the operator-selected public key registry.
+8. KYA proofs, delegation credentials, Entity Cards, DID documents and status lists are untrusted
+   until the authority package verifies and joins them to the exact action.
+9. KYA nonce and authority stores must be atomic and durable in required production mode.
 
 ## Module boundaries
 
@@ -52,6 +55,10 @@ flowchart LR
     H --> P
     H --> MTP["Existing MTP verify and token authority"]
     H --> PG["Durable MTP bridge state"]
+    KYA["@kya-os/mcp proofs and delegation"] --> KA["@inntris/kya-os-authority"]
+    KA --> P
+    KA --> A
+    KA --> PGK["Durable KYA nonce and authority state"]
 ```
 
 `decision-core` has no x402 dependency. Rail-specific packages construct a common `InntrisActionV1`,
@@ -63,6 +70,12 @@ the signer and compares every transaction field before any broadcast.
 
 The conformance package adds mock card and paid MCP bindings without adding execution authority. It
 uses the same policy engine, Decision Envelope and verifier as the production-oriented rail gates.
+
+KYA is not added to `RailSchema`. The authority gate first verifies identity, delegation, revocation
+and exact financial joins, then attaches a normalised verified binding and invokes the ordinary
+policy provider. A KYA failure can issue a signed block. Approval and consumption each require new
+live authority. The same successful execution reference can safely retry from durable state, while a
+new reference requires a new proof.
 
 ## Action hash
 
@@ -234,6 +247,12 @@ decisions_total{verdict,rail}
 decision_latency_ms
 verification_failures_total{reason}
 replay_attempts_total
+kya_verification_total{result,stage}
+kya_proof_replay_total
+kya_delegation_rejection_total{reason}
+kya_revocation_failure_total{reason}
+kya_authority_gate_total{verdict}
+kya_revalidation_total{kind,result}
 ```
 
 Fastify logs structured request, decision, verdict, rail, reason, latency, verification and

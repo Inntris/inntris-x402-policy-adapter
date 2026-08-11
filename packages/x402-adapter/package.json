@@ -1,6 +1,6 @@
 {
   "name": "@inntris/x402-adapter",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Fail-closed Inntris policy guard for the official x402 TypeScript SDK.",
   "license": "MIT",
   "type": "module",
@@ -23,6 +23,8 @@
     "@inntris/decision-core": "workspace:*",
     "@inntris/decision-verifier": "workspace:*",
     "@inntris/execution-reconciliation": "workspace:*",
+    "@inntris/kya-os-authority": "workspace:*",
+    "@kya-os/mcp": "1.12.0",
     "@x402/core": "2.20.0",
     "zod": "4.4.3"
   }

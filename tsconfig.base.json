@@ -17,6 +17,7 @@
     "skipLibCheck": false,
     "strict": true,
     "target": "ES2024",
+    "typeRoots": ["./types", "./node_modules/@types"],
     "useDefineForClassFields": true,
     "verbatimModuleSyntax": true
   }

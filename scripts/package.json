@@ -1,6 +1,6 @@
 {
   "name": "@inntris/repository-scripts",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "license": "MIT",
   "type": "module",
@@ -13,6 +13,7 @@
     "@inntris/decision-core": "workspace:*",
     "@inntris/decision-verifier": "workspace:*",
     "@inntris/execution-reconciliation": "workspace:*",
+    "@inntris/kya-os-authority": "workspace:*",
     "@inntris/multi-rail-conformance": "workspace:*",
     "@inntris/policy-engine": "workspace:*",
     "@inntris/wallet-signing-gate": "workspace:*",

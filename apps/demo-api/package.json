@@ -1,6 +1,6 @@
 {
   "name": "@inntris/demo-api",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "license": "MIT",
   "type": "module",
@@ -13,10 +13,12 @@
     "@inntris/decision-core": "workspace:*",
     "@inntris/decision-verifier": "workspace:*",
     "@inntris/execution-reconciliation": "workspace:*",
+    "@inntris/kya-os-authority": "workspace:*",
     "@inntris/managed-signing": "workspace:*",
     "@inntris/mtp-authority": "workspace:*",
     "@inntris/policy-engine": "workspace:*",
     "@inntris/postgres-store": "workspace:*",
+    "@inntris/x402-adapter": "workspace:*",
     "fastify": "5.10.0",
     "pg": "8.22.0",
     "zod": "4.4.3"

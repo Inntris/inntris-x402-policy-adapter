@@ -5,6 +5,8 @@ import {
   noOpMetrics,
   systemClock,
   type Clock,
+  type BlockDecisionIssuer,
+  type BoundApprovalDecisionProvider,
   type ConsumeDecisionInput,
   type ConsumeDecisionResult,
   type DecisionProvider,
@@ -35,7 +37,9 @@ export interface LocalPolicyDecisionProviderOptions {
   metrics?: MetricsRecorder;
 }
 
-export class LocalPolicyDecisionProvider implements DecisionProvider {
+export class LocalPolicyDecisionProvider
+  implements DecisionProvider, BlockDecisionIssuer, BoundApprovalDecisionProvider
+{
   readonly policyHash: string;
   readonly #clock: Clock;
   readonly #spendState: SpendState;
@@ -95,6 +99,24 @@ export class LocalPolicyDecisionProvider implements DecisionProvider {
     return decision;
   }
 
+  async issueBlock(action: InntrisActionV1, reasonCodes: ReasonCode[]): Promise<InntrisDecisionV1> {
+    if (reasonCodes.length === 0) {
+      throw new TypeError("A signed BLOCK requires at least one reason code");
+    }
+    const started = performance.now();
+    const decision = await this.#sign(action, {
+      verdict: "BLOCK",
+      reasonCodes,
+      approval: {
+        mode: "policy_engine",
+        approval_reference: null,
+        approver_ids: [],
+      },
+    });
+    this.#metrics.decision(decision.verdict, decision.rail, performance.now() - started);
+    return decision;
+  }
+
   /**
    * Issues a new decision that supersedes an open `REQUIRE_APPROVAL` decision.
    * The original decision is never mutated, and current organisational policy
@@ -102,6 +124,20 @@ export class LocalPolicyDecisionProvider implements DecisionProvider {
    * the same action.
    */
   async resolveApproval(input: ResolveApprovalInput): Promise<ResolveApprovalResult> {
+    return this.#resolveApproval(input);
+  }
+
+  async resolveApprovalWithAction(
+    input: ResolveApprovalInput,
+    action: InntrisActionV1,
+  ): Promise<ResolveApprovalResult> {
+    return this.#resolveApproval(input, action);
+  }
+
+  async #resolveApproval(
+    input: ResolveApprovalInput,
+    replacementAction?: InntrisActionV1,
+  ): Promise<ResolveApprovalResult> {
     const rejection = (reasonCode: ReasonCode): ResolveApprovalResult => ({
       success: false,
       status: reasonCode === "APPROVAL_ALREADY_RESOLVED" ? "conflict" : "rejected",
@@ -112,6 +148,22 @@ export class LocalPolicyDecisionProvider implements DecisionProvider {
     const issued = await this.#decisionStore.get(input.decision_id);
     if (issued?.decision.verdict !== "REQUIRE_APPROVAL") {
       return rejection("APPROVAL_NOT_PENDING");
+    }
+
+    const action = replacementAction ?? issued.action;
+    if (
+      replacementAction !== undefined &&
+      (replacementAction.version !== issued.action.version ||
+        replacementAction.principal_id !== issued.action.principal_id ||
+        replacementAction.agent_id !== issued.action.agent_id ||
+        replacementAction.action_type !== issued.action.action_type ||
+        replacementAction.rail !== issued.action.rail ||
+        JSON.stringify(replacementAction.transaction) !==
+          JSON.stringify(issued.action.transaction) ||
+        JSON.stringify(replacementAction.protocol_reference) !==
+          JSON.stringify(issued.action.protocol_reference))
+    ) {
+      return rejection("ACTION_HASH_MISMATCH");
     }
 
     const requestTtlSeconds =
@@ -128,7 +180,7 @@ export class LocalPolicyDecisionProvider implements DecisionProvider {
 
     const started = performance.now();
     const policyEvaluation = await evaluatePolicy({
-      action: issued.action,
+      action,
       policy: this.options.policy,
       spendState: this.#spendState,
       clock: this.#clock,
@@ -154,7 +206,7 @@ export class LocalPolicyDecisionProvider implements DecisionProvider {
       };
     }
 
-    const decision = await this.#sign(issued.action, evaluation, issued.decision.decision_id);
+    const decision = await this.#sign(action, evaluation, issued.decision.decision_id);
     this.#metrics.decision(decision.verdict, decision.rail, performance.now() - started);
     return {
       success: true,
