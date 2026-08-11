@@ -20,6 +20,14 @@
 9. Added a no-secret official x402 test-facilitator probe for advertised Base Sepolia exact support
    and fail-closed invalid-signature verification.
 10. Added a weekly sandbox compatibility workflow and explicit non-settlement evidence boundary.
+11. Added `@inntris/execution-reconciliation` with exact-bound operation claims, explicit unknown
+    outcomes and evidence-bearing authoritative resolution.
+12. Added durable PostgreSQL execution operations and an authenticated read-only unresolved queue to
+    the reference API.
+13. Wired direct x402 settlement to prepare state before consumption, claim immediately before the
+    external call and block retry whenever the prior outcome is unresolved.
+14. Added an executable failure matrix covering concurrent claims, binding conflict, final failure,
+    unknown outcome, state outage, finalisation outage and PostgreSQL recovery.
 
 ## v0.2.0
 

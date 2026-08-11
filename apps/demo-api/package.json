@@ -12,6 +12,7 @@
     "@fastify/rate-limit": "11.2.0",
     "@inntris/decision-core": "workspace:*",
     "@inntris/decision-verifier": "workspace:*",
+    "@inntris/execution-reconciliation": "workspace:*",
     "@inntris/managed-signing": "workspace:*",
     "@inntris/mtp-authority": "workspace:*",
     "@inntris/policy-engine": "workspace:*",

@@ -14,6 +14,7 @@
 10. Mock card and paid MCP action-binding integrity in the conformance suite.
 11. MTP agent signing identity, approval token and cross-service consumption checkpoint.
 12. Managed signing broker credential, pinned public key and rotation registry.
+13. External side-effect claim, outcome evidence and reconciliation history.
 
 ## Actors
 
@@ -85,6 +86,10 @@ decision only after every local check passes and after the nonce store accepts c
 | Key is compromised after historical use                | Earlier decisions may no longer be trustworthy  | Explicit `revoked` status invalidates historical verification; `retired` preserves it            |
 | Sandbox probe accidentally settles                     | Test assets move or a key enters CI             | Public probe calls only `/supported` and `/verify`; it has no buyer key                          |
 | Facilitator compatibility drifts                       | Production integration fails unexpectedly       | Weekly official-SDK probe requires Base Sepolia exact support and structured rejection           |
+| Settlement times out after reaching the facilitator    | Automatic retry may duplicate a payment         | Persist outcome-unknown, block retry and require authoritative reconciliation                    |
+| Execution reference is rebound to changed evidence     | Idempotency key authorises a substituted action | Operation identity and binding cover rail, kind, decision, action and execution reference        |
+| Process stops after the external side effect           | Journal cannot prove the outcome                | Keep in-progress state, expose the authenticated unresolved queue and reconcile before retry     |
+| Operator resolves from weak evidence                   | Incorrect final state hides or duplicates work  | Require resolver identity, outcome reference and resolution note from an authoritative source    |
 
 ## Residual risks
 
@@ -112,6 +117,10 @@ decision only after every local check passes and after the nonce store accepts c
     held by certified hardware or that the operator's custody controls are effective.
 16. The public sandbox probe is negative-path operating evidence. A funded testnet settlement and
     production facilitator behaviour remain separate operator validations.
+17. The generic durable journal is wired to direct x402 first. A2A, AP2 and EVM retain separate
+    execution-store contracts and require durable production adapters at their side-effect boundary.
+18. An authoritative resolver can still record incorrect evidence. Access control, separation of
+    duties and external evidence retention remain operator responsibilities.
 
 ## Out of scope claims
 

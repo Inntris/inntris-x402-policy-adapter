@@ -7,6 +7,7 @@ import {
   type Clock,
   type KeyRegistry,
 } from "@inntris/decision-core";
+import type { ExecutionReconciliationStore } from "@inntris/execution-reconciliation";
 import {
   type DecisionStateStore,
   LocalPolicyDecisionProvider,
@@ -52,7 +53,12 @@ export const bindingInput: X402SettlementInput = {
 
 export async function testContext(
   clock = new MutableClock(),
-  options: { spendState?: SpendState; decisionStore?: DecisionStateStore } = {},
+  options: {
+    spendState?: SpendState;
+    decisionStore?: DecisionStateStore;
+    reconciliationStore?: ExecutionReconciliationStore;
+    classifySettlementError?: (error: unknown) => "failed_final" | "outcome_unknown";
+  } = {},
 ): Promise<{
   clock: MutableClock;
   provider: LocalPolicyDecisionProvider;
@@ -85,6 +91,12 @@ export async function testContext(
       keyRegistry,
       expectedPolicyVersion: "1",
       clock,
+      ...(options.reconciliationStore === undefined
+        ? {}
+        : { reconciliationStore: options.reconciliationStore }),
+      ...(options.classifySettlementError === undefined
+        ? {}
+        : { classifySettlementError: options.classifySettlementError }),
     }),
   };
 }

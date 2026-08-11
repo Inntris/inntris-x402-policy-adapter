@@ -2,10 +2,12 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 import { createPublicDemoSigner } from "@inntris/decision-core";
+import { executionOperationId } from "@inntris/execution-reconciliation";
 import type { MtpAuthorizationRecord } from "@inntris/mtp-authority";
 import { LocalPolicyDecisionProvider, parsePolicyText } from "@inntris/policy-engine";
 import {
   migratePostgresStore,
+  PostgresExecutionReconciliationStore,
   PostgresMtpAuthorityStateStore,
   PostgresPolicyStateStore,
 } from "@inntris/postgres-store";
@@ -35,6 +37,7 @@ postgres("PostgreSQL policy state", () => {
     await pool.query("DROP FUNCTION IF EXISTS inntris.fail_spend() CASCADE");
     await pool.query(`
       TRUNCATE TABLE
+        inntris.execution_operations,
         inntris.mtp_authorisations,
         inntris.approval_claims,
         inntris.consumptions,
@@ -275,5 +278,66 @@ postgres("PostgreSQL policy state", () => {
     await expect(
       store.saveAuthorization({ ...record, approvalToken: "changed-token" }),
     ).rejects.toThrow("immutable");
+  });
+
+  it("persists unresolved execution outcomes and resolves them authoritatively", async () => {
+    const store = new PostgresExecutionReconciliationStore(pool);
+    const preparedAt = new Date("2026-07-29T12:00:00.000Z");
+    const input = {
+      rail: "x402" as const,
+      operationKind: "x402_settlement" as const,
+      decisionId: "postgres-reconciliation-decision",
+      actionHash: `sha256:${"a".repeat(64)}`,
+      executionRef: "postgres-reconciliation-execution",
+      bindingHash: `sha256:${"b".repeat(64)}`,
+      preparedAt,
+    };
+    const prepared = await store.prepare(input);
+    expect(prepared.operationId).toBe(executionOperationId(input));
+    await expect(store.prepare(input)).resolves.toEqual(prepared);
+
+    const starts = await Promise.all([
+      store.start({
+        operationId: prepared.operationId,
+        bindingHash: input.bindingHash,
+        startedAt: preparedAt,
+      }),
+      store.start({
+        operationId: prepared.operationId,
+        bindingHash: input.bindingHash,
+        startedAt: preparedAt,
+      }),
+    ]);
+    expect(starts.map((result) => result.status).sort()).toEqual(["claimed", "in_progress"]);
+    await store.markOutcomeUnknown({
+      operationId: prepared.operationId,
+      bindingHash: input.bindingHash,
+      errorCode: "TimeoutError",
+      observedAt: new Date("2026-07-29T12:00:01.000Z"),
+    });
+
+    const recovered = new PostgresExecutionReconciliationStore(pool);
+    expect(await recovered.listUnresolved()).toEqual([
+      expect.objectContaining({
+        operationId: prepared.operationId,
+        status: "outcome_unknown",
+        lastErrorCode: "TimeoutError",
+      }),
+    ]);
+    const resolved = await recovered.resolve({
+      operationId: prepared.operationId,
+      bindingHash: input.bindingHash,
+      outcome: "succeeded",
+      outcomeReference: "base-sepolia:0xsettlement",
+      resolvedBy: "operator-1",
+      resolutionNote: "Facilitator and chain receipt confirmed",
+      resolvedAt: new Date("2026-07-29T12:05:00.000Z"),
+    });
+    expect(resolved).toMatchObject({
+      status: "succeeded",
+      outcomeReference: "base-sepolia:0xsettlement",
+      resolvedBy: "operator-1",
+    });
+    expect(await recovered.listUnresolved()).toEqual([]);
   });
 });

@@ -23,6 +23,7 @@ import {
 import { LocalPolicyDecisionProvider, loadPolicyFile } from "@inntris/policy-engine";
 import {
   assertPostgresStoreReady,
+  PostgresExecutionReconciliationStore,
   PostgresMtpAuthorityStateStore,
   PostgresPolicyStateStore,
 } from "@inntris/postgres-store";
@@ -188,9 +189,11 @@ const app = await buildDemoApi({
   provider,
   keyRegistry,
   expectedPolicyVersion: policy.policy_version,
-  serviceApiKey:
-    process.env.INNTRIS_SERVICE_API_KEY === "" ? undefined : process.env.INNTRIS_SERVICE_API_KEY,
+  serviceApiKey: configuredValue(process.env.INNTRIS_SERVICE_API_KEY),
   metrics,
+  ...(pool === undefined
+    ? {}
+    : { reconciliationStore: new PostgresExecutionReconciliationStore(pool) }),
 });
 if (pool !== undefined) {
   app.addHook("onClose", async () => {

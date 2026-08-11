@@ -102,20 +102,21 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for trust boundaries and the fingerprint 
 
 ## Packages
 
-| Package                           | Responsibility                                                                         |
-| --------------------------------- | -------------------------------------------------------------------------------------- |
-| `@inntris/decision-core`          | Strict schemas, JCS, SHA 256 hashes, Ed25519, stable reason codes and replay contracts |
-| `@inntris/policy-engine`          | Versioned policy parsing, deterministic evaluation and the local provider              |
-| `@inntris/postgres-store`         | Durable decisions, atomic approvals, consumption and cumulative spend                  |
-| `@inntris/managed-signing`        | Provider-neutral remote Ed25519 signing and controlled public-key rotation             |
-| `@inntris/decision-verifier`      | Offline verification library and `inntris-verify` CLI                                  |
-| `@inntris/x402-adapter`           | Official x402 type binding, remote provider and fail-closed settlement guard           |
-| `@inntris/mtp-authority`          | Composed MTP authority, safe execution retries and recoverable consumption ordering    |
-| `@inntris/a2a-settlement-gate`    | Finality, consumption, delegate idempotency and signed receipts for paid A2A tasks     |
-| `@inntris/ap2-runtime-gate`       | Official AP2 mandate verification, policy binding, replay control and signed receipts  |
-| `@inntris/wallet-signing-gate`    | Exact EVM transaction binding, decision consumption, injected signing and broadcast    |
-| `@inntris/multi-rail-conformance` | One policy and verifier across x402, AP2, EVM, mock card and paid MCP                  |
-| `@inntris/demo-api`               | Fastify reference API, key discovery, verification and consumption                     |
+| Package                             | Responsibility                                                                         |
+| ----------------------------------- | -------------------------------------------------------------------------------------- |
+| `@inntris/decision-core`            | Strict schemas, JCS, SHA 256 hashes, Ed25519, stable reason codes and replay contracts |
+| `@inntris/policy-engine`            | Versioned policy parsing, deterministic evaluation and the local provider              |
+| `@inntris/postgres-store`           | Durable decisions, atomic approvals, consumption and cumulative spend                  |
+| `@inntris/execution-reconciliation` | Side-effect claims, unknown outcomes and authoritative resolution                      |
+| `@inntris/managed-signing`          | Provider-neutral remote Ed25519 signing and controlled public-key rotation             |
+| `@inntris/decision-verifier`        | Offline verification library and `inntris-verify` CLI                                  |
+| `@inntris/x402-adapter`             | Official x402 type binding, remote provider and fail-closed settlement guard           |
+| `@inntris/mtp-authority`            | Composed MTP authority, safe execution retries and recoverable consumption ordering    |
+| `@inntris/a2a-settlement-gate`      | Finality, consumption, delegate idempotency and signed receipts for paid A2A tasks     |
+| `@inntris/ap2-runtime-gate`         | Official AP2 mandate verification, policy binding, replay control and signed receipts  |
+| `@inntris/wallet-signing-gate`      | Exact EVM transaction binding, decision consumption, injected signing and broadcast    |
+| `@inntris/multi-rail-conformance`   | One policy and verifier across x402, AP2, EVM, mock card and paid MCP                  |
+| `@inntris/demo-api`                 | Fastify reference API, key discovery, verification and consumption                     |
 
 The adapter pins `@x402/core` `2.20.0`. It imports `PaymentRequirements` and `PaymentPayload` from
 `@x402/core/types` and validates them with the official runtime schemas.
@@ -172,6 +173,12 @@ The same package provides `PostgresMtpAuthorityStateStore`. It checkpoints the s
 short-lived approval token, stable execution reference, MTP consumption receipt and completed local
 consumption. The approval token is never logged and the table must be restricted to the runtime
 service and migration roles.
+
+It also provides `PostgresExecutionReconciliationStore`. The generic operation journal prepares an
+exact-bound side effect, atomically claims one attempt and separates `succeeded`, `failed_final` and
+`outcome_unknown`. The x402 guard uses it when injected and blocks every retry while an earlier
+outcome is unresolved. The authenticated reference API exposes a read-only unresolved queue for
+operators. See [`docs/RECONCILIATION.md`](docs/RECONCILIATION.md).
 
 ## Managed signing and key rotation
 

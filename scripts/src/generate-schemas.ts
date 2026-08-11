@@ -17,6 +17,7 @@ import {
   InntrisDecisionV1Schema,
   KeyRegistrySchema,
 } from "@inntris/decision-core";
+import { ExecutionOperationRecordSchema } from "@inntris/execution-reconciliation";
 import { InntrisPolicyV1Schema } from "@inntris/policy-engine";
 import {
   MockCardAuthorisationInputSchema,
@@ -67,6 +68,11 @@ const schemas: [string, string, ZodType][] = [
   ],
   ["inntris-action-v1.schema.json", "Inntris Action v1", InntrisActionV1Schema],
   ["inntris-decision-v1.schema.json", "Inntris Decision v1", InntrisDecisionV1Schema],
+  [
+    "inntris-execution-operation-v1.schema.json",
+    "Inntris Execution Operation v1",
+    ExecutionOperationRecordSchema,
+  ],
   [
     "inntris-evm-unsigned-transaction-v1.schema.json",
     "Inntris EVM Unsigned Transaction v1",

@@ -8,6 +8,7 @@ import {
   type MetricsRecorder,
 } from "@inntris/decision-core";
 import { verifyDecision } from "@inntris/decision-verifier";
+import type { ExecutionReconciliationStore } from "@inntris/execution-reconciliation";
 import rateLimit from "@fastify/rate-limit";
 import { timingSafeEqual } from "node:crypto";
 import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from "fastify";
@@ -36,6 +37,12 @@ const ApproveBodySchema = z
     approver_ids: z.array(z.string().min(1).max(128)).min(1).max(32),
   })
   .strict();
+const ReconciliationQuerySchema = z
+  .object({
+    updated_before: z.iso.datetime({ offset: true }).optional(),
+    limit: z.coerce.number().int().min(1).max(500).optional(),
+  })
+  .strict();
 
 export interface DemoApiOptions {
   provider: DecisionProvider;
@@ -45,6 +52,7 @@ export interface DemoApiOptions {
   metrics?: MetricsRecorder | undefined;
   clock?: Clock | undefined;
   logger?: boolean | undefined;
+  reconciliationStore?: ExecutionReconciliationStore | undefined;
 }
 
 function parseFailure(reply: FastifyReply, error: unknown): void {
@@ -61,6 +69,9 @@ function bearerMatches(actual: string | undefined, expectedKey: string): boolean
 }
 
 export async function buildDemoApi(options: DemoApiOptions): Promise<FastifyInstance> {
+  if (options.reconciliationStore !== undefined && options.serviceApiKey === undefined) {
+    throw new Error("A service API key is required when operational reconciliation is exposed");
+  }
   const app = Fastify({
     logger: options.logger ?? true,
   });
@@ -88,6 +99,42 @@ export async function buildDemoApi(options: DemoApiOptions): Promise<FastifyInst
   }));
 
   app.get("/.well-known/inntris-keys.json", async () => options.keyRegistry);
+
+  app.get(
+    "/v1/operations/unresolved",
+    {
+      preHandler: authenticate,
+      config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+    },
+    async (request, reply) => {
+      if (options.reconciliationStore === undefined) {
+        await reply.status(503).send({ error: "reconciliation_store_unavailable" });
+        return;
+      }
+      let query: z.infer<typeof ReconciliationQuerySchema>;
+      try {
+        query = ReconciliationQuerySchema.parse(request.query);
+      } catch (error) {
+        parseFailure(reply, error);
+        return;
+      }
+      try {
+        const operations = await options.reconciliationStore.listUnresolved({
+          ...(query.updated_before === undefined
+            ? {}
+            : { updatedBefore: new Date(query.updated_before) }),
+          ...(query.limit === undefined ? {} : { limit: query.limit }),
+        });
+        request.log.info({
+          request_id: request.id,
+          unresolved_operation_count: operations.length,
+        });
+        await reply.status(200).send({ operations });
+      } catch {
+        await reply.status(503).send({ error: "reconciliation_store_unavailable" });
+      }
+    },
+  );
 
   app.post(
     "/v1/decisions/evaluate",
