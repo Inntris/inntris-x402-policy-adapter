@@ -12,6 +12,7 @@
     "@inntris/ap2-runtime-gate": "workspace:*",
     "@inntris/decision-core": "workspace:*",
     "@inntris/decision-verifier": "workspace:*",
+    "@inntris/execution-reconciliation": "workspace:*",
     "@inntris/multi-rail-conformance": "workspace:*",
     "@inntris/policy-engine": "workspace:*",
     "@inntris/wallet-signing-gate": "workspace:*",

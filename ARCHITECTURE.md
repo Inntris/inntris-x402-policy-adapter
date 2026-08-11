@@ -31,6 +31,8 @@ flowchart LR
     MS --> KMS["Operator signing broker and managed key"]
     MS --> C
     A --> E["Injected settlement executor"]
+    A --> J["@inntris/execution-reconciliation"]
+    J --> PGX["Durable execution journal"]
     T["Official A2A Task type"] --> G["@inntris/a2a-settlement-gate"]
     G --> A
     G --> S["Injected settlement and finality provider"]
@@ -135,8 +137,11 @@ verify fingerprint and Ed25519 signature
 recalculate action hash
 check policy version and expiry
 require ALLOW
+prepare exact-bound execution operation
 consume decision
+claim the operation
 call injected settlement function
+record succeeded, failed-final or outcome-unknown
 ```
 
 Every failure stops before settlement. There is no fallback allow path.
@@ -178,6 +183,13 @@ consumption to overrun the shared limit. A rejected limit check rolls the nonce 
 No generic library can make a database nonce write atomic with every external facilitator. A
 production executor must use the same execution reference as the facilitator idempotency key and
 reconcile an unknown settlement outcome instead of creating a new execution.
+
+The execution reconciliation package makes this boundary explicit. It writes `prepared` before
+consumption and atomically moves it to `in_progress` immediately before the side effect. A thrown
+external error becomes `outcome_unknown` unless the integration can prove a final rejection.
+Unresolved operations cannot be claimed again. Authoritative resolution records the external outcome
+reference, resolver identity and evidence note. See
+[`docs/RECONCILIATION.md`](docs/RECONCILIATION.md).
 
 When MTP composition is enabled, the execution sequence is MTP consumption, durable MTP receipt
 checkpoint, local Decision Envelope consumption, then settlement. A lost MTP response is retried

@@ -86,7 +86,13 @@
               "UNKNOWN_SIGNING_KEY",
               "NONCE_ALREADY_CONSUMED",
               "DECISION_NOT_ALLOW",
-              "DECISION_SERVICE_UNAVAILABLE"
+              "DECISION_SERVICE_UNAVAILABLE",
+              "EXECUTION_STATE_UNAVAILABLE",
+              "EXECUTION_CONFLICT",
+              "EXECUTION_OUTCOME_UNKNOWN",
+              "EXECUTION_ALREADY_COMPLETED",
+              "EXECUTION_FAILED_FINAL",
+              "RECONCILIATION_REQUIRED"
             ]
           }
         },
@@ -243,7 +249,13 @@
               "UNKNOWN_SIGNING_KEY",
               "NONCE_ALREADY_CONSUMED",
               "DECISION_NOT_ALLOW",
-              "DECISION_SERVICE_UNAVAILABLE"
+              "DECISION_SERVICE_UNAVAILABLE",
+              "EXECUTION_STATE_UNAVAILABLE",
+              "EXECUTION_CONFLICT",
+              "EXECUTION_OUTCOME_UNKNOWN",
+              "EXECUTION_ALREADY_COMPLETED",
+              "EXECUTION_FAILED_FINAL",
+              "RECONCILIATION_REQUIRED"
             ]
           }
         },
@@ -403,7 +415,13 @@
               "UNKNOWN_SIGNING_KEY",
               "NONCE_ALREADY_CONSUMED",
               "DECISION_NOT_ALLOW",
-              "DECISION_SERVICE_UNAVAILABLE"
+              "DECISION_SERVICE_UNAVAILABLE",
+              "EXECUTION_STATE_UNAVAILABLE",
+              "EXECUTION_CONFLICT",
+              "EXECUTION_OUTCOME_UNKNOWN",
+              "EXECUTION_ALREADY_COMPLETED",
+              "EXECUTION_FAILED_FINAL",
+              "RECONCILIATION_REQUIRED"
             ]
           }
         },
@@ -565,7 +583,13 @@
               "UNKNOWN_SIGNING_KEY",
               "NONCE_ALREADY_CONSUMED",
               "DECISION_NOT_ALLOW",
-              "DECISION_SERVICE_UNAVAILABLE"
+              "DECISION_SERVICE_UNAVAILABLE",
+              "EXECUTION_STATE_UNAVAILABLE",
+              "EXECUTION_CONFLICT",
+              "EXECUTION_OUTCOME_UNKNOWN",
+              "EXECUTION_ALREADY_COMPLETED",
+              "EXECUTION_FAILED_FINAL",
+              "RECONCILIATION_REQUIRED"
             ]
           }
         },
@@ -721,7 +745,13 @@
               "UNKNOWN_SIGNING_KEY",
               "NONCE_ALREADY_CONSUMED",
               "DECISION_NOT_ALLOW",
-              "DECISION_SERVICE_UNAVAILABLE"
+              "DECISION_SERVICE_UNAVAILABLE",
+              "EXECUTION_STATE_UNAVAILABLE",
+              "EXECUTION_CONFLICT",
+              "EXECUTION_OUTCOME_UNKNOWN",
+              "EXECUTION_ALREADY_COMPLETED",
+              "EXECUTION_FAILED_FINAL",
+              "RECONCILIATION_REQUIRED"
             ]
           }
         },

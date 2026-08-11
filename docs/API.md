@@ -107,3 +107,22 @@ different reference returns HTTP `409` with `NONCE_ALREADY_CONSUMED`.
 `GET /.well-known/inntris-keys.json`
 
 Only public verification material is returned.
+
+## Unresolved operations
+
+`GET /v1/operations/unresolved`
+
+This read-only operational endpoint is available when a reconciliation store is configured. It
+requires `Authorization: Bearer <INNTRIS_SERVICE_API_KEY>` and refuses unkeyed exposure.
+
+Optional query parameters:
+
+| Parameter        | Meaning                                                        |
+| ---------------- | -------------------------------------------------------------- |
+| `updated_before` | ISO 8601 timestamp; return operations older than this boundary |
+| `limit`          | Integer from 1 to 500; defaults to 100                         |
+
+The response contains `in_progress` and `outcome_unknown` operation records ordered from oldest to
+newest. It does not expose a state-changing resolution route. Production resolution must use the
+store contract from an authenticated operator service that has obtained authoritative rail evidence.
+See [`RECONCILIATION.md`](RECONCILIATION.md).

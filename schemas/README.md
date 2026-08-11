@@ -20,3 +20,6 @@ exported by `@inntris/wallet-signing-gate`.
 
 The mock card authorisation and paid MCP tool-call input schemas are generated from the conformance
 bindings exported by `@inntris/multi-rail-conformance`.
+
+The execution operation schema is generated from the durable reconciliation record exported by
+`@inntris/execution-reconciliation`.

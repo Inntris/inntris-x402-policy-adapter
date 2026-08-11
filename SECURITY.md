@@ -73,5 +73,13 @@ Changes must preserve:
     loads a buyer private key.
 32. A funded sandbox run must keep its dedicated buyer key outside Git, chat, fixtures and normal
     logs.
+33. A durable execution operation must be prepared before direct x402 decision consumption and
+    claimed once immediately before settlement.
+34. An external timeout or ambiguous error must remain `outcome_unknown`; it must not be classified
+    as a final failure without rail-specific proof.
+35. `in_progress` and `outcome_unknown` operations must block automatic retry until authoritative
+    evidence resolves them.
+36. Reconciliation resolution must exact-match the operation binding and record the resolver,
+    external outcome reference and evidence note.
 
 The test suite contains direct regression tests for these invariants.

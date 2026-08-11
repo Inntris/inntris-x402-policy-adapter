@@ -23,6 +23,9 @@ importers:
       '@inntris/decision-verifier':
         specifier: workspace:*
         version: link:packages/decision-verifier
+      '@inntris/execution-reconciliation':
+        specifier: workspace:*
+        version: link:packages/execution-reconciliation
       '@inntris/managed-signing':
         specifier: workspace:*
         version: link:packages/managed-signing
@@ -89,6 +92,9 @@ importers:
       '@inntris/decision-verifier':
         specifier: workspace:*
         version: link:../../packages/decision-verifier
+      '@inntris/execution-reconciliation':
+        specifier: workspace:*
+        version: link:../../packages/execution-reconciliation
       '@inntris/managed-signing':
         specifier: workspace:*
         version: link:../../packages/managed-signing
@@ -186,6 +192,15 @@ importers:
         specifier: 15.0.0
         version: 15.0.0
 
+  packages/execution-reconciliation:
+    dependencies:
+      '@inntris/decision-core':
+        specifier: workspace:*
+        version: link:../decision-core
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+
   packages/managed-signing:
     dependencies:
       '@inntris/decision-core':
@@ -248,6 +263,9 @@ importers:
       '@inntris/decision-core':
         specifier: workspace:*
         version: link:../decision-core
+      '@inntris/execution-reconciliation':
+        specifier: workspace:*
+        version: link:../execution-reconciliation
       '@inntris/mtp-authority':
         specifier: workspace:*
         version: link:../mtp-authority
@@ -288,6 +306,9 @@ importers:
       '@inntris/decision-verifier':
         specifier: workspace:*
         version: link:../decision-verifier
+      '@inntris/execution-reconciliation':
+        specifier: workspace:*
+        version: link:../execution-reconciliation
       '@x402/core':
         specifier: 2.20.0
         version: 2.20.0
@@ -309,6 +330,9 @@ importers:
       '@inntris/decision-verifier':
         specifier: workspace:*
         version: link:../packages/decision-verifier
+      '@inntris/execution-reconciliation':
+        specifier: workspace:*
+        version: link:../packages/execution-reconciliation
       '@inntris/multi-rail-conformance':
         specifier: workspace:*
         version: link:../packages/multi-rail-conformance

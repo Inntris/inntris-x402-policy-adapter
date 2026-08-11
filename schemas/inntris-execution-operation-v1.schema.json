@@ -1,0 +1,94 @@
+{
+  "$id": "https://schemas.inntris.com/inntris-execution-operation-v1.schema.json",
+  "title": "Inntris Execution Operation v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": { "type": "string", "const": "inntris-execution-operation-v1" },
+    "operationId": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "rail": { "type": "string", "enum": ["x402", "ap2", "evm", "card", "mcp"] },
+    "operationKind": {
+      "type": "string",
+      "enum": [
+        "x402_settlement",
+        "a2a_settlement",
+        "a2a_delegate",
+        "ap2_delegate",
+        "evm_broadcast",
+        "mtp_consumption"
+      ]
+    },
+    "decisionId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "actionHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "executionRef": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "bindingHash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "status": {
+      "type": "string",
+      "enum": ["prepared", "in_progress", "succeeded", "failed_final", "outcome_unknown"]
+    },
+    "attemptCount": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+    "preparedAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+    },
+    "startedAt": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+        },
+        { "type": "null" }
+      ]
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+    },
+    "resolvedAt": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+        },
+        { "type": "null" }
+      ]
+    },
+    "outcomeReference": {
+      "anyOf": [{ "type": "string", "minLength": 1, "maxLength": 512 }, { "type": "null" }]
+    },
+    "lastErrorCode": {
+      "anyOf": [{ "type": "string", "minLength": 1, "maxLength": 128 }, { "type": "null" }]
+    },
+    "resolvedBy": {
+      "anyOf": [{ "type": "string", "minLength": 1, "maxLength": 128 }, { "type": "null" }]
+    },
+    "resolutionNote": {
+      "anyOf": [{ "type": "string", "minLength": 1, "maxLength": 1024 }, { "type": "null" }]
+    }
+  },
+  "required": [
+    "version",
+    "operationId",
+    "rail",
+    "operationKind",
+    "decisionId",
+    "actionHash",
+    "executionRef",
+    "bindingHash",
+    "status",
+    "attemptCount",
+    "preparedAt",
+    "startedAt",
+    "updatedAt",
+    "resolvedAt",
+    "outcomeReference",
+    "lastErrorCode",
+    "resolvedBy",
+    "resolutionNote"
+  ],
+  "additionalProperties": false
+}

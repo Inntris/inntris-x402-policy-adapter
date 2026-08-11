@@ -1,5 +1,6 @@
 import {
   hashAction,
+  hashCanonical,
   type ConsumeDecisionResult,
   type DecisionProvider,
   type InntrisDecisionV1,
@@ -7,6 +8,7 @@ import {
   type ReasonCode,
 } from "@inntris/decision-core";
 import { verifyDecision, type VerificationResult } from "@inntris/decision-verifier";
+import type { ExecutionReconciliationStore } from "@inntris/execution-reconciliation";
 import type { PaymentPayload, PaymentRequirements } from "@x402/core/types";
 
 import { actionFromX402, paymentRequirementsHash, type X402BindingInput } from "./binding.js";
@@ -29,6 +31,8 @@ export interface InntrisX402GuardOptions {
   keyRegistry: KeyRegistry;
   expectedPolicyVersion?: string | undefined;
   clock?: { now(): Date } | undefined;
+  reconciliationStore?: ExecutionReconciliationStore | undefined;
+  classifySettlementError?: ((error: unknown) => "failed_final" | "outcome_unknown") | undefined;
 }
 
 export class InntrisGuardError extends Error {
@@ -164,6 +168,42 @@ export class InntrisX402Guard {
       ]);
     }
 
+    let reconciliation:
+      | {
+          store: ExecutionReconciliationStore;
+          operationId: string;
+          bindingHash: string;
+        }
+      | undefined;
+    if (this.options.reconciliationStore !== undefined) {
+      const bindingHash = hashCanonical({
+        version: "inntris-x402-settlement-binding-v1",
+        decision_id: decision.decision_id,
+        action_hash: decision.action_hash,
+        execution_ref: executionRef,
+      });
+      try {
+        const operation = await this.options.reconciliationStore.prepare({
+          rail: "x402",
+          operationKind: "x402_settlement",
+          decisionId: decision.decision_id,
+          actionHash: decision.action_hash,
+          executionRef,
+          bindingHash,
+          preparedAt: this.#clock.now(),
+        });
+        reconciliation = {
+          store: this.options.reconciliationStore,
+          operationId: operation.operationId,
+          bindingHash,
+        };
+      } catch {
+        throw new InntrisGuardError("Settlement state is unavailable; execution is blocked", [
+          "EXECUTION_STATE_UNAVAILABLE",
+        ]);
+      }
+    }
+
     const consumption = await this.consumeBeforeExecution(decision, executionRef);
     if (!consumption.success) {
       throw new InntrisGuardError("Settlement blocked because decision consumption failed", [
@@ -171,6 +211,99 @@ export class InntrisX402Guard {
       ]);
     }
 
-    return settle();
+    if (reconciliation === undefined) {
+      return settle();
+    }
+    const { store: reconciliationStore, operationId, bindingHash } = reconciliation;
+    try {
+      const start = await reconciliationStore.start({
+        operationId,
+        bindingHash,
+        startedAt: this.#clock.now(),
+      });
+      if (start.status === "conflict") {
+        throw new InntrisGuardError("Execution reference conflicts with existing evidence", [
+          "EXECUTION_CONFLICT",
+        ]);
+      }
+      if (start.status === "in_progress" || start.status === "outcome_unknown") {
+        throw new InntrisGuardError(
+          "Settlement has an unresolved prior attempt; automatic retry is blocked",
+          ["EXECUTION_OUTCOME_UNKNOWN"],
+        );
+      }
+      if (start.status === "succeeded") {
+        throw new InntrisGuardError("Settlement has already completed", [
+          "EXECUTION_ALREADY_COMPLETED",
+        ]);
+      }
+      if (start.status === "failed_final") {
+        throw new InntrisGuardError("Settlement has a recorded final failure", [
+          "EXECUTION_FAILED_FINAL",
+        ]);
+      }
+      if (start.status === "missing") {
+        throw new Error("Prepared reconciliation operation disappeared before execution");
+      }
+    } catch (error) {
+      if (error instanceof InntrisGuardError) throw error;
+      throw new InntrisGuardError("Settlement state is unavailable; execution is blocked", [
+        "EXECUTION_STATE_UNAVAILABLE",
+      ]);
+    }
+
+    let result: T;
+    try {
+      result = await settle();
+    } catch (error) {
+      const errorCode = error instanceof Error ? error.name.slice(0, 128) : "UNKNOWN_ERROR";
+      const classification = this.options.classifySettlementError?.(error) ?? "outcome_unknown";
+      try {
+        if (classification === "failed_final") {
+          await reconciliationStore.markFailedFinal({
+            operationId,
+            bindingHash,
+            errorCode,
+            resolvedAt: this.#clock.now(),
+          });
+        } else {
+          await reconciliationStore.markOutcomeUnknown({
+            operationId,
+            bindingHash,
+            errorCode,
+            observedAt: this.#clock.now(),
+          });
+        }
+      } catch {
+        throw new InntrisGuardError(
+          "Settlement failed and its outcome state could not be recorded",
+          ["RECONCILIATION_REQUIRED"],
+        );
+      }
+      throw new InntrisGuardError(
+        classification === "failed_final"
+          ? "Settlement failed finally"
+          : "Settlement outcome is unknown; reconciliation is required",
+        [
+          classification === "failed_final"
+            ? "EXECUTION_FAILED_FINAL"
+            : "EXECUTION_OUTCOME_UNKNOWN",
+        ],
+      );
+    }
+
+    try {
+      await reconciliationStore.markSucceeded({
+        operationId,
+        bindingHash,
+        outcomeReference: executionRef,
+        resolvedAt: this.#clock.now(),
+      });
+    } catch {
+      throw new InntrisGuardError("Settlement succeeded but its outcome could not be finalised", [
+        "RECONCILIATION_REQUIRED",
+      ]);
+    }
+    return result;
   }
 }

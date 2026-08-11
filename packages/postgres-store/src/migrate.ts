@@ -2,7 +2,11 @@ import { readFile } from "node:fs/promises";
 
 import type { Pool } from "pg";
 
-const MIGRATION_VERSIONS = ["001_initial", "002_mtp_authority"] as const;
+const MIGRATION_VERSIONS = [
+  "001_initial",
+  "002_mtp_authority",
+  "003_execution_reconciliation",
+] as const;
 const MIGRATION_LOCK_ID = 1_661_437_315;
 
 export async function assertPostgresStoreReady(pool: Pool): Promise<void> {

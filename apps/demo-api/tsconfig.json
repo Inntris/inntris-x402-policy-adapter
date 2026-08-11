@@ -8,6 +8,7 @@
   "include": ["src/**/*.ts"],
   "references": [
     { "path": "../../packages/decision-core" },
+    { "path": "../../packages/execution-reconciliation" },
     { "path": "../../packages/managed-signing" },
     { "path": "../../packages/mtp-authority" },
     { "path": "../../packages/policy-engine" },

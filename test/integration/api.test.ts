@@ -1,4 +1,5 @@
 import { buildDemoApi } from "../../apps/demo-api/src/app.js";
+import { InMemoryExecutionReconciliationStore } from "@inntris/execution-reconciliation";
 import { describe, expect, it } from "vitest";
 
 import { bindingInput, testContext } from "../helpers.js";
@@ -160,6 +161,49 @@ describe("reference API", () => {
     });
     expect(denied.statusCode).toBe(401);
     expect(denied.body).not.toContain("local-test-key");
+    await app.close();
+  });
+
+  it("exposes unresolved operations only through authenticated operational access", async () => {
+    const context = await testContext();
+    const reconciliationStore = new InMemoryExecutionReconciliationStore();
+    const operation = await reconciliationStore.prepare({
+      rail: "x402",
+      operationKind: "x402_settlement",
+      decisionId: "api-reconciliation-decision",
+      actionHash: `sha256:${"a".repeat(64)}`,
+      executionRef: "api-reconciliation-execution",
+      bindingHash: `sha256:${"b".repeat(64)}`,
+      preparedAt: context.clock.now(),
+    });
+    await reconciliationStore.start({
+      operationId: operation.operationId,
+      bindingHash: operation.bindingHash,
+      startedAt: context.clock.now(),
+    });
+
+    await expect(buildDemoApi({ ...context, logger: false, reconciliationStore })).rejects.toThrow(
+      "service API key is required",
+    );
+
+    const app = await buildDemoApi({
+      ...context,
+      logger: false,
+      reconciliationStore,
+      serviceApiKey: "operations-test-key",
+    });
+    const denied = await app.inject({ method: "GET", url: "/v1/operations/unresolved" });
+    const allowed = await app.inject({
+      method: "GET",
+      url: "/v1/operations/unresolved?limit=10",
+      headers: { authorization: "Bearer operations-test-key" },
+    });
+    expect(denied.statusCode).toBe(401);
+    expect(denied.body).not.toContain("api-reconciliation-execution");
+    expect(allowed.statusCode).toBe(200);
+    expect(allowed.json()).toMatchObject({
+      operations: [{ operationId: operation.operationId, status: "in_progress" }],
+    });
     await app.close();
   });
 
