@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.3.0
 
 1. Added an optional PostgreSQL policy state package with durable immutable decisions and atomic
    approval claims.

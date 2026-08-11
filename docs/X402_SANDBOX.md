@@ -34,3 +34,7 @@ the same execution reference for Inntris consumption and facilitator reconciliat
 This public probe proves current protocol connectivity, advertised compatibility and rejection of an
 invalid payment. It does not claim a successful onchain settlement or production facilitator
 availability.
+
+The hosted evidence captured for release `v0.3.0` is committed as
+[`evidence/x402-sandbox-v0.3.0.json`](../evidence/x402-sandbox-v0.3.0.json). Its GitHub Actions URL,
+commit SHA and non-settlement boundary are part of the record.

@@ -394,6 +394,8 @@ See [docs/DECISION_ENVELOPE.md](docs/DECISION_ENVELOPE.md) for the complete sign
 4. [docs/MTP_COMPATIBILITY.md](docs/MTP_COMPATIBILITY.md) distinguishes this envelope from existing
    MTP request hashes and evidence packs.
 5. `fixtures/decisions` contains all committed positive and negative test vectors.
+6. [docs/RELEASE_V0.3.0.md](docs/RELEASE_V0.3.0.md) records the release scope, fresh hosted sandbox
+   evidence and exact claims boundary.
 
 ## Development commands
 
@@ -424,8 +426,9 @@ pnpm audit --prod --audit-level high
 4. The public fixture signing identity is intentionally known and must never be used in production.
 5. No claim is made about HSM custody, disaster recovery, production latency, blockchain finality or
    a live hosted deployment.
-6. The `v0.2.0` release includes the reference A2A, AP2, EVM wallet and conformance packages. It is
-   not evidence that a production service is deployed.
+6. The `v0.3.0` release adds durable policy state, MTP composition, managed signing, official x402
+   sandbox validation and direct x402 reconciliation. It is not evidence that a production service
+   is deployed.
 7. The AP2 reference gate uses a local Python process and a pinned official SDK revision. Production
    packaging, monitored process isolation and SDK upgrade governance remain operator work.
 8. Card and paid MCP lanes are mock conformance fixtures, not production card-network or MCP billing

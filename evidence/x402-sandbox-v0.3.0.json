@@ -1,0 +1,24 @@
+{
+  "version": "inntris-x402-sandbox-evidence-v1",
+  "release": "v0.3.0",
+  "repository": "Inntris/inntris-x402-policy-adapter",
+  "commit": "7d8036b3ff83b5d5966fcedc6bb8fddebd0f3b47",
+  "github_actions_run": "https://github.com/Inntris/inntris-x402-policy-adapter/actions/runs/31468980259",
+  "probe": {
+    "version": "inntris-x402-sandbox-probe-v1",
+    "facilitator_url": "https://x402.org/facilitator",
+    "x402_version": 2,
+    "scheme": "exact",
+    "network": "eip155:84532",
+    "supported": true,
+    "invalid_payment_rejected": true,
+    "invalid_reason": "invalid_exact_evm_signature",
+    "observed_at": "2026-08-11T07:27:34.516Z"
+  },
+  "boundary": {
+    "settlement_called": false,
+    "buyer_key_loaded": false,
+    "asset_moved": false,
+    "funded_settlement_claimed": false
+  }
+}
