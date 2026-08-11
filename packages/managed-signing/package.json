@@ -1,6 +1,6 @@
 {
   "name": "@inntris/managed-signing",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Provider-neutral remote Ed25519 signing and explicit key rotation registry controls.",
   "license": "MIT",
   "type": "module",

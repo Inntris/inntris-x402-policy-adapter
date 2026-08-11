@@ -1,6 +1,6 @@
 {
   "name": "@inntris/a2a-settlement-gate",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Fail-closed settlement and delegate execution gate for paid A2A tasks.",
   "license": "MIT",
   "type": "module",
