@@ -1,0 +1,233 @@
+{
+  "version": "inntris-x402-security-review-v1",
+  "suite": "USENIX x402 attack matrix",
+  "total": 18,
+  "passed": 14,
+  "failed": 4,
+  "results": [
+    {
+      "id": "A1",
+      "attack": "Recipient substitution (payTo redirected to an attacker address)",
+      "status": "PASS",
+      "expectation": "Policy blocks the substituted value outright, and a value swapped after authorisation is refused before settlement.",
+      "observed": "direct request: BLOCK (PAYEE_NOT_ALLOWED); post-authorisation swap: InntrisGuardError (ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH)",
+      "reason_codes": [
+        "PAYEE_NOT_ALLOWED",
+        "ACTION_HASH_MISMATCH",
+        "DECISION_BINDING_MISMATCH",
+        "PAYMENT_REQUIREMENTS_MISMATCH"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "A2",
+      "attack": "Asset substitution (settlement asset changed to an unlisted token)",
+      "status": "PASS",
+      "expectation": "Policy blocks the substituted value outright, and a value swapped after authorisation is refused before settlement.",
+      "observed": "direct request: BLOCK (ASSET_NOT_ALLOWED); post-authorisation swap: InntrisGuardError (ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH)",
+      "reason_codes": [
+        "ASSET_NOT_ALLOWED",
+        "ACTION_HASH_MISMATCH",
+        "DECISION_BINDING_MISMATCH",
+        "PAYMENT_REQUIREMENTS_MISMATCH"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "A3",
+      "attack": "Amount substitution (settlement amount raised above the quoted price)",
+      "status": "PASS",
+      "expectation": "Policy blocks the substituted value outright, and a value swapped after authorisation is refused before settlement.",
+      "observed": "direct request: BLOCK (AMOUNT_EXCEEDS_TRANSACTION_LIMIT); post-authorisation swap: InntrisGuardError (ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH)",
+      "reason_codes": [
+        "AMOUNT_EXCEEDS_TRANSACTION_LIMIT",
+        "ACTION_HASH_MISMATCH",
+        "DECISION_BINDING_MISMATCH",
+        "PAYMENT_REQUIREMENTS_MISMATCH"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "A3-F1",
+      "attack": "Amount substitution via declared asset precision (assetDecimals supplied by the caller)",
+      "status": "FAIL",
+      "expectation": "The decimal amount policy evaluates should be derived from the asset, so an atomic amount cannot be rescaled below a limit.",
+      "observed": "assetDecimals is a caller-supplied parameter. Atomic amount 150000000 is BLOCKed as 150.00 at assetDecimals=6 and ALLOWed as 0.15 at assetDecimals=9. The signed decision, action hash and payment-requirements hash are mutually consistent in both cases, so verification does not detect the rescaling and settlement proceeds.",
+      "reason_codes": [
+        "AMOUNT_EXCEEDS_TRANSACTION_LIMIT",
+        "MERCHANT_ALLOWED",
+        "WITHIN_TRANSACTION_LIMIT",
+        "WITHIN_DAILY_LIMIT"
+      ],
+      "settlement_invoked": true,
+      "resource_served": true
+    },
+    {
+      "id": "A4",
+      "attack": "Network substitution (settlement moved to a different chain)",
+      "status": "PASS",
+      "expectation": "Policy blocks the substituted value outright, and a value swapped after authorisation is refused before settlement.",
+      "observed": "direct request: BLOCK (NETWORK_NOT_ALLOWED); post-authorisation swap: InntrisGuardError (ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH)",
+      "reason_codes": [
+        "NETWORK_NOT_ALLOWED",
+        "ACTION_HASH_MISMATCH",
+        "DECISION_BINDING_MISMATCH",
+        "PAYMENT_REQUIREMENTS_MISMATCH"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "A5",
+      "attack": "Expired authorisation (decision presented after its expiry)",
+      "status": "PASS",
+      "expectation": "An expired decision must not settle and must not be consumable, independently of the executor.",
+      "observed": "Settlement refused with DECISION_EXPIRED at the guard, and direct consumption independently refused with DECISION_EXPIRED at the provider. The facilitator was never called and the resource was not served.",
+      "reason_codes": [
+        "DECISION_EXPIRED"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "A6",
+      "attack": "Nonce replay (one decision presented for a second, different execution)",
+      "status": "PASS",
+      "expectation": "A decision nonce must be consumable once. A retry of the same execution is idempotent; a different execution is a conflict.",
+      "observed": "First consumption: consumed. Same execution reference: idempotent, with the original consumed_at preserved. Different execution reference: conflict with NONCE_ALREADY_CONSUMED.",
+      "reason_codes": [
+        "NONCE_ALREADY_CONSUMED"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "A6-recon",
+      "attack": "Settlement replay against a guard with execution reconciliation configured",
+      "status": "PASS",
+      "expectation": "A completed settlement must not be re-executed, whether the attacker reuses the execution reference or invents a new one.",
+      "observed": "Reused execution reference refused with EXECUTION_ALREADY_COMPLETED; new execution reference refused with NONCE_ALREADY_CONSUMED. The facilitator settled exactly once and the resource was served once.",
+      "reason_codes": [
+        "EXECUTION_ALREADY_COMPLETED",
+        "NONCE_ALREADY_CONSUMED"
+      ],
+      "settlement_invoked": true,
+      "resource_served": true
+    },
+    {
+      "id": "A6-F2",
+      "attack": "Settlement replay against a guard with no execution reconciliation store (the default)",
+      "status": "FAIL",
+      "expectation": "Replaying a settled payment should never invoke the settlement executor a second time.",
+      "observed": "InntrisX402Guard.settleIfAuthorised treats an idempotent nonce consumption as success and, with reconciliationStore left undefined, calls the settlement executor again. The facilitator settled twice and the resource was served twice for one authorisation.",
+      "reason_codes": [],
+      "settlement_invoked": true,
+      "resource_served": true
+    },
+    {
+      "id": "A7",
+      "attack": "Insufficient balance reported by the facilitator at verification time",
+      "status": "PASS",
+      "expectation": "A payer without funds must not have the resource released and must not reach settlement.",
+      "observed": "The integration refused at verification with insufficient_funds. Settlement was never invoked and the resource was not served. Note that balance is the facilitator's judgement, not the adapter's; see finding F-3 on ordering.",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "A7-late",
+      "attack": "Insufficient balance surfacing only when settlement is attempted",
+      "status": "PASS",
+      "expectation": "A settlement that fails after it was attempted must not release the resource and must leave an operator-visible unresolved record.",
+      "observed": "Settlement raised EXECUTION_OUTCOME_UNKNOWN, the resource was not served, and one operation is listed as unresolved with status outcome_unknown pending authoritative resolution.",
+      "reason_codes": [
+        "EXECUTION_OUTCOME_UNKNOWN"
+      ],
+      "settlement_invoked": true,
+      "resource_served": false
+    },
+    {
+      "id": "A8",
+      "attack": "Facilitator verifies the payment as valid, then settlement fails or times out",
+      "status": "PASS",
+      "expectation": "An unknown settlement outcome must fail closed: no resource release, no automatic retry, and a durable record for reconciliation.",
+      "observed": "The first attempt raised EXECUTION_OUTCOME_UNKNOWN after one settlement call. The automatic retry was refused with the same code without calling the facilitator again, the resource was never served, and the operation remains unresolved with lastErrorCode SettlementFailure.",
+      "reason_codes": [
+        "EXECUTION_OUTCOME_UNKNOWN"
+      ],
+      "settlement_invoked": true,
+      "resource_served": false
+    },
+    {
+      "id": "A8-final",
+      "attack": "Settlement failure classified as final by the integration",
+      "status": "PASS",
+      "expectation": "A final settlement failure must be recorded as final and must not be retried against the same authorisation.",
+      "observed": "EXECUTION_FAILED_FINAL on the first attempt and on the retry, with exactly one settlement call and no resource release.",
+      "reason_codes": [
+        "EXECUTION_FAILED_FINAL"
+      ],
+      "settlement_invoked": true,
+      "resource_served": false
+    },
+    {
+      "id": "A7-A8-F3",
+      "attack": "Settlement executed without a preceding facilitator verification (integration ordering)",
+      "status": "FAIL",
+      "expectation": "The guard should make verify-before-settle structurally unavoidable, so an integration cannot settle an unverified payment.",
+      "observed": "InntrisX402Guard.settleIfAuthorised accepts an opaque executor and has no facilitator seam. A caller that omits the verification step settles regardless; the facilitator's verify was never called. Verification ordering is documented but not enforced in code.",
+      "reason_codes": [],
+      "settlement_invoked": true,
+      "resource_served": false
+    },
+    {
+      "id": "A9",
+      "attack": "Repeated resource access using a single paid authorisation",
+      "status": "PASS",
+      "expectation": "One authorisation must yield at most one settled access; further attempts must be refused.",
+      "observed": "Three accesses with one decision: the first served, the second and third refused with NONCE_ALREADY_CONSUMED. One settlement call and one resource release in total.",
+      "reason_codes": [
+        "NONCE_ALREADY_CONSUMED"
+      ],
+      "settlement_invoked": true,
+      "resource_served": true
+    },
+    {
+      "id": "A10",
+      "attack": "Payment payload bound to different payment requirements than the ones being charged",
+      "status": "PASS",
+      "expectation": "A payload whose accepted requirements differ from the quoted requirements must never be authorised or settled.",
+      "observed": "Authorisation raised X402BindingError (\"The payment payload is bound to different x402 payment requirements\"). Settlement was refused with PAYMENT_REQUIREMENTS_MISMATCH and the executor was never called.",
+      "reason_codes": [
+        "PAYMENT_REQUIREMENTS_MISMATCH"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "A10-late",
+      "attack": "Payment payload attached only after the decision was issued without one",
+      "status": "PASS",
+      "expectation": "The settled action must be byte-identical to the authorised action, including the presence or absence of a payload binding.",
+      "observed": "Adding a payload after a payload-free authorisation changes payment_payload_hash from null, so the action hash no longer matches. Settlement refused with ACTION_HASH_MISMATCH and the executor was never called.",
+      "reason_codes": [
+        "ACTION_HASH_MISMATCH"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "A10-F4",
+      "attack": "Signed EIP-3009 authorisation diverges from the accepted requirements it is presented with",
+      "status": "FAIL",
+      "expectation": "An Inntris ALLOW should attest that the payment actually signed pays the approved recipient the approved amount.",
+      "observed": "The adapter derives every policy field from `accepted` and binds `payload` only as an opaque hash. A payload whose inner authorisation pays 0x…ff a value of 1 produced a fully valid ALLOW for payee 0x…01 and amount 4.50, and verifyBeforeSettlement returned valid. Only the facilitator's own verification rejected it, with invalid_exact_evm_payload_recipient_mismatch.",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false
+    }
+  ]
+}

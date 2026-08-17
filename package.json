@@ -30,6 +30,7 @@
     "test": "pnpm build && vitest run",
     "test:ap2-official": "python packages/ap2-runtime-gate/python/self_test.py",
     "test:integration": "pnpm build && vitest run --config vitest.integration.config.ts",
+    "test:security": "pnpm build && vitest run --config vitest.security.config.ts",
     "test:kya": "pnpm build && vitest run --config vitest.kya.config.ts",
     "test:x402-sandbox": "pnpm build && node scripts/dist/probe-x402-sandbox.js",
     "test:unit": "pnpm build && vitest run --config vitest.unit.config.ts",
