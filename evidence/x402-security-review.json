@@ -1,91 +1,517 @@
 {
-  "version": "inntris-x402-security-review-v1",
-  "suite": "USENIX x402 attack matrix",
-  "total": 18,
-  "passed": 14,
-  "failed": 4,
+  "version": "inntris-x402-security-review-v2",
+  "suite": "USENIX x402 baseline, round 3",
+  "baseline_commit": "af3ed4d3bfe10507386c8b039db657f1b9cc9b08",
+  "generated_from_seed": 20260817,
+  "counts": {
+    "PASS": 35,
+    "BORROWED": 2,
+    "KNOWN_GAP": 7,
+    "NOT_TESTED": 0
+  },
+  "enforcement_counts": {
+    "INNTRIS": 22,
+    "FACILITATOR": 2,
+    "NONE": 18,
+    "INNTRIS_CONTAINMENT": 2
+  },
+  "total": 44,
   "results": [
     {
-      "id": "A1",
-      "attack": "Recipient substitution (payTo redirected to an attacker address)",
+      "id": "A10",
+      "deliverable": "D1",
+      "attack": "Payment payload bound to different payment requirements than the ones charged",
       "status": "PASS",
-      "expectation": "Policy blocks the substituted value outright, and a value swapped after authorisation is refused before settlement.",
-      "observed": "direct request: BLOCK (PAYEE_NOT_ALLOWED); post-authorisation swap: InntrisGuardError (ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH)",
+      "expectation": "A payload whose accepted requirements differ from the quoted requirements must be refused by Inntris before a facilitator is consulted.",
+      "observed": "compliant facilitator: rejected at INNTRIS_PREFLIGHT by inntris-adapter (X402BindingError: The payment payload is bound to different x402 payment requirements). permissive facilitator: rejected at INNTRIS_PREFLIGHT by inntris-adapter (X402BindingError: The payment payload is bound to different x402 payment requirements).",
+      "compliant": {
+        "rejected": true,
+        "layer": "INNTRIS_PREFLIGHT",
+        "component": "inntris-adapter",
+        "detail": "X402BindingError: The payment payload is bound to different x402 payment requirements",
+        "reason_codes": [],
+        "settlement_invoked": false,
+        "verify_calls": 0,
+        "resource_served": false
+      },
+      "permissive": {
+        "rejected": true,
+        "layer": "INNTRIS_PREFLIGHT",
+        "component": "inntris-adapter",
+        "detail": "X402BindingError: The payment payload is bound to different x402 payment requirements",
+        "reason_codes": [],
+        "settlement_invoked": false,
+        "verify_calls": 0,
+        "resource_served": false
+      },
+      "enforcement": "INNTRIS",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "A10-F4",
+      "deliverable": "D1",
+      "attack": "Signed EIP-3009 authorisation diverges from the accepted requirements it is presented with",
+      "status": "BORROWED",
+      "expectation": "An Inntris ALLOW should attest that the payment actually signed pays the approved recipient the approved amount.",
+      "observed": "compliant facilitator: rejected at FACILITATOR_VERIFY by facilitator:compliant (invalid_exact_evm_payload_recipient_mismatch). permissive facilitator: NOT REJECTED: resource released, transaction 0xpermissive.",
+      "compliant": {
+        "rejected": true,
+        "layer": "FACILITATOR_VERIFY",
+        "component": "facilitator:compliant",
+        "detail": "invalid_exact_evm_payload_recipient_mismatch",
+        "reason_codes": [],
+        "settlement_invoked": false,
+        "verify_calls": 1,
+        "resource_served": false
+      },
+      "permissive": {
+        "rejected": false,
+        "layer": "NONE",
+        "component": "none",
+        "detail": "resource released, transaction 0xpermissive",
+        "reason_codes": [],
+        "settlement_invoked": true,
+        "resource_served": true,
+        "verify_calls": 1
+      },
+      "enforcement": "FACILITATOR",
+      "reason_codes": [],
+      "settlement_invoked": true,
+      "resource_served": true,
+      "notes": "Every policy field is derived from `accepted`; `payload` is bound only as an opaque hash. The archetype of a borrowed check: the compliant facilitator rejects it, the permissive one settles it, and no Inntris check participates."
+    },
+    {
+      "id": "A10-late",
+      "deliverable": "D1",
+      "attack": "Payment payload attached only after the decision was issued without one",
+      "status": "PASS",
+      "expectation": "The settled action must be byte-identical to the authorised action, including the presence or absence of a payload binding.",
+      "observed": "compliant facilitator: rejected at INNTRIS_POST_VERIFY by inntris-guard (InntrisGuardError: ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH). permissive facilitator: rejected at INNTRIS_POST_VERIFY by inntris-guard (InntrisGuardError: ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH).",
+      "compliant": {
+        "rejected": true,
+        "layer": "INNTRIS_POST_VERIFY",
+        "component": "inntris-guard",
+        "detail": "InntrisGuardError: ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH",
+        "reason_codes": [
+          "ACTION_HASH_MISMATCH",
+          "DECISION_BINDING_MISMATCH"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 1,
+        "resource_served": false
+      },
+      "permissive": {
+        "rejected": true,
+        "layer": "INNTRIS_POST_VERIFY",
+        "component": "inntris-guard",
+        "detail": "InntrisGuardError: ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH",
+        "reason_codes": [
+          "ACTION_HASH_MISMATCH",
+          "DECISION_BINDING_MISMATCH"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 1,
+        "resource_served": false
+      },
+      "enforcement": "INNTRIS",
       "reason_codes": [
-        "PAYEE_NOT_ALLOWED",
         "ACTION_HASH_MISMATCH",
-        "DECISION_BINDING_MISMATCH",
-        "PAYMENT_REQUIREMENTS_MISMATCH"
+        "DECISION_BINDING_MISMATCH"
       ],
       "settlement_invoked": false,
       "resource_served": false
     },
     {
-      "id": "A2",
-      "attack": "Asset substitution (settlement asset changed to an unlisted token)",
+      "id": "A1a",
+      "deliverable": "D1",
+      "attack": "Recipient substitution (payTo redirected to an attacker address) — requested directly",
       "status": "PASS",
-      "expectation": "Policy blocks the substituted value outright, and a value swapped after authorisation is refused before settlement.",
-      "observed": "direct request: BLOCK (ASSET_NOT_ALLOWED); post-authorisation swap: InntrisGuardError (ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH)",
+      "expectation": "Organisational policy refuses the substituted value with PAYEE_NOT_ALLOWED, without consulting a facilitator.",
+      "observed": "compliant facilitator: rejected at INNTRIS_PREFLIGHT by inntris-policy (verdict BLOCK). permissive facilitator: rejected at INNTRIS_PREFLIGHT by inntris-policy (verdict BLOCK).",
+      "compliant": {
+        "rejected": true,
+        "layer": "INNTRIS_PREFLIGHT",
+        "component": "inntris-policy",
+        "detail": "verdict BLOCK",
+        "reason_codes": [
+          "PAYEE_NOT_ALLOWED"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 0,
+        "resource_served": false
+      },
+      "permissive": {
+        "rejected": true,
+        "layer": "INNTRIS_PREFLIGHT",
+        "component": "inntris-policy",
+        "detail": "verdict BLOCK",
+        "reason_codes": [
+          "PAYEE_NOT_ALLOWED"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 0,
+        "resource_served": false
+      },
+      "enforcement": "INNTRIS",
       "reason_codes": [
-        "ASSET_NOT_ALLOWED",
-        "ACTION_HASH_MISMATCH",
-        "DECISION_BINDING_MISMATCH",
-        "PAYMENT_REQUIREMENTS_MISMATCH"
+        "PAYEE_NOT_ALLOWED"
       ],
       "settlement_invoked": false,
       "resource_served": false
     },
     {
-      "id": "A3",
-      "attack": "Amount substitution (settlement amount raised above the quoted price)",
+      "id": "A1b",
+      "deliverable": "D1",
+      "attack": "Recipient substitution (payTo redirected to an attacker address) — swapped in after a legitimate authorisation",
       "status": "PASS",
-      "expectation": "Policy blocks the substituted value outright, and a value swapped after authorisation is refused before settlement.",
-      "observed": "direct request: BLOCK (AMOUNT_EXCEEDS_TRANSACTION_LIMIT); post-authorisation swap: InntrisGuardError (ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH)",
+      "expectation": "The guard refuses to settle an action that differs from the authorised one, without relying on the facilitator to notice.",
+      "observed": "compliant facilitator: rejected at FACILITATOR_VERIFY by facilitator:compliant (invalid_exact_evm_payload_recipient_mismatch). permissive facilitator: rejected at INNTRIS_POST_VERIFY by inntris-guard (InntrisGuardError: ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH).",
+      "compliant": {
+        "rejected": true,
+        "layer": "FACILITATOR_VERIFY",
+        "component": "facilitator:compliant",
+        "detail": "invalid_exact_evm_payload_recipient_mismatch",
+        "reason_codes": [],
+        "settlement_invoked": false,
+        "verify_calls": 1,
+        "resource_served": false
+      },
+      "permissive": {
+        "rejected": true,
+        "layer": "INNTRIS_POST_VERIFY",
+        "component": "inntris-guard",
+        "detail": "InntrisGuardError: ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH",
+        "reason_codes": [
+          "ACTION_HASH_MISMATCH",
+          "DECISION_BINDING_MISMATCH",
+          "PAYMENT_REQUIREMENTS_MISMATCH"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 1,
+        "resource_served": false
+      },
+      "enforcement": "INNTRIS",
       "reason_codes": [
-        "AMOUNT_EXCEEDS_TRANSACTION_LIMIT",
         "ACTION_HASH_MISMATCH",
         "DECISION_BINDING_MISMATCH",
         "PAYMENT_REQUIREMENTS_MISMATCH"
       ],
       "settlement_invoked": false,
+      "resource_served": false,
+      "notes": "Under the documented order the facilitator sees the swapped requirements first, so the compliant run attributes the rejection to FACILITATOR_VERIFY. The permissive run shows the guard rejecting the same swap independently."
+    },
+    {
+      "id": "A2a",
+      "deliverable": "D1",
+      "attack": "Asset substitution (settlement asset changed to an unlisted token) — requested directly",
+      "status": "PASS",
+      "expectation": "Organisational policy refuses the substituted value with ASSET_NOT_ALLOWED, without consulting a facilitator.",
+      "observed": "compliant facilitator: rejected at INNTRIS_PREFLIGHT by inntris-policy (verdict BLOCK). permissive facilitator: rejected at INNTRIS_PREFLIGHT by inntris-policy (verdict BLOCK).",
+      "compliant": {
+        "rejected": true,
+        "layer": "INNTRIS_PREFLIGHT",
+        "component": "inntris-policy",
+        "detail": "verdict BLOCK",
+        "reason_codes": [
+          "ASSET_NOT_ALLOWED"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 0,
+        "resource_served": false
+      },
+      "permissive": {
+        "rejected": true,
+        "layer": "INNTRIS_PREFLIGHT",
+        "component": "inntris-policy",
+        "detail": "verdict BLOCK",
+        "reason_codes": [
+          "ASSET_NOT_ALLOWED"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 0,
+        "resource_served": false
+      },
+      "enforcement": "INNTRIS",
+      "reason_codes": [
+        "ASSET_NOT_ALLOWED"
+      ],
+      "settlement_invoked": false,
       "resource_served": false
+    },
+    {
+      "id": "A2b",
+      "deliverable": "D1",
+      "attack": "Asset substitution (settlement asset changed to an unlisted token) — swapped in after a legitimate authorisation",
+      "status": "PASS",
+      "expectation": "The guard refuses to settle an action that differs from the authorised one, without relying on the facilitator to notice.",
+      "observed": "compliant facilitator: rejected at INNTRIS_POST_VERIFY by inntris-guard (InntrisGuardError: ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH). permissive facilitator: rejected at INNTRIS_POST_VERIFY by inntris-guard (InntrisGuardError: ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH).",
+      "compliant": {
+        "rejected": true,
+        "layer": "INNTRIS_POST_VERIFY",
+        "component": "inntris-guard",
+        "detail": "InntrisGuardError: ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH",
+        "reason_codes": [
+          "ACTION_HASH_MISMATCH",
+          "DECISION_BINDING_MISMATCH",
+          "PAYMENT_REQUIREMENTS_MISMATCH"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 1,
+        "resource_served": false
+      },
+      "permissive": {
+        "rejected": true,
+        "layer": "INNTRIS_POST_VERIFY",
+        "component": "inntris-guard",
+        "detail": "InntrisGuardError: ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH",
+        "reason_codes": [
+          "ACTION_HASH_MISMATCH",
+          "DECISION_BINDING_MISMATCH",
+          "PAYMENT_REQUIREMENTS_MISMATCH"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 1,
+        "resource_served": false
+      },
+      "enforcement": "INNTRIS",
+      "reason_codes": [
+        "ACTION_HASH_MISMATCH",
+        "DECISION_BINDING_MISMATCH",
+        "PAYMENT_REQUIREMENTS_MISMATCH"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false,
+      "notes": "Under the documented order the facilitator sees the swapped requirements first, so the compliant run attributes the rejection to FACILITATOR_VERIFY. The permissive run shows the guard rejecting the same swap independently."
     },
     {
       "id": "A3-F1",
+      "deliverable": "D1",
       "attack": "Amount substitution via declared asset precision (assetDecimals supplied by the caller)",
-      "status": "FAIL",
+      "status": "KNOWN_GAP",
       "expectation": "The decimal amount policy evaluates should be derived from the asset, so an atomic amount cannot be rescaled below a limit.",
-      "observed": "assetDecimals is a caller-supplied parameter. Atomic amount 150000000 is BLOCKed as 150.00 at assetDecimals=6 and ALLOWed as 0.15 at assetDecimals=9. The signed decision, action hash and payment-requirements hash are mutually consistent in both cases, so verification does not detect the rescaling and settlement proceeds.",
-      "reason_codes": [
-        "AMOUNT_EXCEEDS_TRANSACTION_LIMIT",
-        "MERCHANT_ALLOWED",
-        "WITHIN_TRANSACTION_LIMIT",
-        "WITHIN_DAILY_LIMIT"
-      ],
+      "observed": "compliant facilitator: NOT REJECTED: resource released, transaction 0xtx. permissive facilitator: NOT REJECTED: resource released, transaction 0xpermissive.",
+      "compliant": {
+        "rejected": false,
+        "layer": "NONE",
+        "component": "none",
+        "detail": "resource released, transaction 0xtx",
+        "reason_codes": [],
+        "settlement_invoked": true,
+        "resource_served": true,
+        "verify_calls": 1
+      },
+      "permissive": {
+        "rejected": false,
+        "layer": "NONE",
+        "component": "none",
+        "detail": "resource released, transaction 0xpermissive",
+        "reason_codes": [],
+        "settlement_invoked": true,
+        "resource_served": true,
+        "verify_calls": 1
+      },
+      "enforcement": "NONE",
+      "reason_codes": [],
       "settlement_invoked": true,
-      "resource_served": true
+      "resource_served": true,
+      "notes": "Atomic 150000000 is BLOCKed as 150.00 at assetDecimals=6 and ALLOWed as 0.15 at assetDecimals=9. Decision, action hash and requirements hash are mutually consistent in both cases, so no verifier downstream can detect the rescaling."
     },
     {
-      "id": "A4",
-      "attack": "Network substitution (settlement moved to a different chain)",
+      "id": "A3a",
+      "deliverable": "D1",
+      "attack": "Amount substitution (settlement amount raised above the quoted price) — requested directly",
       "status": "PASS",
-      "expectation": "Policy blocks the substituted value outright, and a value swapped after authorisation is refused before settlement.",
-      "observed": "direct request: BLOCK (NETWORK_NOT_ALLOWED); post-authorisation swap: InntrisGuardError (ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH)",
+      "expectation": "Organisational policy refuses the substituted value with AMOUNT_EXCEEDS_TRANSACTION_LIMIT, without consulting a facilitator.",
+      "observed": "compliant facilitator: rejected at INNTRIS_PREFLIGHT by inntris-policy (verdict BLOCK). permissive facilitator: rejected at INNTRIS_PREFLIGHT by inntris-policy (verdict BLOCK).",
+      "compliant": {
+        "rejected": true,
+        "layer": "INNTRIS_PREFLIGHT",
+        "component": "inntris-policy",
+        "detail": "verdict BLOCK",
+        "reason_codes": [
+          "AMOUNT_EXCEEDS_TRANSACTION_LIMIT"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 0,
+        "resource_served": false
+      },
+      "permissive": {
+        "rejected": true,
+        "layer": "INNTRIS_PREFLIGHT",
+        "component": "inntris-policy",
+        "detail": "verdict BLOCK",
+        "reason_codes": [
+          "AMOUNT_EXCEEDS_TRANSACTION_LIMIT"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 0,
+        "resource_served": false
+      },
+      "enforcement": "INNTRIS",
       "reason_codes": [
-        "NETWORK_NOT_ALLOWED",
-        "ACTION_HASH_MISMATCH",
-        "DECISION_BINDING_MISMATCH",
-        "PAYMENT_REQUIREMENTS_MISMATCH"
+        "AMOUNT_EXCEEDS_TRANSACTION_LIMIT"
       ],
       "settlement_invoked": false,
       "resource_served": false
     },
     {
+      "id": "A3b",
+      "deliverable": "D1",
+      "attack": "Amount substitution (settlement amount raised above the quoted price) — swapped in after a legitimate authorisation",
+      "status": "PASS",
+      "expectation": "The guard refuses to settle an action that differs from the authorised one, without relying on the facilitator to notice.",
+      "observed": "compliant facilitator: rejected at FACILITATOR_VERIFY by facilitator:compliant (invalid_exact_evm_payload_value_mismatch). permissive facilitator: rejected at INNTRIS_POST_VERIFY by inntris-guard (InntrisGuardError: ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH).",
+      "compliant": {
+        "rejected": true,
+        "layer": "FACILITATOR_VERIFY",
+        "component": "facilitator:compliant",
+        "detail": "invalid_exact_evm_payload_value_mismatch",
+        "reason_codes": [],
+        "settlement_invoked": false,
+        "verify_calls": 1,
+        "resource_served": false
+      },
+      "permissive": {
+        "rejected": true,
+        "layer": "INNTRIS_POST_VERIFY",
+        "component": "inntris-guard",
+        "detail": "InntrisGuardError: ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH",
+        "reason_codes": [
+          "ACTION_HASH_MISMATCH",
+          "DECISION_BINDING_MISMATCH",
+          "PAYMENT_REQUIREMENTS_MISMATCH"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 1,
+        "resource_served": false
+      },
+      "enforcement": "INNTRIS",
+      "reason_codes": [
+        "ACTION_HASH_MISMATCH",
+        "DECISION_BINDING_MISMATCH",
+        "PAYMENT_REQUIREMENTS_MISMATCH"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false,
+      "notes": "Under the documented order the facilitator sees the swapped requirements first, so the compliant run attributes the rejection to FACILITATOR_VERIFY. The permissive run shows the guard rejecting the same swap independently."
+    },
+    {
+      "id": "A4a",
+      "deliverable": "D1",
+      "attack": "Network substitution (settlement moved to a different chain) — requested directly",
+      "status": "PASS",
+      "expectation": "Organisational policy refuses the substituted value with NETWORK_NOT_ALLOWED, without consulting a facilitator.",
+      "observed": "compliant facilitator: rejected at INNTRIS_PREFLIGHT by inntris-policy (verdict BLOCK). permissive facilitator: rejected at INNTRIS_PREFLIGHT by inntris-policy (verdict BLOCK).",
+      "compliant": {
+        "rejected": true,
+        "layer": "INNTRIS_PREFLIGHT",
+        "component": "inntris-policy",
+        "detail": "verdict BLOCK",
+        "reason_codes": [
+          "NETWORK_NOT_ALLOWED"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 0,
+        "resource_served": false
+      },
+      "permissive": {
+        "rejected": true,
+        "layer": "INNTRIS_PREFLIGHT",
+        "component": "inntris-policy",
+        "detail": "verdict BLOCK",
+        "reason_codes": [
+          "NETWORK_NOT_ALLOWED"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 0,
+        "resource_served": false
+      },
+      "enforcement": "INNTRIS",
+      "reason_codes": [
+        "NETWORK_NOT_ALLOWED"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "A4b",
+      "deliverable": "D1",
+      "attack": "Network substitution (settlement moved to a different chain) — swapped in after a legitimate authorisation",
+      "status": "PASS",
+      "expectation": "The guard refuses to settle an action that differs from the authorised one, without relying on the facilitator to notice.",
+      "observed": "compliant facilitator: rejected at INNTRIS_POST_VERIFY by inntris-guard (InntrisGuardError: ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH). permissive facilitator: rejected at INNTRIS_POST_VERIFY by inntris-guard (InntrisGuardError: ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH).",
+      "compliant": {
+        "rejected": true,
+        "layer": "INNTRIS_POST_VERIFY",
+        "component": "inntris-guard",
+        "detail": "InntrisGuardError: ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH",
+        "reason_codes": [
+          "ACTION_HASH_MISMATCH",
+          "DECISION_BINDING_MISMATCH",
+          "PAYMENT_REQUIREMENTS_MISMATCH"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 1,
+        "resource_served": false
+      },
+      "permissive": {
+        "rejected": true,
+        "layer": "INNTRIS_POST_VERIFY",
+        "component": "inntris-guard",
+        "detail": "InntrisGuardError: ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH",
+        "reason_codes": [
+          "ACTION_HASH_MISMATCH",
+          "DECISION_BINDING_MISMATCH",
+          "PAYMENT_REQUIREMENTS_MISMATCH"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 1,
+        "resource_served": false
+      },
+      "enforcement": "INNTRIS",
+      "reason_codes": [
+        "ACTION_HASH_MISMATCH",
+        "DECISION_BINDING_MISMATCH",
+        "PAYMENT_REQUIREMENTS_MISMATCH"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false,
+      "notes": "Under the documented order the facilitator sees the swapped requirements first, so the compliant run attributes the rejection to FACILITATOR_VERIFY. The permissive run shows the guard rejecting the same swap independently."
+    },
+    {
       "id": "A5",
+      "deliverable": "D1",
       "attack": "Expired authorisation (decision presented after its expiry)",
       "status": "PASS",
-      "expectation": "An expired decision must not settle and must not be consumable, independently of the executor.",
-      "observed": "Settlement refused with DECISION_EXPIRED at the guard, and direct consumption independently refused with DECISION_EXPIRED at the provider. The facilitator was never called and the resource was not served.",
+      "expectation": "An expired decision must not settle, and the refusal must not depend on the facilitator.",
+      "observed": "compliant facilitator: rejected at INNTRIS_POST_VERIFY by inntris-guard (InntrisGuardError: DECISION_EXPIRED). permissive facilitator: rejected at INNTRIS_POST_VERIFY by inntris-guard (InntrisGuardError: DECISION_EXPIRED).",
+      "compliant": {
+        "rejected": true,
+        "layer": "INNTRIS_POST_VERIFY",
+        "component": "inntris-guard",
+        "detail": "InntrisGuardError: DECISION_EXPIRED",
+        "reason_codes": [
+          "DECISION_EXPIRED"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 1,
+        "resource_served": false
+      },
+      "permissive": {
+        "rejected": true,
+        "layer": "INNTRIS_POST_VERIFY",
+        "component": "inntris-guard",
+        "detail": "InntrisGuardError: DECISION_EXPIRED",
+        "reason_codes": [
+          "DECISION_EXPIRED"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 1,
+        "resource_served": false
+      },
+      "enforcement": "INNTRIS",
       "reason_codes": [
         "DECISION_EXPIRED"
       ],
@@ -94,140 +520,574 @@
     },
     {
       "id": "A6",
+      "deliverable": "D1",
       "attack": "Nonce replay (one decision presented for a second, different execution)",
       "status": "PASS",
-      "expectation": "A decision nonce must be consumable once. A retry of the same execution is idempotent; a different execution is a conflict.",
-      "observed": "First consumption: consumed. Same execution reference: idempotent, with the original consumed_at preserved. Different execution reference: conflict with NONCE_ALREADY_CONSUMED.",
+      "expectation": "A consumed decision must not settle again under a new execution reference, without relying on facilitator idempotency.",
+      "observed": "compliant facilitator: rejected at INNTRIS_POST_VERIFY by inntris-guard (InntrisGuardError: NONCE_ALREADY_CONSUMED). permissive facilitator: rejected at INNTRIS_POST_VERIFY by inntris-guard (InntrisGuardError: NONCE_ALREADY_CONSUMED).",
+      "compliant": {
+        "rejected": true,
+        "layer": "INNTRIS_POST_VERIFY",
+        "component": "inntris-guard",
+        "detail": "InntrisGuardError: NONCE_ALREADY_CONSUMED",
+        "reason_codes": [
+          "NONCE_ALREADY_CONSUMED"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 2,
+        "resource_served": false
+      },
+      "permissive": {
+        "rejected": true,
+        "layer": "INNTRIS_POST_VERIFY",
+        "component": "inntris-guard",
+        "detail": "InntrisGuardError: NONCE_ALREADY_CONSUMED",
+        "reason_codes": [
+          "NONCE_ALREADY_CONSUMED"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 2,
+        "resource_served": false
+      },
+      "enforcement": "INNTRIS",
       "reason_codes": [
         "NONCE_ALREADY_CONSUMED"
       ],
       "settlement_invoked": false,
       "resource_served": false
-    },
-    {
-      "id": "A6-recon",
-      "attack": "Settlement replay against a guard with execution reconciliation configured",
-      "status": "PASS",
-      "expectation": "A completed settlement must not be re-executed, whether the attacker reuses the execution reference or invents a new one.",
-      "observed": "Reused execution reference refused with EXECUTION_ALREADY_COMPLETED; new execution reference refused with NONCE_ALREADY_CONSUMED. The facilitator settled exactly once and the resource was served once.",
-      "reason_codes": [
-        "EXECUTION_ALREADY_COMPLETED",
-        "NONCE_ALREADY_CONSUMED"
-      ],
-      "settlement_invoked": true,
-      "resource_served": true
     },
     {
       "id": "A6-F2",
-      "attack": "Settlement replay against a guard with no execution reconciliation store (the default)",
-      "status": "FAIL",
-      "expectation": "Replaying a settled payment should never invoke the settlement executor a second time.",
-      "observed": "InntrisX402Guard.settleIfAuthorised treats an idempotent nonce consumption as success and, with reconciliationStore left undefined, calls the settlement executor again. The facilitator settled twice and the resource was served twice for one authorisation.",
+      "deliverable": "D1",
+      "attack": "Settlement replay with no execution reconciliation store, the guard's default",
+      "status": "KNOWN_GAP",
+      "expectation": "Replaying a settled payment must never invoke the settlement executor a second time.",
+      "observed": "compliant facilitator: NOT REJECTED: resource released, transaction 0xtx. permissive facilitator: NOT REJECTED: resource released, transaction 0xpermissive.",
+      "compliant": {
+        "rejected": false,
+        "layer": "NONE",
+        "component": "none",
+        "detail": "resource released, transaction 0xtx",
+        "reason_codes": [],
+        "settlement_invoked": true,
+        "resource_served": true,
+        "verify_calls": 2
+      },
+      "permissive": {
+        "rejected": false,
+        "layer": "NONE",
+        "component": "none",
+        "detail": "resource released, transaction 0xpermissive",
+        "reason_codes": [],
+        "settlement_invoked": true,
+        "resource_served": true,
+        "verify_calls": 2
+      },
+      "enforcement": "NONE",
       "reason_codes": [],
       "settlement_invoked": true,
-      "resource_served": true
+      "resource_served": true,
+      "notes": "An idempotent nonce consumption is treated as success, and with reconciliationStore undefined nothing else stands between that answer and a second settlement."
     },
     {
-      "id": "A7",
-      "attack": "Insufficient balance reported by the facilitator at verification time",
+      "id": "A6-recon",
+      "deliverable": "D1",
+      "attack": "Settlement replay with the same execution reference, reconciliation configured",
       "status": "PASS",
-      "expectation": "A payer without funds must not have the resource released and must not reach settlement.",
-      "observed": "The integration refused at verification with insufficient_funds. Settlement was never invoked and the resource was not served. Note that balance is the facilitator's judgement, not the adapter's; see finding F-3 on ordering.",
-      "reason_codes": [],
+      "expectation": "A completed settlement must not be re-executed when the attacker reuses the execution reference.",
+      "observed": "compliant facilitator: rejected at INNTRIS_POST_VERIFY by inntris-guard (InntrisGuardError: EXECUTION_ALREADY_COMPLETED). permissive facilitator: rejected at INNTRIS_POST_VERIFY by inntris-guard (InntrisGuardError: EXECUTION_ALREADY_COMPLETED).",
+      "compliant": {
+        "rejected": true,
+        "layer": "INNTRIS_POST_VERIFY",
+        "component": "inntris-guard",
+        "detail": "InntrisGuardError: EXECUTION_ALREADY_COMPLETED",
+        "reason_codes": [
+          "EXECUTION_ALREADY_COMPLETED"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 2,
+        "resource_served": false
+      },
+      "permissive": {
+        "rejected": true,
+        "layer": "INNTRIS_POST_VERIFY",
+        "component": "inntris-guard",
+        "detail": "InntrisGuardError: EXECUTION_ALREADY_COMPLETED",
+        "reason_codes": [
+          "EXECUTION_ALREADY_COMPLETED"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 2,
+        "resource_served": false
+      },
+      "enforcement": "INNTRIS",
+      "reason_codes": [
+        "EXECUTION_ALREADY_COMPLETED"
+      ],
       "settlement_invoked": false,
       "resource_served": false
     },
     {
-      "id": "A7-late",
-      "attack": "Insufficient balance surfacing only when settlement is attempted",
-      "status": "PASS",
-      "expectation": "A settlement that fails after it was attempted must not release the resource and must leave an operator-visible unresolved record.",
-      "observed": "Settlement raised EXECUTION_OUTCOME_UNKNOWN, the resource was not served, and one operation is listed as unresolved with status outcome_unknown pending authoritative resolution.",
-      "reason_codes": [
-        "EXECUTION_OUTCOME_UNKNOWN"
-      ],
+      "id": "A7",
+      "deliverable": "D1",
+      "attack": "Insufficient balance (payer cannot fund the quoted amount)",
+      "status": "BORROWED",
+      "expectation": "A payer without funds should not have the resource released. Inntris holds no balance state, so this is expected to be facilitator-owned; the run measures whether anything else stops it.",
+      "observed": "compliant facilitator: rejected at FACILITATOR_VERIFY by facilitator:custom (insufficient_funds). permissive facilitator: NOT REJECTED: resource released, transaction 0xpermissive.",
+      "compliant": {
+        "rejected": true,
+        "layer": "FACILITATOR_VERIFY",
+        "component": "facilitator:custom",
+        "detail": "insufficient_funds",
+        "reason_codes": [],
+        "settlement_invoked": false,
+        "verify_calls": 1,
+        "resource_served": false
+      },
+      "permissive": {
+        "rejected": false,
+        "layer": "NONE",
+        "component": "none",
+        "detail": "resource released, transaction 0xpermissive",
+        "reason_codes": [],
+        "settlement_invoked": true,
+        "resource_served": true,
+        "verify_calls": 1
+      },
+      "enforcement": "FACILITATOR",
+      "reason_codes": [],
       "settlement_invoked": true,
-      "resource_served": false
-    },
-    {
-      "id": "A8",
-      "attack": "Facilitator verifies the payment as valid, then settlement fails or times out",
-      "status": "PASS",
-      "expectation": "An unknown settlement outcome must fail closed: no resource release, no automatic retry, and a durable record for reconciliation.",
-      "observed": "The first attempt raised EXECUTION_OUTCOME_UNKNOWN after one settlement call. The automatic retry was refused with the same code without calling the facilitator again, the resource was never served, and the operation remains unresolved with lastErrorCode SettlementFailure.",
-      "reason_codes": [
-        "EXECUTION_OUTCOME_UNKNOWN"
-      ],
-      "settlement_invoked": true,
-      "resource_served": false
-    },
-    {
-      "id": "A8-final",
-      "attack": "Settlement failure classified as final by the integration",
-      "status": "PASS",
-      "expectation": "A final settlement failure must be recorded as final and must not be retried against the same authorisation.",
-      "observed": "EXECUTION_FAILED_FINAL on the first attempt and on the retry, with exactly one settlement call and no resource release.",
-      "reason_codes": [
-        "EXECUTION_FAILED_FINAL"
-      ],
-      "settlement_invoked": true,
-      "resource_served": false
+      "resource_served": true,
+      "notes": "Balance is not observable to the adapter. Recorded as BORROWED rather than PASS because no Inntris check contributes to it."
     },
     {
       "id": "A7-A8-F3",
-      "attack": "Settlement executed without a preceding facilitator verification (integration ordering)",
-      "status": "FAIL",
+      "deliverable": "D1",
+      "attack": "Settlement executed without a preceding facilitator verification",
+      "status": "KNOWN_GAP",
       "expectation": "The guard should make verify-before-settle structurally unavoidable, so an integration cannot settle an unverified payment.",
-      "observed": "InntrisX402Guard.settleIfAuthorised accepts an opaque executor and has no facilitator seam. A caller that omits the verification step settles regardless; the facilitator's verify was never called. Verification ordering is documented but not enforced in code.",
+      "observed": "compliant facilitator: NOT REJECTED: resource released, transaction 0xtx. permissive facilitator: NOT REJECTED: resource released, transaction 0xpermissive.",
+      "compliant": {
+        "rejected": false,
+        "layer": "NONE",
+        "component": "none",
+        "detail": "resource released, transaction 0xtx",
+        "reason_codes": [],
+        "settlement_invoked": true,
+        "resource_served": true,
+        "verify_calls": 0
+      },
+      "permissive": {
+        "rejected": false,
+        "layer": "NONE",
+        "component": "none",
+        "detail": "resource released, transaction 0xpermissive",
+        "reason_codes": [],
+        "settlement_invoked": true,
+        "resource_served": true,
+        "verify_calls": 0
+      },
+      "enforcement": "NONE",
       "reason_codes": [],
       "settlement_invoked": true,
+      "resource_served": true,
+      "notes": "settleIfAuthorised accepts an opaque executor and has no facilitator seam, so an integration that omits verification settles regardless. The facilitator here would have rejected the payment had it been asked."
+    },
+    {
+      "id": "A7-late",
+      "deliverable": "D1",
+      "attack": "Insufficient balance surfacing only when settlement is attempted",
+      "status": "PASS",
+      "expectation": "A settlement that fails after being attempted must not release the resource and must leave an operator-visible unresolved record.",
+      "observed": "compliant facilitator: rejected at FACILITATOR_SETTLE by facilitator:custom (InntrisGuardError: EXECUTION_OUTCOME_UNKNOWN)",
+      "compliant": {
+        "rejected": true,
+        "layer": "FACILITATOR_SETTLE",
+        "component": "facilitator:custom",
+        "detail": "InntrisGuardError: EXECUTION_OUTCOME_UNKNOWN",
+        "reason_codes": [
+          "EXECUTION_OUTCOME_UNKNOWN"
+        ],
+        "settlement_invoked": true,
+        "verify_calls": 1,
+        "resource_served": false
+      },
+      "permissive": {
+        "not_expressible": "The permissive stand-in never fails settlement, so a settlement-time funding failure cannot be produced against it."
+      },
+      "enforcement": "INNTRIS_CONTAINMENT",
+      "reason_codes": [
+        "EXECUTION_OUTCOME_UNKNOWN"
+      ],
+      "settlement_invoked": true,
+      "resource_served": false
+    },
+    {
+      "id": "A7-late-nostore",
+      "deliverable": "D1",
+      "attack": "Settlement failure with no execution reconciliation store, the guard's default configuration",
+      "status": "KNOWN_GAP",
+      "expectation": "A settlement failure should carry an Inntris reason code and leave a durable unresolved record regardless of configuration.",
+      "observed": "compliant facilitator: rejected at FACILITATOR_SETTLE by facilitator:custom (SettlementFailure: Settlement failed: insufficient_funds)",
+      "compliant": {
+        "rejected": true,
+        "layer": "FACILITATOR_SETTLE",
+        "component": "facilitator:custom",
+        "detail": "SettlementFailure: Settlement failed: insufficient_funds",
+        "reason_codes": [],
+        "settlement_invoked": true,
+        "verify_calls": 1,
+        "resource_served": false
+      },
+      "permissive": {
+        "not_expressible": "The permissive stand-in never fails settlement, so a settlement-time funding failure cannot be produced against it."
+      },
+      "enforcement": "NONE",
+      "reason_codes": [],
+      "settlement_invoked": true,
+      "resource_served": false,
+      "notes": "Second face of F-2. With reconciliationStore undefined the raw executor error propagates uncaught out of settleIfAuthorised: no InntrisGuardError, no reason code, and no unresolved operation for an operator to reconcile. The caller is left to interpret a bare facilitator error."
+    },
+    {
+      "id": "A8",
+      "deliverable": "D1",
+      "attack": "Facilitator verifies the payment, then settlement fails or times out",
+      "status": "PASS",
+      "expectation": "An unknown settlement outcome must not release the resource, must not retry automatically, and must leave a durable record.",
+      "observed": "compliant facilitator: rejected at INNTRIS_POST_VERIFY by inntris-guard (InntrisGuardError: EXECUTION_OUTCOME_UNKNOWN)",
+      "compliant": {
+        "rejected": true,
+        "layer": "INNTRIS_POST_VERIFY",
+        "component": "inntris-guard",
+        "detail": "InntrisGuardError: EXECUTION_OUTCOME_UNKNOWN",
+        "reason_codes": [
+          "EXECUTION_OUTCOME_UNKNOWN"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 2,
+        "resource_served": false
+      },
+      "permissive": {
+        "not_expressible": "The permissive stand-in always settles successfully, so the attack premise cannot be produced against it."
+      },
+      "enforcement": "INNTRIS_CONTAINMENT",
+      "reason_codes": [
+        "EXECUTION_OUTCOME_UNKNOWN"
+      ],
+      "settlement_invoked": false,
       "resource_served": false
     },
     {
       "id": "A9",
+      "deliverable": "D1",
       "attack": "Repeated resource access using a single paid authorisation",
       "status": "PASS",
-      "expectation": "One authorisation must yield at most one settled access; further attempts must be refused.",
-      "observed": "Three accesses with one decision: the first served, the second and third refused with NONCE_ALREADY_CONSUMED. One settlement call and one resource release in total.",
+      "expectation": "One authorisation must yield at most one settled access, without relying on the facilitator.",
+      "observed": "compliant facilitator: rejected at INNTRIS_POST_VERIFY by inntris-guard (InntrisGuardError: NONCE_ALREADY_CONSUMED). permissive facilitator: rejected at INNTRIS_POST_VERIFY by inntris-guard (InntrisGuardError: NONCE_ALREADY_CONSUMED).",
+      "compliant": {
+        "rejected": true,
+        "layer": "INNTRIS_POST_VERIFY",
+        "component": "inntris-guard",
+        "detail": "InntrisGuardError: NONCE_ALREADY_CONSUMED",
+        "reason_codes": [
+          "NONCE_ALREADY_CONSUMED"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 2,
+        "resource_served": false
+      },
+      "permissive": {
+        "rejected": true,
+        "layer": "INNTRIS_POST_VERIFY",
+        "component": "inntris-guard",
+        "detail": "InntrisGuardError: NONCE_ALREADY_CONSUMED",
+        "reason_codes": [
+          "NONCE_ALREADY_CONSUMED"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 2,
+        "resource_served": false
+      },
+      "enforcement": "INNTRIS",
       "reason_codes": [
         "NONCE_ALREADY_CONSUMED"
       ],
-      "settlement_invoked": true,
-      "resource_served": true
-    },
-    {
-      "id": "A10",
-      "attack": "Payment payload bound to different payment requirements than the ones being charged",
-      "status": "PASS",
-      "expectation": "A payload whose accepted requirements differ from the quoted requirements must never be authorised or settled.",
-      "observed": "Authorisation raised X402BindingError (\"The payment payload is bound to different x402 payment requirements\"). Settlement was refused with PAYMENT_REQUIREMENTS_MISMATCH and the executor was never called.",
-      "reason_codes": [
-        "PAYMENT_REQUIREMENTS_MISMATCH"
-      ],
       "settlement_invoked": false,
       "resource_served": false
     },
     {
-      "id": "A10-late",
-      "attack": "Payment payload attached only after the decision was issued without one",
-      "status": "PASS",
-      "expectation": "The settled action must be byte-identical to the authorised action, including the presence or absence of a payload binding.",
-      "observed": "Adding a payload after a payload-free authorisation changes payment_payload_hash from null, so the action hash no longer matches. Settlement refused with ACTION_HASH_MISMATCH and the executor was never called.",
-      "reason_codes": [
-        "ACTION_HASH_MISMATCH"
-      ],
+      "id": "D2:agent-id-unevaluated",
+      "deliverable": "D2",
+      "attack": "Agent identifier carried into the receipt but not evaluated by policy",
+      "status": "KNOWN_GAP",
+      "expectation": "An agent identifier named in a signed decision should either constrain the decision or be documented as informational.",
+      "observed": "Changing agent_id changes the action hash and the receipt but not the verdict. evaluatePolicy never reads agent_id; the local policy schema has no per-agent rule.",
+      "enforcement": "NONE",
+      "reason_codes": [],
       "settlement_invoked": false,
-      "resource_served": false
+      "resource_served": false,
+      "notes": "The KYA OS gate binds agent identity on its own path. This concerns the plain x402 path only."
     },
     {
-      "id": "A10-F4",
-      "attack": "Signed EIP-3009 authorisation diverges from the accepted requirements it is presented with",
-      "status": "FAIL",
-      "expectation": "An Inntris ALLOW should attest that the payment actually signed pays the approved recipient the approved amount.",
-      "observed": "The adapter derives every policy field from `accepted` and binds `payload` only as an opaque hash. A payload whose inner authorisation pays 0x…ff a value of 1 produced a fully valid ALLOW for payee 0x…01 and amount 4.50, and verifyBeforeSettlement returned valid. Only the facilitator's own verification rejected it, with invalid_exact_evm_payload_recipient_mismatch.",
+      "id": "D2:agentId",
+      "deliverable": "D2",
+      "attack": "Provenance of agentId",
+      "status": "PASS",
+      "expectation": "Every field reaching a decision, hash or receipt is classified by source, controllability and validation.",
+      "observed": "reaches [action-hash, receipt]; source client-asserted; attacker-controllable yes; validated against NOTHING on the local policy path. Carried into the receipt; evaluatePolicy never reads it. The KYA gate binds it separately on the KYA path only.",
+      "enforcement": "NONE",
       "reason_codes": [],
       "settlement_invoked": false,
       "resource_served": false
+    },
+    {
+      "id": "D2:assetDecimals",
+      "deliverable": "D2",
+      "attack": "Provenance of assetDecimals",
+      "status": "PASS",
+      "expectation": "Every field reaching a decision, hash or receipt is classified by source, controllability and validation.",
+      "observed": "reaches [action-hash, receipt]; source client-asserted; attacker-controllable yes; validated against NOTHING beyond an integer range of 0 to 18. Not derived from the asset and not recorded in the receipt.",
+      "enforcement": "NONE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false,
+      "notes": "Finding F-1."
+    },
+    {
+      "id": "D2:extensions",
+      "deliverable": "D2",
+      "attack": "Provenance of extensions",
+      "status": "PASS",
+      "expectation": "Every field reaching a decision, hash or receipt is classified by source, controllability and validation.",
+      "observed": "reaches [action-hash, receipt]; source client-asserted; attacker-controllable yes; validated against Reserved KYA key is rejected on the KYA path; otherwise a free-form record carried into the action hash and receipt.",
+      "enforcement": "INNTRIS",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D2:paymentPayload.accepted",
+      "deliverable": "D2",
+      "attack": "Provenance of paymentPayload.accepted",
+      "status": "PASS",
+      "expectation": "Every field reaching a decision, hash or receipt is classified by source, controllability and validation.",
+      "observed": "mutation rejected before the action is built: The payment payload is bound to different x402 payment requirements",
+      "enforcement": "INNTRIS",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D2:paymentPayload.payload.authorization.to",
+      "deliverable": "D2",
+      "attack": "Provenance of paymentPayload.payload.authorization.to",
+      "status": "PASS",
+      "expectation": "Every field reaching a decision, hash or receipt is classified by source, controllability and validation.",
+      "observed": "reaches [action-hash, payload-hash, receipt]; source signature-derived; attacker-controllable partially; validated against NOTHING inside Inntris. Bound only as part of the opaque payload hash; the facilitator is the sole checker.",
+      "enforcement": "NONE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false,
+      "notes": "Finding F-4."
+    },
+    {
+      "id": "D2:paymentPayload.payload.authorization.validBefore",
+      "deliverable": "D2",
+      "attack": "Provenance of paymentPayload.payload.authorization.validBefore",
+      "status": "PASS",
+      "expectation": "Every field reaching a decision, hash or receipt is classified by source, controllability and validation.",
+      "observed": "reaches [action-hash, payload-hash, receipt]; source signature-derived; attacker-controllable partially; validated against NOTHING inside Inntris. Never compared with the decision expiry, so an authorisation may outlive or predecease the decision that approved it.",
+      "enforcement": "NONE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D2:paymentPayload.payload.authorization.value",
+      "deliverable": "D2",
+      "attack": "Provenance of paymentPayload.payload.authorization.value",
+      "status": "PASS",
+      "expectation": "Every field reaching a decision, hash or receipt is classified by source, controllability and validation.",
+      "observed": "reaches [action-hash, payload-hash, receipt]; source signature-derived; attacker-controllable partially; validated against NOTHING inside Inntris. See F-4.",
+      "enforcement": "NONE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D2:paymentPayload.payload.signature",
+      "deliverable": "D2",
+      "attack": "Provenance of paymentPayload.payload.signature",
+      "status": "PASS",
+      "expectation": "Every field reaching a decision, hash or receipt is classified by source, controllability and validation.",
+      "observed": "reaches [action-hash, payload-hash, receipt]; source signature-derived; attacker-controllable partially; validated against NOTHING inside Inntris. Signature validity is entirely the facilitator's.",
+      "enforcement": "NONE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D2:paymentPayload.resource.url",
+      "deliverable": "D2",
+      "attack": "Provenance of paymentPayload.resource.url",
+      "status": "PASS",
+      "expectation": "Every field reaching a decision, hash or receipt is classified by source, controllability and validation.",
+      "observed": "reaches [action-hash, payload-hash, receipt]; source client-asserted; attacker-controllable yes; validated against NOTHING. Never compared with the `resource` field that policy actually evaluates.",
+      "enforcement": "NONE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D2:paymentRequirements.amount",
+      "deliverable": "D2",
+      "attack": "Provenance of paymentRequirements.amount",
+      "status": "PASS",
+      "expectation": "Every field reaching a decision, hash or receipt is classified by source, controllability and validation.",
+      "observed": "reaches [action-hash, requirements-hash, payload-hash, receipt, decision]; source client-asserted; attacker-controllable yes; validated against policy per-transaction and daily limits, after conversion by the caller-declared assetDecimals",
+      "enforcement": "INNTRIS",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D2:paymentRequirements.asset",
+      "deliverable": "D2",
+      "attack": "Provenance of paymentRequirements.asset",
+      "status": "PASS",
+      "expectation": "Every field reaching a decision, hash or receipt is classified by source, controllability and validation.",
+      "observed": "reaches [action-hash, requirements-hash, payload-hash, receipt, decision]; source client-asserted; attacker-controllable yes; validated against policy rails.x402.allowed_assets, an exact string match",
+      "enforcement": "INNTRIS",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false,
+      "notes": "The demo policy allowlists the symbol `USDC`, not a chain-scoped contract address. Matching a symbol means the allowlist is applied to an unauthenticated label."
+    },
+    {
+      "id": "D2:paymentRequirements.extra",
+      "deliverable": "D2",
+      "attack": "Provenance of paymentRequirements.extra",
+      "status": "PASS",
+      "expectation": "Every field reaching a decision, hash or receipt is classified by source, controllability and validation.",
+      "observed": "reaches [action-hash, requirements-hash, payload-hash, receipt]; source client-asserted; attacker-controllable yes; validated against NOTHING beyond schema shape. Free-form record bound into the requirements hash.",
+      "enforcement": "NONE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D2:paymentRequirements.maxTimeoutSeconds",
+      "deliverable": "D2",
+      "attack": "Provenance of paymentRequirements.maxTimeoutSeconds",
+      "status": "PASS",
+      "expectation": "Every field reaching a decision, hash or receipt is classified by source, controllability and validation.",
+      "observed": "reaches [action-hash, requirements-hash, payload-hash, receipt]; source client-asserted; attacker-controllable yes; validated against NOTHING beyond schema shape. Bound into the requirements hash but never compared to the decision TTL.",
+      "enforcement": "NONE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D2:paymentRequirements.network",
+      "deliverable": "D2",
+      "attack": "Provenance of paymentRequirements.network",
+      "status": "PASS",
+      "expectation": "Every field reaching a decision, hash or receipt is classified by source, controllability and validation.",
+      "observed": "reaches [action-hash, requirements-hash, payload-hash, receipt, decision]; source client-asserted; attacker-controllable yes; validated against policy rails.x402.allowed_networks, plus CAIP-2 shape at schema parse",
+      "enforcement": "INNTRIS",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D2:paymentRequirements.payTo",
+      "deliverable": "D2",
+      "attack": "Provenance of paymentRequirements.payTo",
+      "status": "PASS",
+      "expectation": "Every field reaching a decision, hash or receipt is classified by source, controllability and validation.",
+      "observed": "reaches [action-hash, requirements-hash, payload-hash, receipt, decision]; source client-asserted; attacker-controllable yes; validated against policy merchant payee allowlist",
+      "enforcement": "INNTRIS",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D2:paymentRequirements.scheme",
+      "deliverable": "D2",
+      "attack": "Provenance of paymentRequirements.scheme",
+      "status": "PASS",
+      "expectation": "Every field reaching a decision, hash or receipt is classified by source, controllability and validation.",
+      "observed": "reaches [action-hash, requirements-hash, payload-hash, receipt]; source client-asserted; attacker-controllable yes; validated against NOTHING. Carried into the receipt and the requirements hash; no policy rule and no allowlist references it.",
+      "enforcement": "NONE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D2:principal-keyed-budget",
+      "deliverable": "D2",
+      "attack": "Daily cumulative limit keyed on a caller-supplied principal identifier",
+      "status": "KNOWN_GAP",
+      "expectation": "A cumulative spending limit should be keyed on an identity the caller cannot choose.",
+      "observed": "principal_id is taken from the caller on the library path and from the request body on POST /v1/decisions/evaluate. spendDayKey uses it directly, so each distinct value carries its own independent daily total.",
+      "enforcement": "NONE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false,
+      "notes": "Severity depends on who may call the endpoint; see D8. On the KYA path the principal is derived from the presentation instead."
+    },
+    {
+      "id": "D2:principalId",
+      "deliverable": "D2",
+      "attack": "Provenance of principalId",
+      "status": "PASS",
+      "expectation": "Every field reaching a decision, hash or receipt is classified by source, controllability and validation.",
+      "observed": "reaches [action-hash, receipt]; source client-asserted; attacker-controllable yes; validated against NOTHING. Used as the cumulative daily-spend key, so a new value starts a fresh daily budget.",
+      "enforcement": "NONE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D2:purpose",
+      "deliverable": "D2",
+      "attack": "Provenance of purpose",
+      "status": "PASS",
+      "expectation": "Every field reaching a decision, hash or receipt is classified by source, controllability and validation.",
+      "observed": "reaches [action-hash, receipt, decision]; source client-asserted; attacker-controllable yes; validated against policy merchant purpose allowlist",
+      "enforcement": "INNTRIS",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D2:resource",
+      "deliverable": "D2",
+      "attack": "Provenance of resource",
+      "status": "PASS",
+      "expectation": "Every field reaching a decision, hash or receipt is classified by source, controllability and validation.",
+      "observed": "reaches [action-hash, receipt, decision]; source client-asserted; attacker-controllable yes; validated against policy merchant resource allowlist, an exact URL match",
+      "enforcement": "INNTRIS",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D2:unevaluated-fields-in-receipt",
+      "deliverable": "D2",
+      "attack": "Fields bound into the receipt that no policy rule evaluates",
+      "status": "KNOWN_GAP",
+      "expectation": "A field carried into a signed receipt should either be evaluated by policy or be documented as decorative.",
+      "observed": "scheme=deferred and maxTimeoutSeconds=86400 produced a valid, signed ALLOW. The scheme reaches protocol_reference and the requirements hash; no policy rule references either field.",
+      "enforcement": "NONE",
+      "reason_codes": [
+        "MERCHANT_ALLOWED",
+        "WITHIN_TRANSACTION_LIMIT",
+        "WITHIN_DAILY_LIMIT"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false,
+      "notes": "A reader of the receipt may reasonably infer that a named scheme was approved as such. It was not evaluated."
     }
   ]
 }

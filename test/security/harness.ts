@@ -1,6 +1,5 @@
-import { mkdir, writeFile } from "node:fs/promises";
 import { readFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { resolve } from "node:path";
 
 import {
   buildKeyRegistryEntry,
@@ -13,14 +12,22 @@ import {
   InMemoryExecutionReconciliationStore,
   type ExecutionReconciliationStore,
 } from "@inntris/execution-reconciliation";
-import { LocalPolicyDecisionProvider, parsePolicyText } from "@inntris/policy-engine";
+import {
+  InMemorySpendState,
+  LocalPolicyDecisionProvider,
+  parsePolicyText,
+  type SpendState,
+} from "@inntris/policy-engine";
 import {
   InntrisGuardError,
   InntrisX402Guard,
+  X402BindingError,
   type PaymentPayload,
   type PaymentRequirements,
   type X402SettlementInput,
 } from "@inntris/x402-adapter";
+
+import type { RejectionLayer, RunOutcome } from "./evidence.js";
 
 export class MutableClock implements Clock {
   constructor(private value: Date = new Date("2026-07-29T12:00:00.000Z")) {}
@@ -36,8 +43,8 @@ export class MutableClock implements Clock {
 
 /**
  * The quoted requirements a well-behaved resource server publishes in its 402
- * challenge. Every attack in this suite is expressed as a deviation from these
- * values somewhere in the authorise -> verify -> settle sequence.
+ * challenge. Every attack is expressed as a deviation from these values
+ * somewhere in the authorise -> verify -> settle sequence.
  */
 export const honestRequirements: PaymentRequirements = {
   scheme: "exact",
@@ -79,6 +86,9 @@ export function paymentPayload(options: {
   value?: string;
   from?: string;
   resourceUrl?: string;
+  validBefore?: string;
+  nonce?: string;
+  signature?: string;
 }): PaymentPayload {
   const accepted = options.accepted ?? honestRequirements;
   return {
@@ -90,17 +100,23 @@ export function paymentPayload(options: {
     },
     accepted,
     payload: {
-      signature: `0x${"11".repeat(65)}`,
+      signature: options.signature ?? `0x${"11".repeat(65)}`,
       authorization: {
         from: options.from ?? "0x0000000000000000000000000000000000000002",
         to: options.to ?? accepted.payTo,
         value: options.value ?? accepted.amount,
         validAfter: "0",
-        validBefore: "99999999999",
-        nonce: `0x${"22".repeat(32)}`,
+        validBefore: options.validBefore ?? "99999999999",
+        nonce: options.nonce ?? `0x${"22".repeat(32)}`,
       },
     },
   };
+}
+
+/** Reads the inner EIP-3009 authorisation, which `@x402/core` types as opaque. */
+export function innerAuthorization(payload: PaymentPayload): Record<string, string> {
+  return (payload as unknown as { payload: { authorization: Record<string, string> } }).payload
+    .authorization;
 }
 
 export interface SecurityContext {
@@ -111,28 +127,42 @@ export interface SecurityContext {
   reconciliationStore: ExecutionReconciliationStore | undefined;
 }
 
+export interface SecurityContextOptions {
+  clock?: MutableClock;
+  /** Defaults to false, matching the guard's own default. */
+  reconciliation?: boolean;
+  classifySettlementError?: (error: unknown) => "failed_final" | "outcome_unknown";
+  /** Omit to leave the guard's policy-version pin unset, as a caller may. */
+  expectedPolicyVersion?: string | undefined;
+  policyPath?: string;
+  spendState?: SpendState;
+}
+
 export async function securityContext(
-  options: {
-    clock?: MutableClock;
-    reconciliation?: boolean;
-    classifySettlementError?: (error: unknown) => "failed_final" | "outcome_unknown";
-  } = {},
+  options: SecurityContextOptions = {},
 ): Promise<SecurityContext> {
   const clock = options.clock ?? new MutableClock();
-  const policy = parsePolicyText(await readFile(resolve("policies/demo-x402-policy.yml"), "utf8"));
+  const policy = parsePolicyText(
+    await readFile(resolve(options.policyPath ?? "policies/demo-x402-policy.yml"), "utf8"),
+  );
   const signer = createPublicDemoSigner();
   const keyRegistry: KeyRegistry = {
     version: "inntris-key-registry-v1",
     keys: [buildKeyRegistryEntry(signer, { notBefore: new Date("2026-01-01T00:00:00.000Z") })],
   };
-  const provider = new LocalPolicyDecisionProvider({ policy, signer, clock });
+  const provider = new LocalPolicyDecisionProvider({
+    policy,
+    signer,
+    clock,
+    ...(options.spendState === undefined ? {} : { spendState: options.spendState }),
+  });
   const reconciliationStore =
     options.reconciliation === true ? new InMemoryExecutionReconciliationStore() : undefined;
   const guard = new InntrisX402Guard({
     provider,
     keyRegistry,
-    expectedPolicyVersion: "1",
     clock,
+    expectedPolicyVersion: "expectedPolicyVersion" in options ? options.expectedPolicyVersion : "1",
     ...(reconciliationStore === undefined ? {} : { reconciliationStore }),
     ...(options.classifySettlementError === undefined
       ? {}
@@ -141,53 +171,74 @@ export async function securityContext(
   return { clock, provider, guard, keyRegistry, reconciliationStore };
 }
 
+export { InMemorySpendState };
+
+export type VerifyOutcome = { isValid: true } | { isValid: false; invalidReason: string };
+export type SettleOutcome =
+  { success: true; transaction: string } | { success: false; errorReason: string };
+
 export interface FacilitatorBehaviour {
   verify?: (payload: PaymentPayload, requirements: PaymentRequirements) => VerifyOutcome;
   settle?: (payload: PaymentPayload, requirements: PaymentRequirements) => SettleOutcome;
 }
 
-export type VerifyOutcome = { isValid: true } | { isValid: false; invalidReason: string };
-export type SettleOutcome =
-  | { success: true; transaction: string }
-  | { success: false; errorReason: string; throws?: boolean };
-
 /**
- * A deterministic stand-in for an x402 facilitator. It models the two answers
- * a real facilitator gives — a pre-flight verification and a settlement
- * outcome — without reaching the network, so settlement-boundary behaviour is
- * reproducible.
+ * A deterministic stand-in for an x402 facilitator, modelling the two answers
+ * a real one gives without reaching the network.
  */
 export class FakeFacilitator {
-  verifyCalls: { payload: PaymentPayload; requirements: PaymentRequirements }[] = [];
-  settleCalls: { payload: PaymentPayload; requirements: PaymentRequirements }[] = [];
+  readonly verifyCalls: { payload: PaymentPayload; requirements: PaymentRequirements }[] = [];
+  readonly settleCalls: { payload: PaymentPayload; requirements: PaymentRequirements }[] = [];
 
-  constructor(private readonly behaviour: FacilitatorBehaviour = {}) {}
+  constructor(
+    readonly label: "compliant" | "permissive" | "custom",
+    private readonly behaviour: FacilitatorBehaviour = {},
+  ) {}
 
-  /**
-   * The honest default: a payment verifies only when the signed authorisation
-   * actually pays the quoted recipient the quoted amount.
-   */
   verify(payload: PaymentPayload, requirements: PaymentRequirements): VerifyOutcome {
     this.verifyCalls.push({ payload, requirements });
-    if (this.behaviour.verify !== undefined) {
-      return this.behaviour.verify(payload, requirements);
-    }
-    const authorization = (
-      payload as unknown as { payload: { authorization: Record<string, string> } }
-    ).payload.authorization;
-    if (authorization.to?.toLowerCase() !== requirements.payTo.toLowerCase()) {
-      return { isValid: false, invalidReason: "invalid_exact_evm_payload_recipient_mismatch" };
-    }
-    if (authorization.value !== requirements.amount) {
-      return { isValid: false, invalidReason: "invalid_exact_evm_payload_value_mismatch" };
-    }
-    return { isValid: true };
+    return this.behaviour.verify?.(payload, requirements) ?? { isValid: true };
   }
 
   settle(payload: PaymentPayload, requirements: PaymentRequirements): SettleOutcome {
     this.settleCalls.push({ payload, requirements });
     return this.behaviour.settle?.(payload, requirements) ?? { success: true, transaction: "0xtx" };
   }
+}
+
+/**
+ * A facilitator that follows the x402 `exact` scheme rules: it settles only a
+ * payment whose signed authorisation actually pays the quoted recipient the
+ * quoted amount, within its validity window.
+ */
+export function compliantFacilitator(behaviour: FacilitatorBehaviour = {}): FakeFacilitator {
+  return new FakeFacilitator("compliant", {
+    verify: (payload, requirements) => {
+      const authorization = innerAuthorization(payload);
+      if (authorization.to?.toLowerCase() !== requirements.payTo.toLowerCase()) {
+        return { isValid: false, invalidReason: "invalid_exact_evm_payload_recipient_mismatch" };
+      }
+      if (authorization.value !== requirements.amount) {
+        return { isValid: false, invalidReason: "invalid_exact_evm_payload_value_mismatch" };
+      }
+      return { isValid: true };
+    },
+    ...behaviour,
+  });
+}
+
+/**
+ * A facilitator that approves everything. Running the matrix against it
+ * isolates what Inntris enforces on its own from what the composite enforces,
+ * which is the only honest measure of the adapter's independent value: the
+ * reference study found rule violations in every facilitator it evaluated, so
+ * a check Inntris does not own is a check Inntris cannot rely on.
+ */
+export function permissiveFacilitator(): FakeFacilitator {
+  return new FakeFacilitator("permissive", {
+    verify: () => ({ isValid: true }),
+    settle: () => ({ success: true, transaction: "0xpermissive" }),
+  });
 }
 
 export class SettlementFailure extends Error {
@@ -198,16 +249,27 @@ export class SettlementFailure extends Error {
   }
 }
 
-export type ResourceAccessResult =
-  | { status: 200; body: string; transaction: string }
-  | { status: 402; reason: string; reasonCodes?: string[] };
+export interface AccessRequest {
+  authorisationInput: X402SettlementInput;
+  /** Defaults to the authorisation input; differ them to model a post-authorisation swap. */
+  settlementInput?: X402SettlementInput;
+  payload: PaymentPayload;
+  executionRef: string;
+  decision?: InntrisDecisionV1;
+  /**
+   * Models an integration that settles without a pre-flight verification.
+   * Defaults to false, matching the order the documentation prescribes.
+   */
+  skipVerification?: boolean;
+}
 
 /**
- * A minimal x402-protected resource server wired in the order the Inntris
- * documentation prescribes: authorise under policy, ask the facilitator to
- * verify the payment, then settle behind the guard and only then release the
- * resource. Attacks are run against this loop rather than against the guard in
- * isolation, so a defence that exists only on paper cannot pass.
+ * A minimal x402-protected resource server wired in the documented order:
+ * authorise under policy, ask the facilitator to verify, settle behind the
+ * guard, then release the resource. Every rejection is attributed to the
+ * component that produced it and to the layer at which it occurred, derived
+ * from the observed call sequence rather than from where the check is supposed
+ * to live.
  */
 export class GuardedResourceServer {
   served = 0;
@@ -217,97 +279,149 @@ export class GuardedResourceServer {
     readonly facilitator: FakeFacilitator,
   ) {}
 
-  async access(input: {
-    authorisationInput: X402SettlementInput;
-    settlementInput?: X402SettlementInput;
-    payload: PaymentPayload;
-    executionRef: string;
-    decision?: InntrisDecisionV1;
-  }): Promise<ResourceAccessResult> {
-    const settlementInput = input.settlementInput ?? input.authorisationInput;
+  async access(request: AccessRequest): Promise<RunOutcome> {
+    const settlementInput = request.settlementInput ?? request.authorisationInput;
+    const outcome = (
+      partial: Omit<RunOutcome, "verify_calls" | "resource_served"> & { resource_served?: boolean },
+    ): RunOutcome => ({
+      ...partial,
+      verify_calls: this.facilitator.verifyCalls.length,
+      resource_served: partial.resource_served ?? false,
+    });
 
-    let decision = input.decision;
+    const inntrisLayer = (): RejectionLayer =>
+      this.facilitator.verifyCalls.length === 0 ? "INNTRIS_PREFLIGHT" : "INNTRIS_POST_VERIFY";
+
+    let decision = request.decision;
     if (decision === undefined) {
       try {
-        decision = await this.context.guard.authorise(input.authorisationInput);
+        decision = await this.context.guard.authorise(request.authorisationInput);
       } catch (error) {
-        return {
-          status: 402,
-          reason: "authorisation_failed",
-          ...(error instanceof InntrisGuardError ? { reasonCodes: error.reasonCodes } : {}),
-        };
+        return outcome({
+          rejected: true,
+          layer: inntrisLayer(),
+          component: "inntris-adapter",
+          detail:
+            error instanceof InntrisGuardError
+              ? `InntrisGuardError: ${error.reasonCodes.join(", ")}`
+              : error instanceof X402BindingError
+                ? `X402BindingError: ${error.message}`
+                : `${(error as Error).name}: ${(error as Error).message}`,
+          reason_codes: error instanceof InntrisGuardError ? error.reasonCodes : [],
+          settlement_invoked: false,
+        });
       }
     }
+
     if (decision.verdict !== "ALLOW") {
-      return { status: 402, reason: "policy_verdict", reasonCodes: decision.reason_codes };
+      return outcome({
+        rejected: true,
+        layer: inntrisLayer(),
+        component: "inntris-policy",
+        detail: `verdict ${decision.verdict}`,
+        reason_codes: decision.reason_codes,
+        settlement_invoked: false,
+      });
     }
 
-    const verification = this.facilitator.verify(
-      input.payload,
-      settlementInput.paymentRequirements,
-    );
-    if (!verification.isValid) {
-      return { status: 402, reason: verification.invalidReason };
+    if (request.skipVerification !== true) {
+      const verification = this.facilitator.verify(
+        request.payload,
+        settlementInput.paymentRequirements,
+      );
+      if (!verification.isValid) {
+        return outcome({
+          rejected: true,
+          layer: "FACILITATOR_VERIFY",
+          component: `facilitator:${this.facilitator.label}`,
+          detail: verification.invalidReason,
+          reason_codes: [],
+          settlement_invoked: false,
+        });
+      }
     }
 
-    let transaction: string;
+    let executorInvoked = false;
     try {
-      transaction = await this.context.guard.settleIfAuthorised(
+      const transaction = await this.context.guard.settleIfAuthorised(
         settlementInput,
         decision,
-        input.executionRef,
+        request.executionRef,
         async () => {
-          const outcome = this.facilitator.settle(
-            input.payload,
+          executorInvoked = true;
+          const settled = this.facilitator.settle(
+            request.payload,
             settlementInput.paymentRequirements,
           );
-          if (!outcome.success) {
-            throw new SettlementFailure(outcome.errorReason);
+          if (!settled.success) {
+            throw new SettlementFailure(settled.errorReason);
           }
-          return outcome.transaction;
+          return settled.transaction;
         },
       );
+      this.served += 1;
+      return outcome({
+        rejected: false,
+        layer: "NONE",
+        component: "none",
+        detail: `resource released, transaction ${transaction}`,
+        reason_codes: [],
+        settlement_invoked: true,
+        resource_served: true,
+      });
     } catch (error) {
-      return {
-        status: 402,
-        reason: "settlement_blocked",
-        ...(error instanceof InntrisGuardError ? { reasonCodes: error.reasonCodes } : {}),
-      };
+      const reasonCodes = error instanceof InntrisGuardError ? error.reasonCodes : [];
+      return outcome({
+        rejected: true,
+        // The executor having run is what distinguishes a settlement-side
+        // failure from a guard check that fired before any money moved.
+        layer: executorInvoked ? "FACILITATOR_SETTLE" : inntrisLayer(),
+        component: executorInvoked ? `facilitator:${this.facilitator.label}` : "inntris-guard",
+        detail:
+          error instanceof InntrisGuardError
+            ? `InntrisGuardError: ${error.reasonCodes.join(", ")}`
+            : `${(error as Error).name}: ${(error as Error).message}`,
+        reason_codes: reasonCodes,
+        settlement_invoked: executorInvoked,
+      });
     }
-
-    this.served += 1;
-    return { status: 200, body: "research-report", transaction };
   }
 }
 
-export type EvidenceStatus = "PASS" | "FAIL";
-
-export interface EvidenceEntry {
-  id: string;
-  attack: string;
-  status: EvidenceStatus;
-  expectation: string;
-  observed: string;
-  reason_codes: string[];
-  settlement_invoked: boolean;
-  resource_served: boolean;
+/**
+ * Runs one attack twice, against a rule-following facilitator and against one
+ * that approves everything, and reports who actually enforced the rule.
+ */
+export async function runBothFacilitators(input: {
+  build: (facilitator: FakeFacilitator) => Promise<{
+    server: GuardedResourceServer;
+    run: (server: GuardedResourceServer) => Promise<RunOutcome>;
+  }>;
+}): Promise<{ compliant: RunOutcome; permissive: RunOutcome }> {
+  const compliantHarness = await input.build(compliantFacilitator());
+  const compliant = await compliantHarness.run(compliantHarness.server);
+  const permissiveHarness = await input.build(permissiveFacilitator());
+  const permissive = await permissiveHarness.run(permissiveHarness.server);
+  return { compliant, permissive };
 }
 
-const evidence: EvidenceEntry[] = [];
-
-export function recordEvidence(entry: EvidenceEntry): void {
-  evidence.push(entry);
-}
-
-export async function writeEvidence(path: string): Promise<void> {
-  const report = {
-    version: "inntris-x402-security-review-v1",
-    suite: "USENIX x402 attack matrix",
-    total: evidence.length,
-    passed: evidence.filter((entry) => entry.status === "PASS").length,
-    failed: evidence.filter((entry) => entry.status === "FAIL").length,
-    results: evidence,
-  };
-  await mkdir(dirname(path), { recursive: true });
-  await writeFile(path, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+/**
+ * Ownership follows from the permissive run: if the rule still holds when the
+ * facilitator approves everything, Inntris enforced it. If it does not, the
+ * compliant facilitator was the only thing standing in the way.
+ */
+export function enforcementOwner(
+  compliant: RunOutcome,
+  permissive: RunOutcome,
+): "INNTRIS" | "FACILITATOR" | "NONE" {
+  if (permissive.rejected && permissive.layer.startsWith("INNTRIS")) {
+    return "INNTRIS";
+  }
+  if (compliant.rejected && !permissive.rejected) {
+    return "FACILITATOR";
+  }
+  if (!compliant.rejected && !permissive.rejected) {
+    return "NONE";
+  }
+  return permissive.layer.startsWith("FACILITATOR") ? "FACILITATOR" : "NONE";
 }

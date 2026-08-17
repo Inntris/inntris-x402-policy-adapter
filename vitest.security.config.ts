@@ -3,11 +3,13 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     include: ["test/security/**/*.test.ts"],
-    testTimeout: 15_000,
+    testTimeout: 30_000,
+    globalSetup: ["test/security/global-setup.ts"],
     /**
-     * The suite writes a single shared evidence report, so the files that
-     * contribute to it must not run in parallel processes.
+     * Each file writes its own evidence shard, and the shards are merged in
+     * global teardown. Serial execution keeps the merged bundle deterministic.
      */
     fileParallelism: false,
+    sequence: { shuffle: false },
   },
 });
