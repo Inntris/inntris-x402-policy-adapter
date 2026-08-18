@@ -1,0 +1,45 @@
+[
+  {
+    "id": "D4:property-policy-bearing-mutation",
+    "deliverable": "D4",
+    "attack": "Property: for any mutation of a policy-bearing field, the decision changes or the request is rejected",
+    "status": "PASS",
+    "expectation": "No mutation may alter a policy-bearing value while producing an identical decision and identical hashes.",
+    "observed": "corpus of 47 mutations from seed 20260817: 26 rejected before a decision, 21 changed the decision, 0 silent. No silent policy-bearing mutation was found. See D4:property-limit — this does not mean policy-bearing values cannot be manipulated.",
+    "enforcement": "INNTRIS",
+    "reason_codes": [],
+    "settlement_invoked": false,
+    "resource_served": false,
+    "notes": "Rejected sample: integrity:requirements.amount -> X402BindingError; integrity:requirements.asset -> X402BindingError; integrity:requirements.network -> ZodError; integrity:requirements.payTo -> X402BindingError; integrity:requirements.scheme -> X402BindingError; integrity:requirements.maxTimeoutSeconds -> X402BindingError"
+  },
+  {
+    "id": "D4:property-limit",
+    "deliverable": "D4",
+    "attack": "Limit of the mutation property as specified",
+    "status": "KNOWN_GAP",
+    "expectation": "A zero-silent-mutation result should not be read as evidence that policy-bearing values cannot be manipulated.",
+    "observed": "The property is `decision changes OR request rejected`. F-1 changes the decision — 4.50 becomes 0.0045 at assetDecimals=9 — so it satisfies the property while remaining a complete limit bypass. The property detects a value that moves without trace; it does not detect a value that moves to a false but internally consistent figure. The zero-silent result in D4:property-policy-bearing-mutation must be read with that limit attached.",
+    "enforcement": "NONE",
+    "reason_codes": [
+      "MERCHANT_ALLOWED",
+      "WITHIN_TRANSACTION_LIMIT",
+      "WITHIN_DAILY_LIMIT"
+    ],
+    "settlement_invoked": false,
+    "resource_served": false,
+    "notes": "A property that would catch F-1 needs an independent source of truth for the decimal amount, which is the asset registry F-1's remediation calls for. It cannot be expressed against the current inputs alone."
+  },
+  {
+    "id": "D4:kind-breakdown",
+    "deliverable": "D4",
+    "attack": "Mutation corpus outcome by kind",
+    "status": "PASS",
+    "expectation": "Each mutation kind's disposition is recorded rather than assumed.",
+    "observed": "integrity: 6 rejected, 0 accepted; binding: 1 rejected, 11 accepted; type-encoding: 19 rejected, 10 accepted",
+    "enforcement": "INNTRIS",
+    "reason_codes": [],
+    "settlement_invoked": false,
+    "resource_served": false,
+    "notes": "An accepted mutation is not a failure by itself — it is a failure only when the mutated value was policy-bearing and the decision did not change, which the property case measures."
+  }
+]

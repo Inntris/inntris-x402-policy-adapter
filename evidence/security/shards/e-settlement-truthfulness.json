@@ -1,0 +1,43 @@
+[
+  {
+    "id": "E2:no-transaction-identifier",
+    "deliverable": "E",
+    "attack": "Facilitator reports settlement success without a transaction identifier",
+    "status": "KNOWN_GAP",
+    "expectation": "A settlement naming no transaction should be treated as unsettled and the resource withheld.",
+    "observed": "The resource was released and the operation was marked succeeded. settleIfAuthorised treats any executor return that does not throw as success (guard.ts:255-307) and never inspects the returned value, so the settlement executor's result is opaque to the guard. An empty transaction identifier is indistinguishable from a real one.",
+    "enforcement": "NONE",
+    "reason_codes": [],
+    "settlement_invoked": true,
+    "resource_served": true,
+    "notes": "SR4. Review register row E2."
+  },
+  {
+    "id": "E3:unconfirmed-transaction",
+    "deliverable": "E",
+    "attack": "Facilitator reports settlement success with a transaction that reverted, was dropped, or does not exist",
+    "status": "KNOWN_GAP",
+    "expectation": "Settlement should be confirmed independently against the chain at a stated depth before the resource is released.",
+    "observed": "The resource was released on the facilitator's word alone. The adapter contains no chain client, no RPC configuration and no confirmation-depth setting: grep across packages/ finds no provider, no eth_getTransactionReceipt equivalent, and no anchoring code. Inntris's notion of settled is the facilitator's JSON.",
+    "enforcement": "NONE",
+    "reason_codes": [],
+    "settlement_invoked": true,
+    "resource_served": true,
+    "notes": "SR4, the rule the review names as determining whether Inntris confirms or relays. Resolves the A7 severity condition: with no independent settleability check and no independent settlement confirmation, a permissive facilitator's success is accepted end to end."
+  },
+  {
+    "id": "E4:rollback",
+    "deliverable": "E",
+    "attack": "Post-verification effects when settlement fails",
+    "status": "PASS",
+    "expectation": "The request is treated as unpaid, the resource is withheld, and the failure is durably recorded.",
+    "observed": "The resource was withheld and the operation left unresolved as outcome_unknown for reconciliation. The consumed nonce is not returned, so the authorisation is spent and cannot be replayed — the payer must obtain a new decision. That is fail-closed, and it is the correct direction, but it is a withholding rather than a reversal: no compensating record is signed.",
+    "enforcement": "INNTRIS_CONTAINMENT",
+    "reason_codes": [
+      "EXECUTION_OUTCOME_UNKNOWN"
+    ],
+    "settlement_invoked": true,
+    "resource_served": false,
+    "notes": "Server-SR2. Conditional on a reconciliation store; see A7-late-nostore for the default."
+  }
+]

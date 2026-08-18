@@ -1,0 +1,147 @@
+[
+  {
+    "id": "D5:payTo",
+    "deliverable": "D5",
+    "attack": "Recipient substituted in the quoted requirements",
+    "status": "PASS",
+    "expectation": "A verifier holding only the receipt should be able to tell that a policy-bearing value was substituted.",
+    "observed": "receipt-only verification: valid, substitution NOT detectable. With the served requirements supplied: detectable (PAYMENT_REQUIREMENTS_MISMATCH). To notice, a verifier needs the payee allowlist, which the receipt does not carry.",
+    "enforcement": "INNTRIS",
+    "reason_codes": [
+      "PAYMENT_REQUIREMENTS_MISMATCH"
+    ],
+    "settlement_invoked": false,
+    "resource_served": false
+  },
+  {
+    "id": "D5:amount-atomic",
+    "deliverable": "D5",
+    "attack": "Atomic amount substituted in the quoted requirements",
+    "status": "PASS",
+    "expectation": "A verifier holding only the receipt should be able to tell that a policy-bearing value was substituted.",
+    "observed": "receipt-only verification: valid, substitution NOT detectable. With the served requirements supplied: detectable (PAYMENT_REQUIREMENTS_MISMATCH). To notice, a verifier needs the requirements actually served, to compare against payment_requirements_hash.",
+    "enforcement": "INNTRIS",
+    "reason_codes": [
+      "PAYMENT_REQUIREMENTS_MISMATCH"
+    ],
+    "settlement_invoked": false,
+    "resource_served": false
+  },
+  {
+    "id": "D5:assetDecimals",
+    "deliverable": "D5",
+    "attack": "F-1. Declared asset precision rescales the decimal amount",
+    "status": "KNOWN_GAP",
+    "expectation": "A verifier holding only the receipt should be able to tell that a policy-bearing value was substituted.",
+    "observed": "receipt-only verification: valid, substitution NOT detectable. With the served requirements supplied: still not detectable. To notice, a verifier needs independent knowledge of the asset's true precision, which appears nowhere in the receipt.",
+    "enforcement": "NONE",
+    "reason_codes": [],
+    "settlement_invoked": false,
+    "resource_served": false
+  },
+  {
+    "id": "D5:inner-authorization",
+    "deliverable": "D5",
+    "attack": "F-4. Signed authorisation diverges from the accepted requirements",
+    "status": "KNOWN_GAP",
+    "expectation": "A verifier holding only the receipt should be able to tell that a policy-bearing value was substituted.",
+    "observed": "receipt-only verification: valid, substitution NOT detectable. With the served requirements supplied: still not detectable. To notice, a verifier needs the payload itself, to recompute the payload hash and inspect the inner authorisation.",
+    "enforcement": "NONE",
+    "reason_codes": [],
+    "settlement_invoked": false,
+    "resource_served": false
+  },
+  {
+    "id": "D5:scheme",
+    "deliverable": "D5",
+    "attack": "F-7. Scheme named in the receipt was never evaluated",
+    "status": "PASS",
+    "expectation": "A verifier holding only the receipt should be able to tell that a policy-bearing value was substituted.",
+    "observed": "receipt-only verification: valid, substitution NOT detectable. With the served requirements supplied: detectable (PAYMENT_REQUIREMENTS_MISMATCH). To notice, a verifier needs the requirements actually served — scheme is inside payment_requirements_hash, so a substitution is caught, though the receipt still cannot show the field was never evaluated.",
+    "enforcement": "INNTRIS",
+    "reason_codes": [
+      "PAYMENT_REQUIREMENTS_MISMATCH"
+    ],
+    "settlement_invoked": false,
+    "resource_served": false
+  },
+  {
+    "id": "D5:agentId",
+    "deliverable": "D5",
+    "attack": "F-7. Agent named in the receipt was never evaluated",
+    "status": "KNOWN_GAP",
+    "expectation": "A verifier holding only the receipt should be able to tell that a policy-bearing value was substituted.",
+    "observed": "receipt-only verification: valid, substitution NOT detectable. With the served requirements supplied: still not detectable. To notice, a verifier needs the policy source, to learn that evaluatePolicy never reads agent_id.",
+    "enforcement": "NONE",
+    "reason_codes": [],
+    "settlement_invoked": false,
+    "resource_served": false
+  },
+  {
+    "id": "D5:maxTimeoutSeconds",
+    "deliverable": "D5",
+    "attack": "F-7. Requirement timeout bound into the hash but never compared to expiry",
+    "status": "PASS",
+    "expectation": "A verifier holding only the receipt should be able to tell that a policy-bearing value was substituted.",
+    "observed": "receipt-only verification: valid, substitution NOT detectable. With the served requirements supplied: detectable (PAYMENT_REQUIREMENTS_MISMATCH). To notice, a verifier needs the requirements actually served — the value is inside payment_requirements_hash even though it is not surfaced as a receipt field.",
+    "enforcement": "INNTRIS",
+    "reason_codes": [
+      "PAYMENT_REQUIREMENTS_MISMATCH"
+    ],
+    "settlement_invoked": false,
+    "resource_served": false
+  },
+  {
+    "id": "D5:validBefore",
+    "deliverable": "D5",
+    "attack": "F-7. Authorisation validity window never compared to decision expiry",
+    "status": "KNOWN_GAP",
+    "expectation": "A verifier holding only the receipt should be able to tell that a policy-bearing value was substituted.",
+    "observed": "receipt-only verification: valid, substitution NOT detectable. With the served requirements supplied: still not detectable. To notice, a verifier needs the payload, to read validBefore and compare it to expires_at.",
+    "enforcement": "NONE",
+    "reason_codes": [],
+    "settlement_invoked": false,
+    "resource_served": false
+  },
+  {
+    "id": "D5:principalId",
+    "deliverable": "D5",
+    "attack": "F-5. Principal chosen by the caller, keying the cumulative budget",
+    "status": "KNOWN_GAP",
+    "expectation": "A verifier holding only the receipt should be able to tell that a policy-bearing value was substituted.",
+    "observed": "receipt-only verification: valid, substitution NOT detectable. With the served requirements supplied: still not detectable. To notice, a verifier needs the credential-to-tenancy mapping, which is not modelled anywhere.",
+    "enforcement": "NONE",
+    "reason_codes": [],
+    "settlement_invoked": false,
+    "resource_served": false
+  },
+  {
+    "id": "D5:F7-unevaluated-not-detectable",
+    "deliverable": "D5",
+    "attack": "F-7. Telling from the receipt alone which bound fields were actually evaluated",
+    "status": "KNOWN_GAP",
+    "expectation": "A receipt should let a verifier distinguish a field the issuer checked from one it merely copied.",
+    "observed": "A signed ALLOW carrying scheme=deferred, agent_id=agent_impostor, maxTimeoutSeconds=86400 and an authorisation whose validBefore is in the past verifies cleanly. Its reason codes — MERCHANT_ALLOWED, WITHIN_TRANSACTION_LIMIT, WITHIN_DAILY_LIMIT — name no field, so nothing in the receipt distinguishes an evaluated field from a copied one. Substitution of scheme or maxTimeoutSeconds is separately detectable to a verifier holding the served requirements, because both sit inside payment_requirements_hash; that detects a changed value, not an unchecked one.",
+    "enforcement": "NONE",
+    "reason_codes": [
+      "MERCHANT_ALLOWED",
+      "WITHIN_TRANSACTION_LIMIT",
+      "WITHIN_DAILY_LIMIT"
+    ],
+    "settlement_invoked": false,
+    "resource_served": false
+  },
+  {
+    "id": "D5:F6-path-indistinguishable",
+    "deliverable": "D5",
+    "attack": "F-6. Distinguishing a derived receipt from a caller-asserted one, offline",
+    "status": "KNOWN_GAP",
+    "expectation": "A verifier should be able to tell whether the issuer derived the facts it signed or accepted them from the caller.",
+    "observed": "A decision produced through InntrisX402Guard.authorise and one produced by handing provider.evaluate a caller-authored action are field-identical once the per-issuance values are removed, and both verify. inntris-decision-v1 carries no provenance or derivation-path field, so the distinction is not recoverable from the receipt.",
+    "enforcement": "NONE",
+    "reason_codes": [],
+    "settlement_invoked": false,
+    "resource_served": false,
+    "notes": "See docs/security/F6_RECEIPT_TRUST_OPTIONS.md."
+  }
+]

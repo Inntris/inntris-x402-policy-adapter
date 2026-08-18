@@ -1,21 +1,22 @@
 {
   "version": "inntris-x402-security-review-v2",
   "suite": "USENIX x402 baseline, round 3",
-  "baseline_commit": "af3ed4d3bfe10507386c8b039db657f1b9cc9b08",
+  "baseline_commit": "0b1e3ceaf60228ca8f01b9985c0c49bd2ccda952",
   "generated_from_seed": 20260817,
   "counts": {
-    "PASS": 35,
+    "PASS": 59,
     "BORROWED": 2,
-    "KNOWN_GAP": 7,
-    "NOT_TESTED": 0
+    "KNOWN_GAP": 23,
+    "NOT_TESTED": 2
   },
   "enforcement_counts": {
-    "INNTRIS": 22,
+    "INNTRIS": 37,
     "FACILITATOR": 2,
-    "NONE": 18,
-    "INNTRIS_CONTAINMENT": 2
+    "NONE": 37,
+    "INNTRIS_CONTAINMENT": 3,
+    "NOT_APPLICABLE": 7
   },
-  "total": 44,
+  "total": 86,
   "results": [
     {
       "id": "A10",
@@ -1088,6 +1089,720 @@
       "settlement_invoked": false,
       "resource_served": false,
       "notes": "A reader of the receipt may reasonably infer that a named scheme was approved as such. It was not evaluated."
+    },
+    {
+      "id": "D4:kind-breakdown",
+      "deliverable": "D4",
+      "attack": "Mutation corpus outcome by kind",
+      "status": "PASS",
+      "expectation": "Each mutation kind's disposition is recorded rather than assumed.",
+      "observed": "integrity: 6 rejected, 0 accepted; binding: 1 rejected, 11 accepted; type-encoding: 19 rejected, 10 accepted",
+      "enforcement": "INNTRIS",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false,
+      "notes": "An accepted mutation is not a failure by itself — it is a failure only when the mutated value was policy-bearing and the decision did not change, which the property case measures."
+    },
+    {
+      "id": "D4:property-limit",
+      "deliverable": "D4",
+      "attack": "Limit of the mutation property as specified",
+      "status": "KNOWN_GAP",
+      "expectation": "A zero-silent-mutation result should not be read as evidence that policy-bearing values cannot be manipulated.",
+      "observed": "The property is `decision changes OR request rejected`. F-1 changes the decision — 4.50 becomes 0.0045 at assetDecimals=9 — so it satisfies the property while remaining a complete limit bypass. The property detects a value that moves without trace; it does not detect a value that moves to a false but internally consistent figure. The zero-silent result in D4:property-policy-bearing-mutation must be read with that limit attached.",
+      "enforcement": "NONE",
+      "reason_codes": [
+        "MERCHANT_ALLOWED",
+        "WITHIN_TRANSACTION_LIMIT",
+        "WITHIN_DAILY_LIMIT"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false,
+      "notes": "A property that would catch F-1 needs an independent source of truth for the decimal amount, which is the asset registry F-1's remediation calls for. It cannot be expressed against the current inputs alone."
+    },
+    {
+      "id": "D4:property-policy-bearing-mutation",
+      "deliverable": "D4",
+      "attack": "Property: for any mutation of a policy-bearing field, the decision changes or the request is rejected",
+      "status": "PASS",
+      "expectation": "No mutation may alter a policy-bearing value while producing an identical decision and identical hashes.",
+      "observed": "corpus of 47 mutations from seed 20260817: 26 rejected before a decision, 21 changed the decision, 0 silent. No silent policy-bearing mutation was found. See D4:property-limit — this does not mean policy-bearing values cannot be manipulated.",
+      "enforcement": "INNTRIS",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false,
+      "notes": "Rejected sample: integrity:requirements.amount -> X402BindingError; integrity:requirements.asset -> X402BindingError; integrity:requirements.network -> ZodError; integrity:requirements.payTo -> X402BindingError; integrity:requirements.scheme -> X402BindingError; integrity:requirements.maxTimeoutSeconds -> X402BindingError"
+    },
+    {
+      "id": "D5:agentId",
+      "deliverable": "D5",
+      "attack": "F-7. Agent named in the receipt was never evaluated",
+      "status": "KNOWN_GAP",
+      "expectation": "A verifier holding only the receipt should be able to tell that a policy-bearing value was substituted.",
+      "observed": "receipt-only verification: valid, substitution NOT detectable. With the served requirements supplied: still not detectable. To notice, a verifier needs the policy source, to learn that evaluatePolicy never reads agent_id.",
+      "enforcement": "NONE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D5:amount-atomic",
+      "deliverable": "D5",
+      "attack": "Atomic amount substituted in the quoted requirements",
+      "status": "PASS",
+      "expectation": "A verifier holding only the receipt should be able to tell that a policy-bearing value was substituted.",
+      "observed": "receipt-only verification: valid, substitution NOT detectable. With the served requirements supplied: detectable (PAYMENT_REQUIREMENTS_MISMATCH). To notice, a verifier needs the requirements actually served, to compare against payment_requirements_hash.",
+      "enforcement": "INNTRIS",
+      "reason_codes": [
+        "PAYMENT_REQUIREMENTS_MISMATCH"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D5:assetDecimals",
+      "deliverable": "D5",
+      "attack": "F-1. Declared asset precision rescales the decimal amount",
+      "status": "KNOWN_GAP",
+      "expectation": "A verifier holding only the receipt should be able to tell that a policy-bearing value was substituted.",
+      "observed": "receipt-only verification: valid, substitution NOT detectable. With the served requirements supplied: still not detectable. To notice, a verifier needs independent knowledge of the asset's true precision, which appears nowhere in the receipt.",
+      "enforcement": "NONE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D5:F6-path-indistinguishable",
+      "deliverable": "D5",
+      "attack": "F-6. Distinguishing a derived receipt from a caller-asserted one, offline",
+      "status": "KNOWN_GAP",
+      "expectation": "A verifier should be able to tell whether the issuer derived the facts it signed or accepted them from the caller.",
+      "observed": "A decision produced through InntrisX402Guard.authorise and one produced by handing provider.evaluate a caller-authored action are field-identical once the per-issuance values are removed, and both verify. inntris-decision-v1 carries no provenance or derivation-path field, so the distinction is not recoverable from the receipt.",
+      "enforcement": "NONE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false,
+      "notes": "See docs/security/F6_RECEIPT_TRUST_OPTIONS.md."
+    },
+    {
+      "id": "D5:F7-unevaluated-not-detectable",
+      "deliverable": "D5",
+      "attack": "F-7. Telling from the receipt alone which bound fields were actually evaluated",
+      "status": "KNOWN_GAP",
+      "expectation": "A receipt should let a verifier distinguish a field the issuer checked from one it merely copied.",
+      "observed": "A signed ALLOW carrying scheme=deferred, agent_id=agent_impostor, maxTimeoutSeconds=86400 and an authorisation whose validBefore is in the past verifies cleanly. Its reason codes — MERCHANT_ALLOWED, WITHIN_TRANSACTION_LIMIT, WITHIN_DAILY_LIMIT — name no field, so nothing in the receipt distinguishes an evaluated field from a copied one. Substitution of scheme or maxTimeoutSeconds is separately detectable to a verifier holding the served requirements, because both sit inside payment_requirements_hash; that detects a changed value, not an unchecked one.",
+      "enforcement": "NONE",
+      "reason_codes": [
+        "MERCHANT_ALLOWED",
+        "WITHIN_TRANSACTION_LIMIT",
+        "WITHIN_DAILY_LIMIT"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D5:inner-authorization",
+      "deliverable": "D5",
+      "attack": "F-4. Signed authorisation diverges from the accepted requirements",
+      "status": "KNOWN_GAP",
+      "expectation": "A verifier holding only the receipt should be able to tell that a policy-bearing value was substituted.",
+      "observed": "receipt-only verification: valid, substitution NOT detectable. With the served requirements supplied: still not detectable. To notice, a verifier needs the payload itself, to recompute the payload hash and inspect the inner authorisation.",
+      "enforcement": "NONE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D5:maxTimeoutSeconds",
+      "deliverable": "D5",
+      "attack": "F-7. Requirement timeout bound into the hash but never compared to expiry",
+      "status": "PASS",
+      "expectation": "A verifier holding only the receipt should be able to tell that a policy-bearing value was substituted.",
+      "observed": "receipt-only verification: valid, substitution NOT detectable. With the served requirements supplied: detectable (PAYMENT_REQUIREMENTS_MISMATCH). To notice, a verifier needs the requirements actually served — the value is inside payment_requirements_hash even though it is not surfaced as a receipt field.",
+      "enforcement": "INNTRIS",
+      "reason_codes": [
+        "PAYMENT_REQUIREMENTS_MISMATCH"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D5:payTo",
+      "deliverable": "D5",
+      "attack": "Recipient substituted in the quoted requirements",
+      "status": "PASS",
+      "expectation": "A verifier holding only the receipt should be able to tell that a policy-bearing value was substituted.",
+      "observed": "receipt-only verification: valid, substitution NOT detectable. With the served requirements supplied: detectable (PAYMENT_REQUIREMENTS_MISMATCH). To notice, a verifier needs the payee allowlist, which the receipt does not carry.",
+      "enforcement": "INNTRIS",
+      "reason_codes": [
+        "PAYMENT_REQUIREMENTS_MISMATCH"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D5:principalId",
+      "deliverable": "D5",
+      "attack": "F-5. Principal chosen by the caller, keying the cumulative budget",
+      "status": "KNOWN_GAP",
+      "expectation": "A verifier holding only the receipt should be able to tell that a policy-bearing value was substituted.",
+      "observed": "receipt-only verification: valid, substitution NOT detectable. With the served requirements supplied: still not detectable. To notice, a verifier needs the credential-to-tenancy mapping, which is not modelled anywhere.",
+      "enforcement": "NONE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D5:scheme",
+      "deliverable": "D5",
+      "attack": "F-7. Scheme named in the receipt was never evaluated",
+      "status": "PASS",
+      "expectation": "A verifier holding only the receipt should be able to tell that a policy-bearing value was substituted.",
+      "observed": "receipt-only verification: valid, substitution NOT detectable. With the served requirements supplied: detectable (PAYMENT_REQUIREMENTS_MISMATCH). To notice, a verifier needs the requirements actually served — scheme is inside payment_requirements_hash, so a substitution is caught, though the receipt still cannot show the field was never evaluated.",
+      "enforcement": "INNTRIS",
+      "reason_codes": [
+        "PAYMENT_REQUIREMENTS_MISMATCH"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D5:validBefore",
+      "deliverable": "D5",
+      "attack": "F-7. Authorisation validity window never compared to decision expiry",
+      "status": "KNOWN_GAP",
+      "expectation": "A verifier holding only the receipt should be able to tell that a policy-bearing value was substituted.",
+      "observed": "receipt-only verification: valid, substitution NOT detectable. With the served requirements supplied: still not detectable. To notice, a verifier needs the payload, to read validBefore and compare it to expires_at.",
+      "enforcement": "NONE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D6:F8-facilitator-unreachable",
+      "deliverable": "D6",
+      "attack": "F-8. Facilitator times out on a request carrying a mutated payee that Inntris would have rejected",
+      "status": "KNOWN_GAP",
+      "expectation": "A request Inntris can reject on its own should not depend on a third party being reachable, and its refusal should carry a reason code.",
+      "observed": "The facilitator call raised before the guard was consulted. No settlement occurred and the resource was withheld, so the composite fails closed — but the failure surfaces as a transport exception with no Inntris reason code, no verdict and no recorded rejection. The same request rejects cleanly with ACTION_HASH_MISMATCH when the facilitator is reachable, which means availability of a third party determines whether a refusal is attributable.",
+      "enforcement": "NONE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false,
+      "notes": "Ordering consequence of binding checks running POST_VERIFY. See the D3 Ordering column."
+    },
+    {
+      "id": "D6:post-authorisation-swap:accumulating-spend-state",
+      "deliverable": "D6",
+      "attack": "Payee swapped after authorisation — configuration: accumulating spend state",
+      "status": "PASS",
+      "expectation": "Under every reachable configuration, this case must be rejected.",
+      "observed": "rejected at INNTRIS_POST_VERIFY (ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH)",
+      "compliant": {
+        "rejected": true,
+        "layer": "INNTRIS_POST_VERIFY",
+        "component": "inntris-guard",
+        "detail": "InntrisGuardError: ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH",
+        "reason_codes": [
+          "ACTION_HASH_MISMATCH",
+          "DECISION_BINDING_MISMATCH",
+          "PAYMENT_REQUIREMENTS_MISMATCH"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 1,
+        "resource_served": false
+      },
+      "enforcement": "INNTRIS",
+      "reason_codes": [
+        "ACTION_HASH_MISMATCH",
+        "DECISION_BINDING_MISMATCH",
+        "PAYMENT_REQUIREMENTS_MISMATCH"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D6:post-authorisation-swap:default-no-reconciliation-store-",
+      "deliverable": "D6",
+      "attack": "Payee swapped after authorisation — configuration: default (no reconciliation store)",
+      "status": "PASS",
+      "expectation": "Under every reachable configuration, this case must be rejected.",
+      "observed": "rejected at INNTRIS_POST_VERIFY (ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH)",
+      "compliant": {
+        "rejected": true,
+        "layer": "INNTRIS_POST_VERIFY",
+        "component": "inntris-guard",
+        "detail": "InntrisGuardError: ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH",
+        "reason_codes": [
+          "ACTION_HASH_MISMATCH",
+          "DECISION_BINDING_MISMATCH",
+          "PAYMENT_REQUIREMENTS_MISMATCH"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 1,
+        "resource_served": false
+      },
+      "enforcement": "INNTRIS",
+      "reason_codes": [
+        "ACTION_HASH_MISMATCH",
+        "DECISION_BINDING_MISMATCH",
+        "PAYMENT_REQUIREMENTS_MISMATCH"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D6:post-authorisation-swap:no-policy-version-pin",
+      "deliverable": "D6",
+      "attack": "Payee swapped after authorisation — configuration: no policy-version pin",
+      "status": "PASS",
+      "expectation": "Under every reachable configuration, this case must be rejected.",
+      "observed": "rejected at INNTRIS_POST_VERIFY (ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH)",
+      "compliant": {
+        "rejected": true,
+        "layer": "INNTRIS_POST_VERIFY",
+        "component": "inntris-guard",
+        "detail": "InntrisGuardError: ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH",
+        "reason_codes": [
+          "ACTION_HASH_MISMATCH",
+          "DECISION_BINDING_MISMATCH",
+          "PAYMENT_REQUIREMENTS_MISMATCH"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 1,
+        "resource_served": false
+      },
+      "enforcement": "INNTRIS",
+      "reason_codes": [
+        "ACTION_HASH_MISMATCH",
+        "DECISION_BINDING_MISMATCH",
+        "PAYMENT_REQUIREMENTS_MISMATCH"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D6:post-authorisation-swap:reconciliation-store-configured",
+      "deliverable": "D6",
+      "attack": "Payee swapped after authorisation — configuration: reconciliation store configured",
+      "status": "PASS",
+      "expectation": "Under every reachable configuration, this case must be rejected.",
+      "observed": "rejected at INNTRIS_POST_VERIFY (ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH)",
+      "compliant": {
+        "rejected": true,
+        "layer": "INNTRIS_POST_VERIFY",
+        "component": "inntris-guard",
+        "detail": "InntrisGuardError: ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH",
+        "reason_codes": [
+          "ACTION_HASH_MISMATCH",
+          "DECISION_BINDING_MISMATCH",
+          "PAYMENT_REQUIREMENTS_MISMATCH"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 1,
+        "resource_served": false
+      },
+      "enforcement": "INNTRIS",
+      "reason_codes": [
+        "ACTION_HASH_MISMATCH",
+        "DECISION_BINDING_MISMATCH",
+        "PAYMENT_REQUIREMENTS_MISMATCH"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D6:replay-same-ref:accumulating-spend-state",
+      "deliverable": "D6",
+      "attack": "Settlement replay with the same execution reference — configuration: accumulating spend state",
+      "status": "PASS",
+      "expectation": "Under every reachable configuration, this case must be rejected.",
+      "observed": "rejected at INNTRIS_POST_VERIFY (EXECUTION_ALREADY_COMPLETED)",
+      "compliant": {
+        "rejected": true,
+        "layer": "INNTRIS_POST_VERIFY",
+        "component": "inntris-guard",
+        "detail": "InntrisGuardError: EXECUTION_ALREADY_COMPLETED",
+        "reason_codes": [
+          "EXECUTION_ALREADY_COMPLETED"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 2,
+        "resource_served": false
+      },
+      "enforcement": "INNTRIS",
+      "reason_codes": [
+        "EXECUTION_ALREADY_COMPLETED"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D6:replay-same-ref:default-no-reconciliation-store-",
+      "deliverable": "D6",
+      "attack": "Settlement replay with the same execution reference — configuration: default (no reconciliation store)",
+      "status": "KNOWN_GAP",
+      "expectation": "Under every reachable configuration, this case must be rejected.",
+      "observed": "NOT REJECTED — resource released, transaction 0xpermissive",
+      "compliant": {
+        "rejected": false,
+        "layer": "NONE",
+        "component": "none",
+        "detail": "resource released, transaction 0xpermissive",
+        "reason_codes": [],
+        "settlement_invoked": true,
+        "resource_served": true,
+        "verify_calls": 2
+      },
+      "enforcement": "NONE",
+      "reason_codes": [],
+      "settlement_invoked": true,
+      "resource_served": true
+    },
+    {
+      "id": "D6:replay-same-ref:no-policy-version-pin",
+      "deliverable": "D6",
+      "attack": "Settlement replay with the same execution reference — configuration: no policy-version pin",
+      "status": "PASS",
+      "expectation": "Under every reachable configuration, this case must be rejected.",
+      "observed": "rejected at INNTRIS_POST_VERIFY (EXECUTION_ALREADY_COMPLETED)",
+      "compliant": {
+        "rejected": true,
+        "layer": "INNTRIS_POST_VERIFY",
+        "component": "inntris-guard",
+        "detail": "InntrisGuardError: EXECUTION_ALREADY_COMPLETED",
+        "reason_codes": [
+          "EXECUTION_ALREADY_COMPLETED"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 2,
+        "resource_served": false
+      },
+      "enforcement": "INNTRIS",
+      "reason_codes": [
+        "EXECUTION_ALREADY_COMPLETED"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D6:replay-same-ref:reconciliation-store-configured",
+      "deliverable": "D6",
+      "attack": "Settlement replay with the same execution reference — configuration: reconciliation store configured",
+      "status": "PASS",
+      "expectation": "Under every reachable configuration, this case must be rejected.",
+      "observed": "rejected at INNTRIS_POST_VERIFY (EXECUTION_ALREADY_COMPLETED)",
+      "compliant": {
+        "rejected": true,
+        "layer": "INNTRIS_POST_VERIFY",
+        "component": "inntris-guard",
+        "detail": "InntrisGuardError: EXECUTION_ALREADY_COMPLETED",
+        "reason_codes": [
+          "EXECUTION_ALREADY_COMPLETED"
+        ],
+        "settlement_invoked": false,
+        "verify_calls": 2,
+        "resource_served": false
+      },
+      "enforcement": "INNTRIS",
+      "reason_codes": [
+        "EXECUTION_ALREADY_COMPLETED"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D6:settlement-failure:accumulating-spend-state",
+      "deliverable": "D6",
+      "attack": "Settlement failure bookkeeping — configuration: accumulating spend state",
+      "status": "PASS",
+      "expectation": "Under every reachable configuration, this case must be rejected.",
+      "observed": "rejected at FACILITATOR_SETTLE (EXECUTION_OUTCOME_UNKNOWN)",
+      "compliant": {
+        "rejected": true,
+        "layer": "FACILITATOR_SETTLE",
+        "component": "facilitator:custom",
+        "detail": "InntrisGuardError: EXECUTION_OUTCOME_UNKNOWN",
+        "reason_codes": [
+          "EXECUTION_OUTCOME_UNKNOWN"
+        ],
+        "settlement_invoked": true,
+        "verify_calls": 1,
+        "resource_served": false
+      },
+      "enforcement": "NONE",
+      "reason_codes": [
+        "EXECUTION_OUTCOME_UNKNOWN"
+      ],
+      "settlement_invoked": true,
+      "resource_served": false
+    },
+    {
+      "id": "D6:settlement-failure:default-no-reconciliation-store-",
+      "deliverable": "D6",
+      "attack": "Settlement failure bookkeeping — configuration: default (no reconciliation store)",
+      "status": "PASS",
+      "expectation": "Under every reachable configuration, this case must be rejected.",
+      "observed": "rejected at FACILITATOR_SETTLE (SettlementFailure: Settlement failed: settlement_timeout)",
+      "compliant": {
+        "rejected": true,
+        "layer": "FACILITATOR_SETTLE",
+        "component": "facilitator:custom",
+        "detail": "SettlementFailure: Settlement failed: settlement_timeout",
+        "reason_codes": [],
+        "settlement_invoked": true,
+        "verify_calls": 1,
+        "resource_served": false
+      },
+      "enforcement": "NONE",
+      "reason_codes": [],
+      "settlement_invoked": true,
+      "resource_served": false
+    },
+    {
+      "id": "D6:settlement-failure:no-policy-version-pin",
+      "deliverable": "D6",
+      "attack": "Settlement failure bookkeeping — configuration: no policy-version pin",
+      "status": "PASS",
+      "expectation": "Under every reachable configuration, this case must be rejected.",
+      "observed": "rejected at FACILITATOR_SETTLE (EXECUTION_OUTCOME_UNKNOWN)",
+      "compliant": {
+        "rejected": true,
+        "layer": "FACILITATOR_SETTLE",
+        "component": "facilitator:custom",
+        "detail": "InntrisGuardError: EXECUTION_OUTCOME_UNKNOWN",
+        "reason_codes": [
+          "EXECUTION_OUTCOME_UNKNOWN"
+        ],
+        "settlement_invoked": true,
+        "verify_calls": 1,
+        "resource_served": false
+      },
+      "enforcement": "NONE",
+      "reason_codes": [
+        "EXECUTION_OUTCOME_UNKNOWN"
+      ],
+      "settlement_invoked": true,
+      "resource_served": false
+    },
+    {
+      "id": "D6:settlement-failure:reconciliation-store-configured",
+      "deliverable": "D6",
+      "attack": "Settlement failure bookkeeping — configuration: reconciliation store configured",
+      "status": "PASS",
+      "expectation": "Under every reachable configuration, this case must be rejected.",
+      "observed": "rejected at FACILITATOR_SETTLE (EXECUTION_OUTCOME_UNKNOWN)",
+      "compliant": {
+        "rejected": true,
+        "layer": "FACILITATOR_SETTLE",
+        "component": "facilitator:custom",
+        "detail": "InntrisGuardError: EXECUTION_OUTCOME_UNKNOWN",
+        "reason_codes": [
+          "EXECUTION_OUTCOME_UNKNOWN"
+        ],
+        "settlement_invoked": true,
+        "verify_calls": 1,
+        "resource_served": false
+      },
+      "enforcement": "NONE",
+      "reason_codes": [
+        "EXECUTION_OUTCOME_UNKNOWN"
+      ],
+      "settlement_invoked": true,
+      "resource_served": false
+    },
+    {
+      "id": "D7:contract-signatures",
+      "deliverable": "D7",
+      "attack": "ERC-1271 and ERC-6492 contract wallet signatures",
+      "status": "NOT_TESTED",
+      "expectation": "Anything reachable is either tested or recorded NOT_TESTED with a reason; anything unreachable is confirmed unreachable rather than assumed.",
+      "observed": "Neither parsed nor rejected. `payload` is typed Record<string, unknown> by @x402/core and the adapter hashes it without inspection, so an ERC-6492 wrapper carrying an attacker-chosen factory address and calldata is carried into the action hash unexamined and passed to the facilitator. The adapter therefore neither supports nor refuses contract wallets.",
+      "enforcement": "NOT_APPLICABLE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false,
+      "notes": "Review tests B4 and B5. The reference paper's only validated asset-theft finding ran through ERC-6492 handling; that path is the facilitator's here, and was not exercised."
+    },
+    {
+      "id": "D7:network-families",
+      "deliverable": "D7",
+      "attack": "Network identifiers — EVM chain ids and Solana clusters",
+      "status": "PASS",
+      "expectation": "Anything reachable is either tested or recorded NOT_TESTED with a reason; anything unreachable is confirmed unreachable rather than assumed.",
+      "observed": "4 of 6 parse. eip155:8453: accepted; eip155:1: accepted; eip155:84532: accepted; solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp: accepted; base: rejected — ZodError; base-sepolia: rejected — ZodError. Legacy v1 aliases are rejected at schema parse, so there is no alias-confusion path. Policy independently restricts the accepted set to its allowed_networks list.",
+      "enforcement": "NOT_APPLICABLE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false,
+      "notes": "Solana reachability at the schema layer is recorded; no Solana settlement path is exercised anywhere in this suite."
+    },
+    {
+      "id": "D7:scheme-allowlist",
+      "deliverable": "D7",
+      "attack": "Payment schemes accepted",
+      "status": "KNOWN_GAP",
+      "expectation": "Anything reachable is either tested or recorded NOT_TESTED with a reason; anything unreachable is confirmed unreachable rather than assumed.",
+      "observed": "Every scheme string parses and reaches a decision: exact: accepted; deferred: accepted; upto: accepted; totally-made-up: accepted. The x402 v2 schema types scheme as a free string, and no Inntris policy rule constrains it. Only 'exact' semantics are modelled anywhere in the adapter, but nothing rejects the others.",
+      "enforcement": "NOT_APPLICABLE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false,
+      "notes": "F-7. The review's test A6 (scheme substitution) is measured here."
+    },
+    {
+      "id": "D7:transports",
+      "deliverable": "D7",
+      "attack": "Transports — HTTP and MCP",
+      "status": "PASS",
+      "expectation": "Anything reachable is either tested or recorded NOT_TESTED with a reason; anything unreachable is confirmed unreachable rather than assumed.",
+      "observed": "HTTP is exercised in D8 through buildDemoApi via inject, covering all eleven routes. MCP is reachable only through the KYA path: @kya-os/mcp supplies card and delegation schemas consumed by actionFromKyaX402 (packages/x402-adapter/src/kya.ts), and no MCP server or tool-call transport is implemented in this repository. The mcp rail in the action schema is a protocol_reference type, not a transport.",
+      "enforcement": "NOT_APPLICABLE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false,
+      "notes": "KYA delegation and proof logic is out of this review's scope."
+    },
+    {
+      "id": "D7:untested-surface",
+      "deliverable": "D7",
+      "attack": "Reachable-but-untested protocol surface",
+      "status": "NOT_TESTED",
+      "expectation": "Anything reachable is either tested or recorded NOT_TESTED with a reason; anything unreachable is confirmed unreachable rather than assumed.",
+      "observed": "SR4 chain confirmation (E2, E3) — no chain client exists in the adapter, so there is nothing to exercise; a test would be measuring its absence, which D3 records instead. EIP-712 domain substitution (A5) — the adapter performs no signature recovery, so chainId and verifyingContract are never read. Concurrent nonce race (C4) — the suite is sequential; the in-memory nonce store's check-and-set is single-process and the atomic PostgreSQL store was not run. Premature authorisation, validAfter in the future (C2) — validAfter is never read. Remaining-validity threshold sweep (C5) — no freshness bound exists to measure. Zero-amount and dust proofs (D2, D3 of the review register) — no settleability check exists. Solana settlement semantics — reachable at the schema layer, no settlement path implemented. PostgreSQL-backed stores — in-memory implementations only throughout this suite",
+      "enforcement": "NOT_APPLICABLE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false,
+      "notes": "Each entry carries its reason; none is omitted."
+    },
+    {
+      "id": "D7:v1-unreachable",
+      "deliverable": "D7",
+      "attack": "x402 protocol version 1",
+      "status": "PASS",
+      "expectation": "Anything reachable is either tested or recorded NOT_TESTED with a reason; anything unreachable is confirmed unreachable rather than assumed.",
+      "observed": "The adapter parses with PaymentPayloadV2Schema only (binding.ts:34). x402Version 1 payload: rejected — ZodError. v1 is confirmed unreachable rather than assumed: a v1-shaped payload fails schema parse before any binding logic runs.",
+      "enforcement": "NOT_APPLICABLE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D7:v2-specifics",
+      "deliverable": "D7",
+      "attack": "x402 v2 — accepted echo, extensions, CAIP-2 networks, amount field",
+      "status": "PASS",
+      "expectation": "Anything reachable is either tested or recorded NOT_TESTED with a reason; anything unreachable is confirmed unreachable rather than assumed.",
+      "observed": "All four are exercised. The `accepted` echo is compared against the served requirements (binding.ts:78, case A10). `extensions` on the action is carried into the action hash (D2 row). CAIP-2 network identifiers are the only accepted form. `amount` is the v2 field name; `maxAmountRequired` does not appear in the v2 schema and is not accepted.",
+      "enforcement": "NOT_APPLICABLE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D8:auth-enforced-when-configured",
+      "deliverable": "D8",
+      "attack": "Credential check with a service key configured",
+      "status": "PASS",
+      "expectation": "A configured bearer credential is required and compared in constant time.",
+      "observed": "Anonymous and wrong-credential requests both return 401; the correct credential returns 200. bearerMatches compares with timingSafeEqual after a length check.",
+      "enforcement": "INNTRIS",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D8:endpoint-surface",
+      "deliverable": "D8",
+      "attack": "Endpoint reachability, authentication and rate limiting inventory",
+      "status": "PASS",
+      "expectation": "Every endpoint's exposure is recorded rather than assumed.",
+      "observed": "Three endpoints are unauthenticated by construction: GET /healthz, GET /.well-known/inntris-keys.json and GET /v1/kya/config. Eight carry the authenticate preHandler, which is a no-op unless a service key is configured. Rate limiting is global 100/min with 30/min per sensitive route, keyed by client address, with no per-credential or per-principal quota.",
+      "enforcement": "INNTRIS",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D8:F5-principal-tenancy",
+      "deliverable": "D8",
+      "attack": "F-5. Cumulative daily limit keyed on a principal identifier the caller supplies in the request body",
+      "status": "KNOWN_GAP",
+      "expectation": "A cumulative limit must be keyed on an identity bound to the authenticated credential, so one caller cannot mint independent budgets.",
+      "observed": "One bearer credential authored two decisions naming org_demo and org_attacker. The credential does not scope the principal in any way: authenticate compares a single shared service key and never associates it with a tenancy. spendDayKey then keys the daily total on the asserted value, so each name carries its own independent budget.",
+      "enforcement": "NONE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false,
+      "notes": "Regression target: two evaluations under differing principalId with the same credential must share one daily total."
+    },
+    {
+      "id": "D8:F6-no-server-side-derivation",
+      "deliverable": "D8",
+      "attack": "F-6. Signed receipt minted from an action the caller authored in full, with no server-side derivation",
+      "status": "KNOWN_GAP",
+      "expectation": "A receipt should either attest to facts the issuer derived, or declare on its face that its inputs were caller-asserted.",
+      "observed": "POST /v1/decisions/evaluate parses the request body into an InntrisActionV1 and passes it straight to provider.evaluate. Amount, payee, asset, network, resource, purpose, principal, agent and payment_requirements_hash are all taken as given. A caller-authored action carrying a 150000000 atomic amount declared at 9 decimals produced a signed ALLOW reading 0.15, with a requirements hash the server never recomputed from any served requirements.",
+      "enforcement": "NONE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false,
+      "notes": "The library path derives the same fields inside InntrisX402Guard.authorise. Both paths sign with the same key and emit the same receipt format, and an offline verifier cannot tell them apart."
+    },
+    {
+      "id": "D8:no-auth-default",
+      "deliverable": "D8",
+      "attack": "Reaching the decision API with no credential at all",
+      "status": "KNOWN_GAP",
+      "expectation": "An endpoint that mints signed policy decisions should require a credential in every configuration.",
+      "observed": "buildDemoApi treats serviceApiKey as optional, and its authenticate preHandler returns early when it is undefined. INNTRIS_SERVICE_API_KEY is blank in .env.example and configuredValue maps blank to undefined, so a default deployment answers POST /v1/decisions/evaluate with a signed ALLOW and no credential. The only configuration that forces a key is one that also injects a reconciliation store, which buildDemoApi rejects without one.",
+      "enforcement": "NONE",
+      "reason_codes": [],
+      "settlement_invoked": false,
+      "resource_served": false,
+      "notes": "Sets the exposure precondition for F-1, F-5 and F-6."
+    },
+    {
+      "id": "E2:no-transaction-identifier",
+      "deliverable": "E",
+      "attack": "Facilitator reports settlement success without a transaction identifier",
+      "status": "KNOWN_GAP",
+      "expectation": "A settlement naming no transaction should be treated as unsettled and the resource withheld.",
+      "observed": "The resource was released and the operation was marked succeeded. settleIfAuthorised treats any executor return that does not throw as success (guard.ts:255-307) and never inspects the returned value, so the settlement executor's result is opaque to the guard. An empty transaction identifier is indistinguishable from a real one.",
+      "enforcement": "NONE",
+      "reason_codes": [],
+      "settlement_invoked": true,
+      "resource_served": true,
+      "notes": "SR4. Review register row E2."
+    },
+    {
+      "id": "E3:unconfirmed-transaction",
+      "deliverable": "E",
+      "attack": "Facilitator reports settlement success with a transaction that reverted, was dropped, or does not exist",
+      "status": "KNOWN_GAP",
+      "expectation": "Settlement should be confirmed independently against the chain at a stated depth before the resource is released.",
+      "observed": "The resource was released on the facilitator's word alone. The adapter contains no chain client, no RPC configuration and no confirmation-depth setting: grep across packages/ finds no provider, no eth_getTransactionReceipt equivalent, and no anchoring code. Inntris's notion of settled is the facilitator's JSON.",
+      "enforcement": "NONE",
+      "reason_codes": [],
+      "settlement_invoked": true,
+      "resource_served": true,
+      "notes": "SR4, the rule the review names as determining whether Inntris confirms or relays. Resolves the A7 severity condition: with no independent settleability check and no independent settlement confirmation, a permissive facilitator's success is accepted end to end."
+    },
+    {
+      "id": "E4:rollback",
+      "deliverable": "E",
+      "attack": "Post-verification effects when settlement fails",
+      "status": "PASS",
+      "expectation": "The request is treated as unpaid, the resource is withheld, and the failure is durably recorded.",
+      "observed": "The resource was withheld and the operation left unresolved as outcome_unknown for reconciliation. The consumed nonce is not returned, so the authorisation is spent and cannot be replayed — the payer must obtain a new decision. That is fail-closed, and it is the correct direction, but it is a withholding rather than a reversal: no compensating record is signed.",
+      "enforcement": "INNTRIS_CONTAINMENT",
+      "reason_codes": [
+        "EXECUTION_OUTCOME_UNKNOWN"
+      ],
+      "settlement_invoked": true,
+      "resource_served": false,
+      "notes": "Server-SR2. Conditional on a reconciliation store; see A7-late-nostore for the default."
     }
   ]
 }

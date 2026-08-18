@@ -1,0 +1,335 @@
+[
+  {
+    "id": "D6:replay-same-ref:default-no-reconciliation-store-",
+    "deliverable": "D6",
+    "attack": "Settlement replay with the same execution reference — configuration: default (no reconciliation store)",
+    "status": "KNOWN_GAP",
+    "expectation": "Under every reachable configuration, this case must be rejected.",
+    "observed": "NOT REJECTED — resource released, transaction 0xpermissive",
+    "compliant": {
+      "rejected": false,
+      "layer": "NONE",
+      "component": "none",
+      "detail": "resource released, transaction 0xpermissive",
+      "reason_codes": [],
+      "settlement_invoked": true,
+      "resource_served": true,
+      "verify_calls": 2
+    },
+    "enforcement": "NONE",
+    "reason_codes": [],
+    "settlement_invoked": true,
+    "resource_served": true
+  },
+  {
+    "id": "D6:settlement-failure:default-no-reconciliation-store-",
+    "deliverable": "D6",
+    "attack": "Settlement failure bookkeeping — configuration: default (no reconciliation store)",
+    "status": "PASS",
+    "expectation": "Under every reachable configuration, this case must be rejected.",
+    "observed": "rejected at FACILITATOR_SETTLE (SettlementFailure: Settlement failed: settlement_timeout)",
+    "compliant": {
+      "rejected": true,
+      "layer": "FACILITATOR_SETTLE",
+      "component": "facilitator:custom",
+      "detail": "SettlementFailure: Settlement failed: settlement_timeout",
+      "reason_codes": [],
+      "settlement_invoked": true,
+      "verify_calls": 1,
+      "resource_served": false
+    },
+    "enforcement": "NONE",
+    "reason_codes": [],
+    "settlement_invoked": true,
+    "resource_served": false
+  },
+  {
+    "id": "D6:post-authorisation-swap:default-no-reconciliation-store-",
+    "deliverable": "D6",
+    "attack": "Payee swapped after authorisation — configuration: default (no reconciliation store)",
+    "status": "PASS",
+    "expectation": "Under every reachable configuration, this case must be rejected.",
+    "observed": "rejected at INNTRIS_POST_VERIFY (ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH)",
+    "compliant": {
+      "rejected": true,
+      "layer": "INNTRIS_POST_VERIFY",
+      "component": "inntris-guard",
+      "detail": "InntrisGuardError: ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH",
+      "reason_codes": [
+        "ACTION_HASH_MISMATCH",
+        "DECISION_BINDING_MISMATCH",
+        "PAYMENT_REQUIREMENTS_MISMATCH"
+      ],
+      "settlement_invoked": false,
+      "verify_calls": 1,
+      "resource_served": false
+    },
+    "enforcement": "INNTRIS",
+    "reason_codes": [
+      "ACTION_HASH_MISMATCH",
+      "DECISION_BINDING_MISMATCH",
+      "PAYMENT_REQUIREMENTS_MISMATCH"
+    ],
+    "settlement_invoked": false,
+    "resource_served": false
+  },
+  {
+    "id": "D6:replay-same-ref:reconciliation-store-configured",
+    "deliverable": "D6",
+    "attack": "Settlement replay with the same execution reference — configuration: reconciliation store configured",
+    "status": "PASS",
+    "expectation": "Under every reachable configuration, this case must be rejected.",
+    "observed": "rejected at INNTRIS_POST_VERIFY (EXECUTION_ALREADY_COMPLETED)",
+    "compliant": {
+      "rejected": true,
+      "layer": "INNTRIS_POST_VERIFY",
+      "component": "inntris-guard",
+      "detail": "InntrisGuardError: EXECUTION_ALREADY_COMPLETED",
+      "reason_codes": [
+        "EXECUTION_ALREADY_COMPLETED"
+      ],
+      "settlement_invoked": false,
+      "verify_calls": 2,
+      "resource_served": false
+    },
+    "enforcement": "INNTRIS",
+    "reason_codes": [
+      "EXECUTION_ALREADY_COMPLETED"
+    ],
+    "settlement_invoked": false,
+    "resource_served": false
+  },
+  {
+    "id": "D6:settlement-failure:reconciliation-store-configured",
+    "deliverable": "D6",
+    "attack": "Settlement failure bookkeeping — configuration: reconciliation store configured",
+    "status": "PASS",
+    "expectation": "Under every reachable configuration, this case must be rejected.",
+    "observed": "rejected at FACILITATOR_SETTLE (EXECUTION_OUTCOME_UNKNOWN)",
+    "compliant": {
+      "rejected": true,
+      "layer": "FACILITATOR_SETTLE",
+      "component": "facilitator:custom",
+      "detail": "InntrisGuardError: EXECUTION_OUTCOME_UNKNOWN",
+      "reason_codes": [
+        "EXECUTION_OUTCOME_UNKNOWN"
+      ],
+      "settlement_invoked": true,
+      "verify_calls": 1,
+      "resource_served": false
+    },
+    "enforcement": "NONE",
+    "reason_codes": [
+      "EXECUTION_OUTCOME_UNKNOWN"
+    ],
+    "settlement_invoked": true,
+    "resource_served": false
+  },
+  {
+    "id": "D6:post-authorisation-swap:reconciliation-store-configured",
+    "deliverable": "D6",
+    "attack": "Payee swapped after authorisation — configuration: reconciliation store configured",
+    "status": "PASS",
+    "expectation": "Under every reachable configuration, this case must be rejected.",
+    "observed": "rejected at INNTRIS_POST_VERIFY (ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH)",
+    "compliant": {
+      "rejected": true,
+      "layer": "INNTRIS_POST_VERIFY",
+      "component": "inntris-guard",
+      "detail": "InntrisGuardError: ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH",
+      "reason_codes": [
+        "ACTION_HASH_MISMATCH",
+        "DECISION_BINDING_MISMATCH",
+        "PAYMENT_REQUIREMENTS_MISMATCH"
+      ],
+      "settlement_invoked": false,
+      "verify_calls": 1,
+      "resource_served": false
+    },
+    "enforcement": "INNTRIS",
+    "reason_codes": [
+      "ACTION_HASH_MISMATCH",
+      "DECISION_BINDING_MISMATCH",
+      "PAYMENT_REQUIREMENTS_MISMATCH"
+    ],
+    "settlement_invoked": false,
+    "resource_served": false
+  },
+  {
+    "id": "D6:replay-same-ref:no-policy-version-pin",
+    "deliverable": "D6",
+    "attack": "Settlement replay with the same execution reference — configuration: no policy-version pin",
+    "status": "PASS",
+    "expectation": "Under every reachable configuration, this case must be rejected.",
+    "observed": "rejected at INNTRIS_POST_VERIFY (EXECUTION_ALREADY_COMPLETED)",
+    "compliant": {
+      "rejected": true,
+      "layer": "INNTRIS_POST_VERIFY",
+      "component": "inntris-guard",
+      "detail": "InntrisGuardError: EXECUTION_ALREADY_COMPLETED",
+      "reason_codes": [
+        "EXECUTION_ALREADY_COMPLETED"
+      ],
+      "settlement_invoked": false,
+      "verify_calls": 2,
+      "resource_served": false
+    },
+    "enforcement": "INNTRIS",
+    "reason_codes": [
+      "EXECUTION_ALREADY_COMPLETED"
+    ],
+    "settlement_invoked": false,
+    "resource_served": false
+  },
+  {
+    "id": "D6:settlement-failure:no-policy-version-pin",
+    "deliverable": "D6",
+    "attack": "Settlement failure bookkeeping — configuration: no policy-version pin",
+    "status": "PASS",
+    "expectation": "Under every reachable configuration, this case must be rejected.",
+    "observed": "rejected at FACILITATOR_SETTLE (EXECUTION_OUTCOME_UNKNOWN)",
+    "compliant": {
+      "rejected": true,
+      "layer": "FACILITATOR_SETTLE",
+      "component": "facilitator:custom",
+      "detail": "InntrisGuardError: EXECUTION_OUTCOME_UNKNOWN",
+      "reason_codes": [
+        "EXECUTION_OUTCOME_UNKNOWN"
+      ],
+      "settlement_invoked": true,
+      "verify_calls": 1,
+      "resource_served": false
+    },
+    "enforcement": "NONE",
+    "reason_codes": [
+      "EXECUTION_OUTCOME_UNKNOWN"
+    ],
+    "settlement_invoked": true,
+    "resource_served": false
+  },
+  {
+    "id": "D6:post-authorisation-swap:no-policy-version-pin",
+    "deliverable": "D6",
+    "attack": "Payee swapped after authorisation — configuration: no policy-version pin",
+    "status": "PASS",
+    "expectation": "Under every reachable configuration, this case must be rejected.",
+    "observed": "rejected at INNTRIS_POST_VERIFY (ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH)",
+    "compliant": {
+      "rejected": true,
+      "layer": "INNTRIS_POST_VERIFY",
+      "component": "inntris-guard",
+      "detail": "InntrisGuardError: ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH",
+      "reason_codes": [
+        "ACTION_HASH_MISMATCH",
+        "DECISION_BINDING_MISMATCH",
+        "PAYMENT_REQUIREMENTS_MISMATCH"
+      ],
+      "settlement_invoked": false,
+      "verify_calls": 1,
+      "resource_served": false
+    },
+    "enforcement": "INNTRIS",
+    "reason_codes": [
+      "ACTION_HASH_MISMATCH",
+      "DECISION_BINDING_MISMATCH",
+      "PAYMENT_REQUIREMENTS_MISMATCH"
+    ],
+    "settlement_invoked": false,
+    "resource_served": false
+  },
+  {
+    "id": "D6:replay-same-ref:accumulating-spend-state",
+    "deliverable": "D6",
+    "attack": "Settlement replay with the same execution reference — configuration: accumulating spend state",
+    "status": "PASS",
+    "expectation": "Under every reachable configuration, this case must be rejected.",
+    "observed": "rejected at INNTRIS_POST_VERIFY (EXECUTION_ALREADY_COMPLETED)",
+    "compliant": {
+      "rejected": true,
+      "layer": "INNTRIS_POST_VERIFY",
+      "component": "inntris-guard",
+      "detail": "InntrisGuardError: EXECUTION_ALREADY_COMPLETED",
+      "reason_codes": [
+        "EXECUTION_ALREADY_COMPLETED"
+      ],
+      "settlement_invoked": false,
+      "verify_calls": 2,
+      "resource_served": false
+    },
+    "enforcement": "INNTRIS",
+    "reason_codes": [
+      "EXECUTION_ALREADY_COMPLETED"
+    ],
+    "settlement_invoked": false,
+    "resource_served": false
+  },
+  {
+    "id": "D6:settlement-failure:accumulating-spend-state",
+    "deliverable": "D6",
+    "attack": "Settlement failure bookkeeping — configuration: accumulating spend state",
+    "status": "PASS",
+    "expectation": "Under every reachable configuration, this case must be rejected.",
+    "observed": "rejected at FACILITATOR_SETTLE (EXECUTION_OUTCOME_UNKNOWN)",
+    "compliant": {
+      "rejected": true,
+      "layer": "FACILITATOR_SETTLE",
+      "component": "facilitator:custom",
+      "detail": "InntrisGuardError: EXECUTION_OUTCOME_UNKNOWN",
+      "reason_codes": [
+        "EXECUTION_OUTCOME_UNKNOWN"
+      ],
+      "settlement_invoked": true,
+      "verify_calls": 1,
+      "resource_served": false
+    },
+    "enforcement": "NONE",
+    "reason_codes": [
+      "EXECUTION_OUTCOME_UNKNOWN"
+    ],
+    "settlement_invoked": true,
+    "resource_served": false
+  },
+  {
+    "id": "D6:post-authorisation-swap:accumulating-spend-state",
+    "deliverable": "D6",
+    "attack": "Payee swapped after authorisation — configuration: accumulating spend state",
+    "status": "PASS",
+    "expectation": "Under every reachable configuration, this case must be rejected.",
+    "observed": "rejected at INNTRIS_POST_VERIFY (ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH)",
+    "compliant": {
+      "rejected": true,
+      "layer": "INNTRIS_POST_VERIFY",
+      "component": "inntris-guard",
+      "detail": "InntrisGuardError: ACTION_HASH_MISMATCH, DECISION_BINDING_MISMATCH, PAYMENT_REQUIREMENTS_MISMATCH",
+      "reason_codes": [
+        "ACTION_HASH_MISMATCH",
+        "DECISION_BINDING_MISMATCH",
+        "PAYMENT_REQUIREMENTS_MISMATCH"
+      ],
+      "settlement_invoked": false,
+      "verify_calls": 1,
+      "resource_served": false
+    },
+    "enforcement": "INNTRIS",
+    "reason_codes": [
+      "ACTION_HASH_MISMATCH",
+      "DECISION_BINDING_MISMATCH",
+      "PAYMENT_REQUIREMENTS_MISMATCH"
+    ],
+    "settlement_invoked": false,
+    "resource_served": false
+  },
+  {
+    "id": "D6:F8-facilitator-unreachable",
+    "deliverable": "D6",
+    "attack": "F-8. Facilitator times out on a request carrying a mutated payee that Inntris would have rejected",
+    "status": "KNOWN_GAP",
+    "expectation": "A request Inntris can reject on its own should not depend on a third party being reachable, and its refusal should carry a reason code.",
+    "observed": "The facilitator call raised before the guard was consulted. No settlement occurred and the resource was withheld, so the composite fails closed — but the failure surfaces as a transport exception with no Inntris reason code, no verdict and no recorded rejection. The same request rejects cleanly with ACTION_HASH_MISMATCH when the facilitator is reachable, which means availability of a third party determines whether a refusal is attributable.",
+    "enforcement": "NONE",
+    "reason_codes": [],
+    "settlement_invoked": false,
+    "resource_served": false,
+    "notes": "Ordering consequence of binding checks running POST_VERIFY. See the D3 Ordering column."
+  }
+]
