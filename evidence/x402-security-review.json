@@ -1,7 +1,7 @@
 {
   "version": "inntris-x402-security-review-v2",
   "suite": "USENIX x402 baseline, round 3",
-  "baseline_commit": "0b1e3ceaf60228ca8f01b9985c0c49bd2ccda952",
+  "baseline_commit": "9ef64c433cd49d0252ca2072a86bb32f66e66954",
   "generated_from_seed": 20260817,
   "counts": {
     "PASS": 59,

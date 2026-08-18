@@ -559,9 +559,9 @@ integration path with a reconciliation store configured — say so when using th
 ## 7. Reproduction
 
 - **Repository and commit:** `inntris/inntris-x402-policy-adapter`, branch
-  `claude/internet-access-question-jgdrey`. **Baseline commit: `__BASELINE_SHA__`.** The evidence
-  bundle was generated at that commit; this document, which records the digest, is the commit that
-  follows it.
+  `claude/internet-access-question-jgdrey`. **Baseline commit:
+  `9ef64c433cd49d0252ca2072a86bb32f66e66954`.** The evidence bundle was generated at that commit;
+  this document, which records the digest, is the commit that follows it.
 - **Network(s) and chain ids:** none. No network was contacted and no chain was read. The
   requirements under test name `eip155:8453` and `eip155:84532` as data only.
 - **Facilitator(s) exercised, and authorisation basis for testing each:** none. Both facilitators
@@ -583,7 +583,8 @@ integration path with a reconciliation store configured — say so when using th
   `evidence/x402-security-review.json.sha256` and per-file shards under `evidence/security/shards/`.
   Supporting analyses: `docs/security/D3_RULE_TO_CODE_MAP.md`,
   `docs/security/F6_RECEIPT_TRUST_OPTIONS.md`, `docs/security/USENIX_X402_SECURITY_RULES.md`.
-- **Evidence bundle digest (SHA-256):** `__BASELINE_DIGEST__`
+- **Evidence bundle digest (SHA-256):**
+  `b8789f69e4e39514012b3dc76a67de1381abfe713bff353640184bd278271eeb`
 - **Corpus seed:** `20260817`, fixed in `test/security/global-setup.ts`. The D4 mutation corpus is
   regenerated identically on every run.
 - **Runtime:** Node.js 24.19.0, pnpm 10.18.1, vitest 4.1.10, Linux x64.
