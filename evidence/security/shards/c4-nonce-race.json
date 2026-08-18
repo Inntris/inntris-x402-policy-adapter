@@ -1,0 +1,119 @@
+[
+  {
+    "id": "C4:n2:compliant",
+    "deliverable": "C4",
+    "attack": "Concurrent nonce race — 2 parallel requests carrying one authorisation, compliant facilitator",
+    "status": "PASS",
+    "expectation": "Releases equals settled transactions equals one, however many requests arrive in parallel.",
+    "observed": "2 parallel accesses on one decision against the durable PostgreSQL store: 1 released, 1 settlement calls. Refusal reasons: NONCE_ALREADY_CONSUMED.",
+    "enforcement": "INNTRIS",
+    "reason_codes": [
+      "NONCE_ALREADY_CONSUMED"
+    ],
+    "settlement_invoked": true,
+    "resource_served": true,
+    "notes": "Atomic PostgreSQL policy state store and PostgreSQL reconciliation store. Each request carries a distinct execution reference, so idempotency cannot collapse them and the nonce must do the work."
+  },
+  {
+    "id": "C4:n2:permissive",
+    "deliverable": "C4",
+    "attack": "Concurrent nonce race — 2 parallel requests carrying one authorisation, permissive facilitator",
+    "status": "PASS",
+    "expectation": "Releases equals settled transactions equals one, however many requests arrive in parallel.",
+    "observed": "2 parallel accesses on one decision against the durable PostgreSQL store: 1 released, 1 settlement calls. Refusal reasons: NONCE_ALREADY_CONSUMED.",
+    "enforcement": "INNTRIS",
+    "reason_codes": [
+      "NONCE_ALREADY_CONSUMED"
+    ],
+    "settlement_invoked": true,
+    "resource_served": true,
+    "notes": "Atomic PostgreSQL policy state store and PostgreSQL reconciliation store. Each request carries a distinct execution reference, so idempotency cannot collapse them and the nonce must do the work."
+  },
+  {
+    "id": "C4:n5:compliant",
+    "deliverable": "C4",
+    "attack": "Concurrent nonce race — 5 parallel requests carrying one authorisation, compliant facilitator",
+    "status": "PASS",
+    "expectation": "Releases equals settled transactions equals one, however many requests arrive in parallel.",
+    "observed": "5 parallel accesses on one decision against the durable PostgreSQL store: 1 released, 1 settlement calls. Refusal reasons: NONCE_ALREADY_CONSUMED.",
+    "enforcement": "INNTRIS",
+    "reason_codes": [
+      "NONCE_ALREADY_CONSUMED"
+    ],
+    "settlement_invoked": true,
+    "resource_served": true,
+    "notes": "Atomic PostgreSQL policy state store and PostgreSQL reconciliation store. Each request carries a distinct execution reference, so idempotency cannot collapse them and the nonce must do the work."
+  },
+  {
+    "id": "C4:n5:permissive",
+    "deliverable": "C4",
+    "attack": "Concurrent nonce race — 5 parallel requests carrying one authorisation, permissive facilitator",
+    "status": "PASS",
+    "expectation": "Releases equals settled transactions equals one, however many requests arrive in parallel.",
+    "observed": "5 parallel accesses on one decision against the durable PostgreSQL store: 1 released, 1 settlement calls. Refusal reasons: NONCE_ALREADY_CONSUMED.",
+    "enforcement": "INNTRIS",
+    "reason_codes": [
+      "NONCE_ALREADY_CONSUMED"
+    ],
+    "settlement_invoked": true,
+    "resource_served": true,
+    "notes": "Atomic PostgreSQL policy state store and PostgreSQL reconciliation store. Each request carries a distinct execution reference, so idempotency cannot collapse them and the nonce must do the work."
+  },
+  {
+    "id": "C4:n20:compliant",
+    "deliverable": "C4",
+    "attack": "Concurrent nonce race — 20 parallel requests carrying one authorisation, compliant facilitator",
+    "status": "PASS",
+    "expectation": "Releases equals settled transactions equals one, however many requests arrive in parallel.",
+    "observed": "20 parallel accesses on one decision against the durable PostgreSQL store: 1 released, 1 settlement calls. Refusal reasons: NONCE_ALREADY_CONSUMED.",
+    "enforcement": "INNTRIS",
+    "reason_codes": [
+      "NONCE_ALREADY_CONSUMED"
+    ],
+    "settlement_invoked": true,
+    "resource_served": true,
+    "notes": "Atomic PostgreSQL policy state store and PostgreSQL reconciliation store. Each request carries a distinct execution reference, so idempotency cannot collapse them and the nonce must do the work."
+  },
+  {
+    "id": "C4:n20:permissive",
+    "deliverable": "C4",
+    "attack": "Concurrent nonce race — 20 parallel requests carrying one authorisation, permissive facilitator",
+    "status": "PASS",
+    "expectation": "Releases equals settled transactions equals one, however many requests arrive in parallel.",
+    "observed": "20 parallel accesses on one decision against the durable PostgreSQL store: 1 released, 1 settlement calls. Refusal reasons: NONCE_ALREADY_CONSUMED.",
+    "enforcement": "INNTRIS",
+    "reason_codes": [
+      "NONCE_ALREADY_CONSUMED"
+    ],
+    "settlement_invoked": true,
+    "resource_served": true,
+    "notes": "Atomic PostgreSQL policy state store and PostgreSQL reconciliation store. Each request carries a distinct execution reference, so idempotency cannot collapse them and the nonce must do the work."
+  },
+  {
+    "id": "C4:control-in-memory",
+    "deliverable": "C4",
+    "attack": "Control — same 20-way race against the in-memory stores",
+    "status": "PASS",
+    "expectation": "Recorded to establish what the single-process race can and cannot demonstrate.",
+    "observed": "1 released, 1 settlement calls against the in-memory stores. The in-process race is won by the event loop rather than by the database, so a passing single-process result is not evidence of durable atomicity. The cross-process case supplies that evidence.",
+    "enforcement": "INNTRIS",
+    "reason_codes": [],
+    "settlement_invoked": true,
+    "resource_served": true
+  },
+  {
+    "id": "C4:cross-process",
+    "deliverable": "C4",
+    "attack": "Concurrent nonce race across 20 separate OS processes, each with its own connection pool",
+    "status": "PASS",
+    "expectation": "Exactly one process consumes the nonce; every other is refused. This is the case the reference paper exploited.",
+    "observed": "20 processes converged on one decision at a shared wall-clock instant: 1 consumed, 19 conflict, 0 other. Statuses: {\"conflict:NONCE_ALREADY_CONSUMED\":19,\"consumed\":1}. Reservation is a single INSERT ... ON CONFLICT DO NOTHING RETURNING inside a transaction (postgres-store/src/store.ts:141), so exactly one transaction can return a row.",
+    "enforcement": "INNTRIS",
+    "reason_codes": [
+      "NONCE_ALREADY_CONSUMED"
+    ],
+    "settlement_invoked": false,
+    "resource_served": true,
+    "notes": "Answers the question the F-2 redesign depends on: nonce reservation is already atomic at the database level, so F-2 does not require a store redesign — it requires the non-durable default to stop being the default."
+  }
+]

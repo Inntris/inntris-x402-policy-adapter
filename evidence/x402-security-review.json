@@ -1,22 +1,22 @@
 {
   "version": "inntris-x402-security-review-v2",
   "suite": "USENIX x402 baseline, round 3",
-  "baseline_commit": "9ef64c433cd49d0252ca2072a86bb32f66e66954",
+  "baseline_commit": "083ad69abe13bf33927eea933c425e59702a96b6",
   "generated_from_seed": 20260817,
   "counts": {
-    "PASS": 59,
+    "PASS": 68,
     "BORROWED": 2,
-    "KNOWN_GAP": 23,
+    "KNOWN_GAP": 24,
     "NOT_TESTED": 2
   },
   "enforcement_counts": {
-    "INNTRIS": 37,
+    "INNTRIS": 46,
     "FACILITATOR": 2,
-    "NONE": 37,
+    "NONE": 38,
     "INNTRIS_CONTAINMENT": 3,
     "NOT_APPLICABLE": 7
   },
-  "total": 86,
+  "total": 96,
   "results": [
     {
       "id": "A10",
@@ -817,6 +817,123 @@
       "resource_served": false
     },
     {
+      "id": "C4:control-in-memory",
+      "deliverable": "C4",
+      "attack": "Control — same 20-way race against the in-memory stores",
+      "status": "PASS",
+      "expectation": "Recorded to establish what the single-process race can and cannot demonstrate.",
+      "observed": "1 released, 1 settlement calls against the in-memory stores. The in-process race is won by the event loop rather than by the database, so a passing single-process result is not evidence of durable atomicity. The cross-process case supplies that evidence.",
+      "enforcement": "INNTRIS",
+      "reason_codes": [],
+      "settlement_invoked": true,
+      "resource_served": true
+    },
+    {
+      "id": "C4:cross-process",
+      "deliverable": "C4",
+      "attack": "Concurrent nonce race across 20 separate OS processes, each with its own connection pool",
+      "status": "PASS",
+      "expectation": "Exactly one process consumes the nonce; every other is refused. This is the case the reference paper exploited.",
+      "observed": "20 processes converged on one decision at a shared wall-clock instant: 1 consumed, 19 conflict, 0 other. Statuses: {\"conflict:NONCE_ALREADY_CONSUMED\":19,\"consumed\":1}. Reservation is a single INSERT ... ON CONFLICT DO NOTHING RETURNING inside a transaction (postgres-store/src/store.ts:141), so exactly one transaction can return a row.",
+      "enforcement": "INNTRIS",
+      "reason_codes": [
+        "NONCE_ALREADY_CONSUMED"
+      ],
+      "settlement_invoked": false,
+      "resource_served": true,
+      "notes": "Answers the question the F-2 redesign depends on: nonce reservation is already atomic at the database level, so F-2 does not require a store redesign — it requires the non-durable default to stop being the default."
+    },
+    {
+      "id": "C4:n2:compliant",
+      "deliverable": "C4",
+      "attack": "Concurrent nonce race — 2 parallel requests carrying one authorisation, compliant facilitator",
+      "status": "PASS",
+      "expectation": "Releases equals settled transactions equals one, however many requests arrive in parallel.",
+      "observed": "2 parallel accesses on one decision against the durable PostgreSQL store: 1 released, 1 settlement calls. Refusal reasons: NONCE_ALREADY_CONSUMED.",
+      "enforcement": "INNTRIS",
+      "reason_codes": [
+        "NONCE_ALREADY_CONSUMED"
+      ],
+      "settlement_invoked": true,
+      "resource_served": true,
+      "notes": "Atomic PostgreSQL policy state store and PostgreSQL reconciliation store. Each request carries a distinct execution reference, so idempotency cannot collapse them and the nonce must do the work."
+    },
+    {
+      "id": "C4:n2:permissive",
+      "deliverable": "C4",
+      "attack": "Concurrent nonce race — 2 parallel requests carrying one authorisation, permissive facilitator",
+      "status": "PASS",
+      "expectation": "Releases equals settled transactions equals one, however many requests arrive in parallel.",
+      "observed": "2 parallel accesses on one decision against the durable PostgreSQL store: 1 released, 1 settlement calls. Refusal reasons: NONCE_ALREADY_CONSUMED.",
+      "enforcement": "INNTRIS",
+      "reason_codes": [
+        "NONCE_ALREADY_CONSUMED"
+      ],
+      "settlement_invoked": true,
+      "resource_served": true,
+      "notes": "Atomic PostgreSQL policy state store and PostgreSQL reconciliation store. Each request carries a distinct execution reference, so idempotency cannot collapse them and the nonce must do the work."
+    },
+    {
+      "id": "C4:n20:compliant",
+      "deliverable": "C4",
+      "attack": "Concurrent nonce race — 20 parallel requests carrying one authorisation, compliant facilitator",
+      "status": "PASS",
+      "expectation": "Releases equals settled transactions equals one, however many requests arrive in parallel.",
+      "observed": "20 parallel accesses on one decision against the durable PostgreSQL store: 1 released, 1 settlement calls. Refusal reasons: NONCE_ALREADY_CONSUMED.",
+      "enforcement": "INNTRIS",
+      "reason_codes": [
+        "NONCE_ALREADY_CONSUMED"
+      ],
+      "settlement_invoked": true,
+      "resource_served": true,
+      "notes": "Atomic PostgreSQL policy state store and PostgreSQL reconciliation store. Each request carries a distinct execution reference, so idempotency cannot collapse them and the nonce must do the work."
+    },
+    {
+      "id": "C4:n20:permissive",
+      "deliverable": "C4",
+      "attack": "Concurrent nonce race — 20 parallel requests carrying one authorisation, permissive facilitator",
+      "status": "PASS",
+      "expectation": "Releases equals settled transactions equals one, however many requests arrive in parallel.",
+      "observed": "20 parallel accesses on one decision against the durable PostgreSQL store: 1 released, 1 settlement calls. Refusal reasons: NONCE_ALREADY_CONSUMED.",
+      "enforcement": "INNTRIS",
+      "reason_codes": [
+        "NONCE_ALREADY_CONSUMED"
+      ],
+      "settlement_invoked": true,
+      "resource_served": true,
+      "notes": "Atomic PostgreSQL policy state store and PostgreSQL reconciliation store. Each request carries a distinct execution reference, so idempotency cannot collapse them and the nonce must do the work."
+    },
+    {
+      "id": "C4:n5:compliant",
+      "deliverable": "C4",
+      "attack": "Concurrent nonce race — 5 parallel requests carrying one authorisation, compliant facilitator",
+      "status": "PASS",
+      "expectation": "Releases equals settled transactions equals one, however many requests arrive in parallel.",
+      "observed": "5 parallel accesses on one decision against the durable PostgreSQL store: 1 released, 1 settlement calls. Refusal reasons: NONCE_ALREADY_CONSUMED.",
+      "enforcement": "INNTRIS",
+      "reason_codes": [
+        "NONCE_ALREADY_CONSUMED"
+      ],
+      "settlement_invoked": true,
+      "resource_served": true,
+      "notes": "Atomic PostgreSQL policy state store and PostgreSQL reconciliation store. Each request carries a distinct execution reference, so idempotency cannot collapse them and the nonce must do the work."
+    },
+    {
+      "id": "C4:n5:permissive",
+      "deliverable": "C4",
+      "attack": "Concurrent nonce race — 5 parallel requests carrying one authorisation, permissive facilitator",
+      "status": "PASS",
+      "expectation": "Releases equals settled transactions equals one, however many requests arrive in parallel.",
+      "observed": "5 parallel accesses on one decision against the durable PostgreSQL store: 1 released, 1 settlement calls. Refusal reasons: NONCE_ALREADY_CONSUMED.",
+      "enforcement": "INNTRIS",
+      "reason_codes": [
+        "NONCE_ALREADY_CONSUMED"
+      ],
+      "settlement_invoked": true,
+      "resource_served": true,
+      "notes": "Atomic PostgreSQL policy state store and PostgreSQL reconciliation store. Each request carries a distinct execution reference, so idempotency cannot collapse them and the nonce must do the work."
+    },
+    {
       "id": "D2:agent-id-unevaluated",
       "deliverable": "D2",
       "attack": "Agent identifier carried into the receipt but not evaluated by policy",
@@ -1089,6 +1206,39 @@
       "settlement_invoked": false,
       "resource_served": false,
       "notes": "A reader of the receipt may reasonably infer that a named scheme was approved as such. It was not evaluated."
+    },
+    {
+      "id": "D4:ground-truth-control",
+      "deliverable": "D4",
+      "attack": "Ground-truth oracle control — honest precision",
+      "status": "PASS",
+      "expectation": "The oracle must agree with the adapter whenever the declared precision matches the registry, or it would report false positives.",
+      "observed": "True value 4.50 from the registry; adapter evaluated 4.50 and returned ALLOW, which is the verdict the oracle requires. The oracle discriminates F-1 without flagging correct behaviour.",
+      "enforcement": "INNTRIS",
+      "reason_codes": [
+        "MERCHANT_ALLOWED",
+        "WITHIN_TRANSACTION_LIMIT",
+        "WITHIN_DAILY_LIMIT"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false
+    },
+    {
+      "id": "D4:ground-truth-property",
+      "deliverable": "D4",
+      "attack": "Re-specified property — decision must agree with independently computed true value",
+      "status": "KNOWN_GAP",
+      "expectation": "For every mutation, the decision's evaluated amount and verdict must agree with the true economic value computed from an asset registry the adapter cannot influence.",
+      "observed": "The oracle is wired and detects F-1: {\"atomicAmount\":\"150000000\",\"declaredDecimals\":9,\"trueValue\":\"150.00\",\"evaluatedAmount\":\"0.15\",\"expectedVerdict\":\"BLOCK\",\"actualVerdict\":\"ALLOW\"}. The original property returned zero silent mutations across 47 cases because it asked whether the decision moved, not whether it moved correctly.",
+      "enforcement": "NONE",
+      "reason_codes": [
+        "MERCHANT_ALLOWED",
+        "WITHIN_TRANSACTION_LIMIT",
+        "WITHIN_DAILY_LIMIT"
+      ],
+      "settlement_invoked": false,
+      "resource_served": false,
+      "notes": "Instrument validated, not yet applied to the corpus. Per the unfreeze sequence the corpus is not re-run under this property until F-1 closes; at Stage 5 it replaces the original property in d4-mutation-corpus.test.ts."
     },
     {
       "id": "D4:kind-breakdown",
@@ -1669,7 +1819,7 @@
       "attack": "Reachable-but-untested protocol surface",
       "status": "NOT_TESTED",
       "expectation": "Anything reachable is either tested or recorded NOT_TESTED with a reason; anything unreachable is confirmed unreachable rather than assumed.",
-      "observed": "SR4 chain confirmation (E2, E3) — no chain client exists in the adapter, so there is nothing to exercise; a test would be measuring its absence, which D3 records instead. EIP-712 domain substitution (A5) — the adapter performs no signature recovery, so chainId and verifyingContract are never read. Concurrent nonce race (C4) — the suite is sequential; the in-memory nonce store's check-and-set is single-process and the atomic PostgreSQL store was not run. Premature authorisation, validAfter in the future (C2) — validAfter is never read. Remaining-validity threshold sweep (C5) — no freshness bound exists to measure. Zero-amount and dust proofs (D2, D3 of the review register) — no settleability check exists. Solana settlement semantics — reachable at the schema layer, no settlement path implemented. PostgreSQL-backed stores — in-memory implementations only throughout this suite",
+      "observed": "SR4 chain confirmation (E2, E3) — no chain client exists in the adapter, so there is nothing to exercise; a test would be measuring its absence, which D3 records instead. EIP-712 domain substitution (A5) — the adapter performs no signature recovery, so chainId and verifyingContract are never read. Concurrent nonce race (C4) — RESOLVED in Stage 0.2 and no longer untested: exercised at N=2/5/20 in-process and across 20 OS processes against a real PostgreSQL instance; retained here so the list records the change rather than silently dropping the row. Premature authorisation, validAfter in the future (C2) — validAfter is never read. Remaining-validity threshold sweep (C5) — no freshness bound exists to measure. Zero-amount and dust proofs (D2, D3 of the review register) — no settleability check exists. Solana settlement semantics — reachable at the schema layer, no settlement path implemented. PostgreSQL-backed stores — in-memory implementations only throughout this suite",
       "enforcement": "NOT_APPLICABLE",
       "reason_codes": [],
       "settlement_invoked": false,

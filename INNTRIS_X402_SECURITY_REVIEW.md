@@ -126,18 +126,24 @@ Adapted from §3.1 of the paper, narrowed to the adapter's position.
 
 ## 2. Results summary
 
-| Severity      | Count            | Findings                                                                         |
-| ------------- | ---------------- | -------------------------------------------------------------------------------- |
-| Critical      | 3                | F-5, F-6, F-9                                                                    |
-| High          | 3                | F-1, F-2, F-7                                                                    |
-| Medium        | 3                | F-3, F-4, F-8                                                                    |
-| Low           | 0                | —                                                                                |
-| Informational | 0                | —                                                                                |
-| Not tested    | 11 register rows | A9, B3, B4, B5, C4, D2, D3, R7, plus the surface listed in `D7:untested-surface` |
+| Severity      | Count            | Findings                                                                     |
+| ------------- | ---------------- | ---------------------------------------------------------------------------- |
+| Critical      | 4                | F-5, F-6, F-9, F-10                                                          |
+| High          | 3                | F-1, F-2, F-7                                                                |
+| Medium        | 3                | F-3, F-4, F-8                                                                |
+| Low           | 0                | —                                                                            |
+| Informational | 0                | —                                                                            |
+| Not tested    | 10 register rows | A9, B3, B4, B5, D2, D3, R7, plus the surface listed in `D7:untested-surface` |
 
-**Machine-readable results:** `evidence/x402-security-review.json`, 86 cases — 59 `PASS`, 2
-`BORROWED`, 23 `KNOWN_GAP`, 2 `NOT_TESTED`. Every case carries its expectation, observed behaviour,
+**Machine-readable results:** `evidence/x402-security-review.json`, 96 cases — 68 `PASS`, 2
+`BORROWED`, 24 `KNOWN_GAP`, 2 `NOT_TESTED`. Every case carries its expectation, observed behaviour,
 rejection layer, and results against both facilitator stand-ins. Digest and reproduction in §7.
+
+**Stage 0 addendum (post-freeze, test-only).** Ten cases were added after the round-3 freeze under
+the unfreeze sequence's Stage 0, which is explicitly not product code: eight for C4 against a real
+PostgreSQL instance, and two validating the re-specified D4 ground-truth property. C4 moved from
+`NOT TESTED` to `PASS`. The frozen round-3 baseline digest and this addendum's digest are both
+recorded in §7.
 
 **Ownership, from D1.** Of the 22 attack-matrix cases: 14 owned by Inntris, 2 `INNTRIS_CONTAINMENT`,
 2 `FACILITATOR` (borrowed), 4 owned by nobody.
@@ -208,14 +214,14 @@ claim.
 
 ### Group C — Freshness and replay (SR3, SR5, SR7)
 
-| ID   | Test                                                                                                        | Rule         | Expected                                              | Result                                | Evidence                                                                                                                                                                                                                                                                                                                                                                              |
-| ---- | ----------------------------------------------------------------------------------------------------------- | ------------ | ----------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| C1   | Expired authorisation — `validBefore` in the past                                                           | SR3          | Reject                                                | **FAIL**                              | Case `D5:validBefore`, and `D5:F7-unevaluated-not-detectable` where a payload whose `validBefore` is `1` produced a valid signed `ALLOW`. The authorisation's own expiry is never read. **Do not confuse this with the Inntris decision TTL, which is enforced — see C6.**                                                                                                            |
-| C2 ⊕ | **Premature authorisation** — `validAfter` far in the future                                                | SR3          | Reject                                                | **FAIL** _(by construction)_          | `validAfter` is never read, for the same structural reason as C1. `D3` records the SR3 authorisation-window row as `ABSENT`.                                                                                                                                                                                                                                                          |
-| C3   | Nonce replay, sequential — resubmit a proof already settled                                                 | SR3, SR5     | Reject                                                | **PASS**, configuration-dependent     | Cases `A6` (`NONCE_ALREADY_CONSUMED` on a second execution reference), `A6-recon` (`EXECUTION_ALREADY_COMPLETED` on a reused reference) and `A9` (three accesses, one release). Both hold under the permissive stand-in. **With no reconciliation store — the default — an identical retry settles a second time** (F-2, case `A6-F2`, and `D6` replay row).                          |
-| C4 ⊕ | **Nonce race, concurrent** — N parallel requests carrying one proof, before the nonce is consumed           | SR5, SR7     | At most one release; all others rejected              | **NOT TESTED**                        | The suite is sequential. The in-memory nonce store's check-and-set is single-process and the atomic PostgreSQL store was not run. Recorded in `D7:untested-surface`. The reference paper's _validated_ free-shopping exploit was the concurrent case, so this is the highest-value untested row in the register.                                                                      |
-| C5 ⊕ | **Remaining-validity threshold sweep** — measure the minimum accepted `validBefore − now`                   | SR5          | A stated, configured, defensible bound                | **FAIL** _(by construction)_          | There is no bound to measure. `maxTimeoutSeconds` is bound into the requirements hash and never compared to anything (`D2` row); `validBefore` is never read. `D3` records the SR5 freshness row as `ABSENT`.                                                                                                                                                                         |
-| C6 ⊕ | **Verify-to-release delay** — inject latency between verification and the release decision, spanning expiry | SR7 analogue | Re-check freshness; do not release on a stale verdict | **PASS**, for decision freshness only | Case `A5`: the clock is advanced past the 60-second decision TTL between authorisation and release; settlement is refused with `DECISION_EXPIRED` at the guard _and_ independently at the provider, the facilitator is never called, and the resource is withheld. Holds under the permissive stand-in. It is the _decision's_ freshness that is re-checked, not the authorisation's. |
+| ID   | Test                                                                                                        | Rule         | Expected                                              | Result                                | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ---- | ----------------------------------------------------------------------------------------------------------- | ------------ | ----------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| C1   | Expired authorisation — `validBefore` in the past                                                           | SR3          | Reject                                                | **FAIL**                              | Case `D5:validBefore`, and `D5:F7-unevaluated-not-detectable` where a payload whose `validBefore` is `1` produced a valid signed `ALLOW`. The authorisation's own expiry is never read. **Do not confuse this with the Inntris decision TTL, which is enforced — see C6.**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| C2 ⊕ | **Premature authorisation** — `validAfter` far in the future                                                | SR3          | Reject                                                | **FAIL** _(by construction)_          | `validAfter` is never read, for the same structural reason as C1. `D3` records the SR3 authorisation-window row as `ABSENT`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| C3   | Nonce replay, sequential — resubmit a proof already settled                                                 | SR3, SR5     | Reject                                                | **PASS**, configuration-dependent     | Cases `A6` (`NONCE_ALREADY_CONSUMED` on a second execution reference), `A6-recon` (`EXECUTION_ALREADY_COMPLETED` on a reused reference) and `A9` (three accesses, one release). Both hold under the permissive stand-in. **With no reconciliation store — the default — an identical retry settles a second time** (F-2, case `A6-F2`, and `D6` replay row).                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| C4 ⊕ | **Nonce race, concurrent** — N parallel requests carrying one proof, before the nonce is consumed           | SR5, SR7     | At most one release; all others rejected              | **PASS** _(Stage 0.2)_                | Cases `C4:n2/n5/n20` against a real PostgreSQL instance using the atomic policy state store and the PostgreSQL reconciliation store, run against both facilitator stand-ins: 1 released and 1 settlement call every time. `C4:cross-process` is the decisive one — 20 separate OS processes, each with its own connection pool, converging on one decision at a shared wall-clock instant: 1 consumed, 19 `NONCE_ALREADY_CONSUMED`. `C4:control-in-memory` records that the single-process race does not discriminate an atomically-reserved nonce from one protected only by the event loop, so the cross-process case is what carries the result. Reservation is a single `INSERT … ON CONFLICT DO NOTHING RETURNING` inside a transaction (`packages/postgres-store/src/store.ts:141`). |
+| C5 ⊕ | **Remaining-validity threshold sweep** — measure the minimum accepted `validBefore − now`                   | SR5          | A stated, configured, defensible bound                | **FAIL** _(by construction)_          | There is no bound to measure. `maxTimeoutSeconds` is bound into the requirements hash and never compared to anything (`D2` row); `validBefore` is never read. `D3` records the SR5 freshness row as `ABSENT`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| C6 ⊕ | **Verify-to-release delay** — inject latency between verification and the release decision, spanning expiry | SR7 analogue | Re-check freshness; do not release on a stale verdict | **PASS**, for decision freshness only | Case `A5`: the clock is advanced past the 60-second decision TTL between authorisation and release; settlement is refused with `DECISION_EXPIRED` at the guard _and_ independently at the provider, the facilitator is never called, and the resource is withheld. Holds under the permissive stand-in. It is the _decision's_ freshness that is re-checked, not the authorisation's.                                                                                                                                                                                                                                                                                                                                                                                                      |
 
 **C4 is not C3.** Sequential replay is the easy case, and it is the one most implementations already
 handle. The paper's _validated_ free-shopping exploit was the concurrent case: verification is
@@ -319,6 +325,37 @@ product code was changed._
   Inntris attests to a facilitator's response rather than to a settlement. The second is a
   defensible product; it is not the current positioning.
 - **Status:** Open
+
+### F-10 — Authentication fails open when no credential is configured
+
+- **Severity:** Critical
+- **Rules implicated:** none of SR1–SR8 directly; it is the precondition that makes F-1, F-5 and F-6
+  remotely reachable
+- **Tests:** `D8:no-auth-default`, `D8:auth-enforced-when-configured`, `D8:endpoint-surface`
+- **Location:** `apps/demo-api/src/app.ts:129-136`, `apps/demo-api/src/start.ts:259`,
+  `.env.example:14`
+- **Description:** `serviceApiKey` is optional. When it is unset — which is what a blank
+  `INNTRIS_SERVICE_API_KEY` produces, and what the shipped `.env.example` contains — the
+  `authenticate` preHandler returns early and every guarded endpoint answers unauthenticated. The
+  only configuration that forces a credential is one that also supplies a reconciliation store.
+- **Reproduction:** `pnpm test:security`, case `D8:no-auth-default`.
+- **Observed:** `POST /v1/decisions/evaluate` returned a signed `ALLOW` to a request carrying no
+  credential. With a key configured, the same endpoint correctly returns `401` for anonymous and
+  wrong credentials.
+- **Expected:** Construction or startup fails without a credential. An endpoint that mints signed
+  policy decisions should have no unauthenticated mode.
+- **Impact:** Where the process is also externally reachable, an unauthenticated caller mints signed
+  Inntris decisions choosing every policy-bearing field, including `principal_id` (F-5) and
+  `assetDecimals` (F-1), on a path that re-derives nothing (F-6). The mitigating default is the
+  loopback bind at `start.ts:273`; that is a default, not an enforcement, and it is overridable by
+  an environment variable.
+- **Remediation:** Remove the early return; fail closed at construction. Separately, one shared key
+  scopes nothing — per-tenant credentials are follow-on work and are the prerequisite for F-5's real
+  fix.
+- **Status:** Open. Code fix scheduled for Stage 1 and unconditional. The operational question —
+  whether any deployment ever ran unset _and_ reachable — is unanswerable from this repository and
+  is recorded in `docs/security/STAGE0_F10_OPERATIONAL_CHECK.md`; its answer determines only whether
+  the Stage 4 receipt migration also needs a key-rotation boundary.
 
 ### F-5 — Cumulative spend limits keyed on a caller-supplied identifier
 
@@ -583,8 +620,14 @@ integration path with a reconciliation store configured — say so when using th
   `evidence/x402-security-review.json.sha256` and per-file shards under `evidence/security/shards/`.
   Supporting analyses: `docs/security/D3_RULE_TO_CODE_MAP.md`,
   `docs/security/F6_RECEIPT_TRUST_OPTIONS.md`, `docs/security/USENIX_X402_SECURITY_RULES.md`.
-- **Evidence bundle digest (SHA-256):**
+- **Evidence bundle digest (SHA-256), round-3 frozen baseline, 86 cases:**
   `b8789f69e4e39514012b3dc76a67de1381abfe713bff353640184bd278271eeb`
+- **Evidence bundle digest (SHA-256), Stage 0 addendum, 96 cases:**
+  `dd29b2cb63b86db6980d3e7de4bbd83134c3c39a89dc1edaaba4a02f9c0122ac` Regenerate with
+  `INNTRIS_TEST_POSTGRES_URL=<url> pnpm test:security`. Without that variable the C4 suite skips and
+  the bundle returns 88 cases, so this digest is reproducible only with a PostgreSQL instance
+  available. Stage 0 changed test and instrumentation code only; no product code was touched between
+  the two digests.
 - **Corpus seed:** `20260817`, fixed in `test/security/global-setup.ts`. The D4 mutation corpus is
   regenerated identically on every run.
 - **Runtime:** Node.js 24.19.0, pnpm 10.18.1, vitest 4.1.10, Linux x64.

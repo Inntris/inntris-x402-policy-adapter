@@ -1,0 +1,35 @@
+[
+  {
+    "id": "D4:ground-truth-property",
+    "deliverable": "D4",
+    "attack": "Re-specified property — decision must agree with independently computed true value",
+    "status": "KNOWN_GAP",
+    "expectation": "For every mutation, the decision's evaluated amount and verdict must agree with the true economic value computed from an asset registry the adapter cannot influence.",
+    "observed": "The oracle is wired and detects F-1: {\"atomicAmount\":\"150000000\",\"declaredDecimals\":9,\"trueValue\":\"150.00\",\"evaluatedAmount\":\"0.15\",\"expectedVerdict\":\"BLOCK\",\"actualVerdict\":\"ALLOW\"}. The original property returned zero silent mutations across 47 cases because it asked whether the decision moved, not whether it moved correctly.",
+    "enforcement": "NONE",
+    "reason_codes": [
+      "MERCHANT_ALLOWED",
+      "WITHIN_TRANSACTION_LIMIT",
+      "WITHIN_DAILY_LIMIT"
+    ],
+    "settlement_invoked": false,
+    "resource_served": false,
+    "notes": "Instrument validated, not yet applied to the corpus. Per the unfreeze sequence the corpus is not re-run under this property until F-1 closes; at Stage 5 it replaces the original property in d4-mutation-corpus.test.ts."
+  },
+  {
+    "id": "D4:ground-truth-control",
+    "deliverable": "D4",
+    "attack": "Ground-truth oracle control — honest precision",
+    "status": "PASS",
+    "expectation": "The oracle must agree with the adapter whenever the declared precision matches the registry, or it would report false positives.",
+    "observed": "True value 4.50 from the registry; adapter evaluated 4.50 and returned ALLOW, which is the verdict the oracle requires. The oracle discriminates F-1 without flagging correct behaviour.",
+    "enforcement": "INNTRIS",
+    "reason_codes": [
+      "MERCHANT_ALLOWED",
+      "WITHIN_TRANSACTION_LIMIT",
+      "WITHIN_DAILY_LIMIT"
+    ],
+    "settlement_invoked": false,
+    "resource_served": false
+  }
+]

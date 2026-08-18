@@ -158,7 +158,7 @@ describe("D7 protocol surface reachability", () => {
     const untested = [
       "SR4 chain confirmation (E2, E3) — no chain client exists in the adapter, so there is nothing to exercise; a test would be measuring its absence, which D3 records instead",
       "EIP-712 domain substitution (A5) — the adapter performs no signature recovery, so chainId and verifyingContract are never read",
-      "Concurrent nonce race (C4) — the suite is sequential; the in-memory nonce store's check-and-set is single-process and the atomic PostgreSQL store was not run",
+      "Concurrent nonce race (C4) — RESOLVED in Stage 0.2 and no longer untested: exercised at N=2/5/20 in-process and across 20 OS processes against a real PostgreSQL instance; retained here so the list records the change rather than silently dropping the row",
       "Premature authorisation, validAfter in the future (C2) — validAfter is never read",
       "Remaining-validity threshold sweep (C5) — no freshness bound exists to measure",
       "Zero-amount and dust proofs (D2, D3 of the review register) — no settleability check exists",
