@@ -10,6 +10,12 @@
     "node": ">=24.18.0 <25",
     "pnpm": ">=10.18.1 <11"
   },
+  "pnpm": {
+    "overrides": {
+      "fast-uri@^3.0.0": "3.1.7",
+      "fast-uri@^4.0.0": "4.1.4"
+    }
+  },
   "scripts": {
     "build": "tsc -b",
     "clean": "tsc -b --clean",
