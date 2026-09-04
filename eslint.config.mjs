@@ -7,6 +7,7 @@ export default tseslint.config(
       "**/dist/**",
       "**/node_modules/**",
       ".dev/**",
+      ".venv/**",
       ".pytest_cache/**",
       ".inspect-x402/**",
       "coverage/**",

@@ -1,0 +1,115 @@
+name: Independent Pulse AP2 x402 v0.3
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PULSE_FIXTURE_COMMIT: e06a6cbfe3ddb965c8fc70f50838f5014ec2038e
+  PULSE_VALIDATOR_COMMIT: fe24b304735c8ab1f38118a89d0a204bc7d00fe8
+  FIXTURE_SHA256: 8f40be1bdc3d4458f758100e91b418b6a335c5d8d358723f118e2d3e1ad84ee0
+
+jobs:
+  reproduce:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out the independent implementation
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 10.18.1
+
+      - name: Set up Node.js for Inntris
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+
+      - name: Install the independent implementation
+        run: pnpm install --frozen-lockfile
+
+      - name: Install the pinned official AP2 SDK
+        run: >-
+          python -m pip install
+          "git+https://github.com/google-agentic-commerce/AP2.git@e1ea56db72a6385bce3e5c1112b3a56ce60acb43"
+
+      - name: Apply audited AP2 dependency overrides
+        run: |
+          python -m pip install --upgrade pip==26.2
+          python -m pip install --upgrade \
+            -r packages/ap2-runtime-gate/python/security-overrides.txt
+          python -m pip_audit
+
+      - name: Run independent tests before obtaining the Pulse validator
+        run: pnpm test:pulse
+
+      - name: Fetch and blind the frozen fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --silent --show-error \
+            "https://raw.githubusercontent.com/shibutatsu/pulse-ap2-x402-conformance/${PULSE_FIXTURE_COMMIT}/fixtures/v0.3/cases.json" \
+            --output frozen-cases.json
+          echo "${FIXTURE_SHA256}  frozen-cases.json" | sha256sum --check --strict
+          pnpm pulse:blind -- \
+            --source frozen-cases.json \
+            --output evaluator-input.json
+
+      - name: Generate and freeze the independent 80 case record
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm pulse:evaluate -- \
+            --input evaluator-input.json \
+            --record reproduction.json \
+            --implementation-commit "${GITHUB_SHA}" \
+            --organization Inntris \
+            --published-url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            --command "pnpm pulse:evaluate -- --input evaluator-input.json --record reproduction.json"
+          sha256sum reproduction.json | tee reproduction.sha256
+          chmod 0444 reproduction.json reproduction.sha256
+
+      - name: Check out the separately pinned Pulse validator after results exist
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: shibutatsu/pulse-ap2-x402-conformance
+          ref: ${{ env.PULSE_VALIDATOR_COMMIT }}
+          path: pulse-reference
+          persist-credentials: false
+
+      - name: Set up Node.js for the evidence validator
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: pulse-reference/package-lock.json
+
+      - name: Run the separately pinned evidence validator
+        run: |
+          npm --prefix pulse-reference ci
+          npm --prefix pulse-reference run evidence:reproduction -- \
+            "$GITHUB_WORKSPACE/frozen-cases.json" \
+            "$GITHUB_WORKSPACE/reproduction.json"
+
+      - name: Preserve the independently generated record
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: independent-pulse-v0.3-${{ github.sha }}
+          path: |
+            reproduction.json
+            reproduction.sha256
+          if-no-files-found: error
+          retention-days: 30

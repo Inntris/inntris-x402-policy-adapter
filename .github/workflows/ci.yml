@@ -77,6 +77,9 @@ jobs:
       - name: Official AP2 SDK self test
         run: pnpm test:ap2-official
 
+      - name: Independent Pulse evaluator tests
+        run: pnpm test:pulse
+
       - name: Integration tests
         run: pnpm test:integration
 
