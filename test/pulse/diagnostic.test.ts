@@ -245,7 +245,6 @@ describe("Pulse diagnostic failure derivation", () => {
         "AP2_OPEN_MANDATE_CLAIMS_HASH_MISMATCH",
         "AP2_OPEN_PRESET_MISMATCH",
         "AP2_RECEIPT_NOT_SUCCESSFUL",
-        "AP2_RECEIPT_TRANSACTION_MISMATCH",
       ],
     });
   });

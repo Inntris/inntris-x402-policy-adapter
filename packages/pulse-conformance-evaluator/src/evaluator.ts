@@ -360,7 +360,8 @@ export async function evaluateCase(
       );
       failures.add(
         "AP2_RECEIPT_TRANSACTION_MISMATCH",
-        receipt.network_confirmation_id !== fixtureCase.x402.settlement.transaction,
+        receipt.status === "Success" &&
+          receipt.network_confirmation_id !== fixtureCase.x402.settlement.transaction,
       );
     }
   }
