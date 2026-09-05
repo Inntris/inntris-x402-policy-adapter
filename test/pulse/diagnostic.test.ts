@@ -36,9 +36,9 @@ describe("Pulse diagnostic failure derivation", () => {
       id: "independent-test-case",
       decision: "reject",
       failureCodes: [
-        "AP2_CHECKOUT_BINDING_UNVERIFIED",
+        "AP2_RECEIPT_UNVERIFIED",
+        "AP2_OPEN_MANDATE_CLAIMS_HASH_MISMATCH",
         "AP2_PAYMENT_REFERENCE_MISMATCH",
-        "AP2_CONSTRAINT_VIOLATION",
         "AP2_RECEIPT_REFERENCE_MISMATCH",
       ],
     });
@@ -55,7 +55,7 @@ describe("Pulse diagnostic failure derivation", () => {
     await expect(evaluateCase(fixtureCase, verifier)).resolves.toEqual({
       id: "independent-test-case",
       decision: "reject",
-      failureCodes: ["AP2_RECEIPT_TRANSACTION_MISMATCH"],
+      failureCodes: ["AP2_RECEIPT_UNVERIFIED", "AP2_RECEIPT_TRANSACTION_MISMATCH"],
     });
   });
 
@@ -113,7 +113,11 @@ describe("Pulse diagnostic failure derivation", () => {
     await expect(evaluateCase(fixtureCase, verifier)).resolves.toEqual({
       id: "independent-test-case",
       decision: "reject",
-      failureCodes: ["AP2_CONSTRAINT_VIOLATION", "AP2_PAYMENT_INSTRUMENT_NOT_ALLOWED"],
+      failureCodes: [
+        "AP2_OPEN_MANDATE_CLAIMS_HASH_MISMATCH",
+        "AP2_CONSTRAINT_VIOLATION",
+        "AP2_PAYMENT_INSTRUMENT_NOT_ALLOWED",
+      ],
     });
   });
 
@@ -142,7 +146,12 @@ describe("Pulse diagnostic failure derivation", () => {
     await expect(evaluateCase(fixtureCase, verifier)).resolves.toEqual({
       id: "independent-test-case",
       decision: "reject",
-      failureCodes: ["AP2_X402_PAYEE_MISMATCH", "AP2_X402_COMMERCE_BINDING_MISMATCH"],
+      failureCodes: [
+        "AP2_CLOSED_MANDATE_CLAIMS_HASH_MISMATCH",
+        "AP2_OPEN_MANDATE_CLAIMS_HASH_MISMATCH",
+        "AP2_X402_PAYEE_MISMATCH",
+        "AP2_X402_COMMERCE_BINDING_MISMATCH",
+      ],
     });
   });
 
@@ -190,7 +199,11 @@ describe("Pulse diagnostic failure derivation", () => {
     await expect(evaluateCase(fixtureCase, verifier)).resolves.toEqual({
       id: "independent-test-case",
       decision: "reject",
-      failureCodes: ["AP2_UNSUPPORTED_CONSTRAINT", "AP2_X402_TIMEOUT_MISMATCH"],
+      failureCodes: [
+        "AP2_OPEN_MANDATE_CLAIMS_HASH_MISMATCH",
+        "AP2_UNSUPPORTED_CONSTRAINT",
+        "AP2_X402_TIMEOUT_MISMATCH",
+      ],
     });
   });
 
@@ -228,6 +241,8 @@ describe("Pulse diagnostic failure derivation", () => {
       id: "independent-test-case",
       decision: "reject",
       failureCodes: [
+        "AP2_RECEIPT_UNVERIFIED",
+        "AP2_OPEN_MANDATE_CLAIMS_HASH_MISMATCH",
         "AP2_OPEN_PRESET_MISMATCH",
         "AP2_RECEIPT_NOT_SUCCESSFUL",
         "AP2_RECEIPT_TRANSACTION_MISMATCH",
@@ -247,7 +262,10 @@ describe("Pulse diagnostic failure derivation", () => {
     await expect(evaluateCase(fixtureCase, verifier)).resolves.toEqual({
       id: "independent-test-case",
       decision: "reject",
-      failureCodes: ["AP2_CHECKOUT_BINDING_UNVERIFIED", "AP2_CLOSED_TRANSACTION_ID_MISMATCH"],
+      failureCodes: [
+        "AP2_CLOSED_MANDATE_CLAIMS_HASH_MISMATCH",
+        "AP2_CLOSED_TRANSACTION_ID_MISMATCH",
+      ],
     });
   });
 

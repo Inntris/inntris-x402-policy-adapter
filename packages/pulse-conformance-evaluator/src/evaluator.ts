@@ -71,7 +71,6 @@ function evaluateConstraints(
           : undefined;
       const mismatch = reference !== openCheckoutReference;
       failures.add("AP2_PAYMENT_REFERENCE_MISMATCH", mismatch);
-      failures.add("AP2_CONSTRAINT_VIOLATION", mismatch);
       continue;
     }
     if (type === "payment.allowed_payment_instruments") {
@@ -270,7 +269,8 @@ export async function evaluateCase(
     "AP2_RECEIPT_UNVERIFIED",
     structured?.receipt.status === "invalid" ||
       (structured?.receipt.status === "verified" && verifiedReceipt === undefined) ||
-      (receiptCryptographicallyVerified && normalisedReceipt === undefined),
+      (receiptCryptographicallyVerified &&
+        (normalisedReceipt === undefined || !canonicalEqual(normalisedReceipt, verifiedReceipt))),
   );
 
   const issuerJwt =
@@ -286,17 +286,38 @@ export async function evaluateCase(
 
   failures.add(
     "AP2_CLOSED_MANDATE_CLAIMS_HASH_MISMATCH",
-    canonicalHash(fixtureCase.ap2.closedMandate) !== verification.closedMandateClaimsHash,
+    canonicalHash(fixtureCase.ap2.closedMandate) !== verification.closedMandateClaimsHash ||
+      (verifiedClosed !== undefined &&
+        canonicalHash(verifiedClosed) !== verification.closedMandateClaimsHash),
   );
   failures.add(
     "AP2_OPEN_MANDATE_CLAIMS_HASH_MISMATCH",
-    canonicalHash(fixtureCase.ap2.openMandate) !== verification.openMandateClaimsHash,
+    canonicalHash(fixtureCase.ap2.openMandate) !== verification.openMandateClaimsHash ||
+      (verifiedOpen !== undefined &&
+        canonicalHash(verifiedOpen) !== verification.openMandateClaimsHash),
   );
 
   const mandatePairs: (readonly [OpenMandate, ClosedMandate])[] = [];
   if (openVerified && closedVerified && keyBindingVerified) {
     mandatePairs.push([fixtureCase.ap2.openMandate, fixtureCase.ap2.closedMandate]);
     mandatePairs.push([verifiedOpen, verifiedClosed]);
+
+    const verifiedReferenceConstraints = verifiedOpen.constraints.filter(
+      (constraint) => constraintType(constraint) === "payment.reference",
+    );
+    const verifiedReferenceMismatch =
+      verifiedReferenceConstraints.length === 0 ||
+      verifiedReferenceConstraints.some(
+        (constraint) =>
+          Reflect.get(constraint, "conditional_transaction_id") !==
+          verification.openCheckoutReference,
+      );
+    const verifiedTransactionMismatch =
+      verifiedClosed.transaction_id !== verification.openCheckoutReference;
+    failures.add(
+      "AP2_CHECKOUT_BINDING_UNVERIFIED",
+      verifiedReferenceMismatch || verifiedTransactionMismatch,
+    );
   }
   for (const [open, closed] of mandatePairs) {
     const referenceConstraints = open.constraints.filter(
@@ -310,7 +331,6 @@ export async function evaluateCase(
           verification.openCheckoutReference,
       );
     const transactionMismatch = closed.transaction_id !== verification.openCheckoutReference;
-    failures.add("AP2_CHECKOUT_BINDING_UNVERIFIED", referenceMismatch || transactionMismatch);
     failures.add("AP2_PAYMENT_REFERENCE_MISMATCH", referenceMismatch);
     failures.add("AP2_CLOSED_TRANSACTION_ID_MISMATCH", transactionMismatch);
 
