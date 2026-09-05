@@ -8,7 +8,7 @@ import {
   X402_COMMIT,
   X402_PACKAGE_VERSION,
 } from "./constants.js";
-import type { ConformanceBundle, ConformanceCase } from "./types.js";
+import type { ConformanceBundle, ConformanceCase, ConformanceCaseEnvelope } from "./types.js";
 
 const NonEmptyString = z.string().min(1).max(2_048);
 const Identifier = z.string().min(1).max(512);
@@ -88,7 +88,7 @@ const Ap2X402ExtensionSchema = z
     eip712Domain: Eip712DomainSchema,
     nonceBinding: NonEmptyString,
   })
-  .catchall(z.unknown());
+  .strict();
 
 const PaymentInstrumentSchema = z
   .object({
@@ -96,6 +96,15 @@ const PaymentInstrumentSchema = z
     type: NonEmptyString,
     description: NonEmptyString,
     x402: Ap2X402ExtensionSchema.optional(),
+  })
+  .strict();
+
+const ProfilePaymentInstrumentSchema = z
+  .object({
+    id: Identifier,
+    type: NonEmptyString,
+    description: NonEmptyString,
+    x402: Ap2X402ExtensionSchema,
   })
   .strict();
 
@@ -168,7 +177,7 @@ export const ClosedMandateSchema = z
     transaction_id: Base64Url32,
     payee: MerchantSchema,
     payment_amount: AmountSchema,
-    payment_instrument: PaymentInstrumentSchema,
+    payment_instrument: ProfilePaymentInstrumentSchema,
     execution_date: z.iso.datetime({ offset: true }),
     iat: Epoch,
     exp: Epoch,
@@ -182,7 +191,7 @@ export const OpenMandateSchema = z
     cnf: z.object({ jwk: PublicJwkSchema }).strict(),
     payee: MerchantSchema.optional(),
     payment_amount: AmountSchema.optional(),
-    payment_instrument: PaymentInstrumentSchema.optional(),
+    payment_instrument: ProfilePaymentInstrumentSchema.optional(),
     execution_date: z.iso.datetime({ offset: true }).optional(),
     iat: Epoch,
     exp: Epoch,
@@ -327,12 +336,25 @@ export const ConformanceCaseSchema = z
   })
   .strict();
 
+const ConformanceCaseEnvelopeSchema = z
+  .object({
+    caseVersion: z.literal(PULSE_CASE_VERSION),
+    sourcePins: SourcePinsSchema,
+    id: Identifier,
+    description: NonEmptyString,
+    nowEpochSeconds: Epoch,
+    ap2: z.record(z.string(), z.unknown()),
+    x402: z.record(z.string(), z.unknown()),
+    inputHash: Base64Url32,
+  })
+  .strict();
+
 export const ConformanceBundleSchema = z
   .object({
     bundleVersion: z.literal(PULSE_BUNDLE_VERSION),
     sourcePins: SourcePinsSchema,
     generatedAt: z.iso.datetime({ offset: true }),
-    cases: z.array(ConformanceCaseSchema).length(PULSE_CASE_COUNT),
+    cases: z.array(ConformanceCaseEnvelopeSchema).length(PULSE_CASE_COUNT),
   })
   .strict();
 
@@ -348,4 +370,11 @@ export function parseConformanceBundle(value: unknown): ConformanceBundle {
 
 export function parseConformanceCase(value: unknown): ConformanceCase {
   return ConformanceCaseSchema.parse(value);
+}
+
+export function tryParseConformanceCase(
+  value: ConformanceCaseEnvelope,
+): ConformanceCase | undefined {
+  const result = ConformanceCaseSchema.safeParse(value);
+  return result.success ? result.data : undefined;
 }

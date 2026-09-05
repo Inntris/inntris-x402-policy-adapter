@@ -5,6 +5,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   blindPinnedFixture,
+  calculateInputHash,
+  evaluateCase,
   parseBlindedBundleBytes,
   parseConformanceCase,
 } from "../../packages/pulse-conformance-evaluator/src/index.js";
@@ -26,6 +28,42 @@ describe("Pulse strict parser and blinding boundary", () => {
     const fixtureCase = await makeConformanceCase();
 
     expect(() => parseConformanceCase({ ...fixtureCase, futureField: true })).toThrow();
+  });
+
+  it("maps a missing or unknown selected x402 instrument extension to schema failure", async () => {
+    const missing = await makeConformanceCase();
+    delete missing.ap2.closedMandate.payment_instrument.x402;
+    missing.inputHash = calculateInputHash(missing);
+    expect(() => parseConformanceCase(missing)).toThrow();
+    await expect(
+      evaluateCase(missing, {
+        verify: async () => {
+          throw new Error("the AP2 verifier must not run for invalid input");
+        },
+      }),
+    ).resolves.toEqual({
+      id: "independent-test-case",
+      decision: "reject",
+      failureCodes: ["INPUT_SCHEMA_INVALID"],
+    });
+
+    const unknown = await makeConformanceCase();
+    const extension = unknown.ap2.closedMandate.payment_instrument.x402;
+    if (extension === undefined) throw new Error("Test extension setup failed");
+    extension.futureField = true;
+    unknown.inputHash = calculateInputHash(unknown);
+    expect(() => parseConformanceCase(unknown)).toThrow();
+    await expect(
+      evaluateCase(unknown, {
+        verify: async () => {
+          throw new Error("the AP2 verifier must not run for invalid input");
+        },
+      }),
+    ).resolves.toEqual({
+      id: "independent-test-case",
+      decision: "reject",
+      failureCodes: ["INPUT_SCHEMA_INVALID"],
+    });
   });
 
   it("rejects non-canonical encodings and values outside uint256", async () => {

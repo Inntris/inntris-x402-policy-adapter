@@ -195,22 +195,27 @@ export interface X402Input {
   settlement: X402Settlement;
 }
 
-export interface ConformanceCase {
+export interface ConformanceCaseEnvelope {
   caseVersion: string;
   sourcePins: SourcePins;
   id: string;
   description: string;
   nowEpochSeconds: number;
+  ap2: unknown;
+  x402: unknown;
+  inputHash: string;
+}
+
+export interface ConformanceCase extends ConformanceCaseEnvelope {
   ap2: Ap2Input;
   x402: X402Input;
-  inputHash: string;
 }
 
 export interface ConformanceBundle {
   bundleVersion: string;
   sourcePins: SourcePins;
   generatedAt: string;
-  cases: ConformanceCase[];
+  cases: ConformanceCaseEnvelope[];
 }
 
 export interface ConformanceResult {
@@ -219,6 +224,15 @@ export interface ConformanceResult {
   failureCodes: ConformanceFailureCode[];
 }
 
+export type Ap2VerificationStatus = "verified" | "invalid" | "notEvaluated";
+
+export type StructuredClaimsVerification =
+  { status: "verified"; claims: Record<string, unknown> } | { status: "invalid" | "notEvaluated" };
+
+export type StructuredClosedMandateVerification =
+  | { status: "verified"; claims: Record<string, unknown>; issuerJwt: string }
+  | { status: "invalid" | "notEvaluated" };
+
 export interface StructuredAp2Verification {
   version: "inntris-pulse-ap2-structured-verification/0.1";
   sdk: {
@@ -226,20 +240,11 @@ export interface StructuredAp2Verification {
     commit: string;
     protocolVersion: string;
   };
-  openMandate: {
-    verified: boolean;
-    claims?: Record<string, unknown> | undefined;
-  };
-  closedMandate: {
-    verified: boolean;
-    claims?: Record<string, unknown> | undefined;
-    issuerJwt?: string | undefined;
-  };
-  keyBinding: { verified: boolean };
-  receipt: {
-    verified: boolean;
-    claims?: Record<string, unknown> | undefined;
-  };
+  openMandate: StructuredClaimsVerification;
+  closedMandate: StructuredClosedMandateVerification;
+  keyBinding: { status: Ap2VerificationStatus };
+  mandateTime: { status: Ap2VerificationStatus };
+  receipt: StructuredClaimsVerification;
 }
 
 export interface StructuredAp2Verifier {

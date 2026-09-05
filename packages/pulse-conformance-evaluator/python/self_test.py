@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import json
 import time
 
@@ -45,7 +46,42 @@ def _flip_signature(jwt: str) -> str:
     return ".".join(parts)
 
 
-def _make_request() -> dict:
+def _decode_base64url_json(value: str) -> object:
+    padding = "=" * ((4 - len(value) % 4) % 4)
+    return json.loads(base64.urlsafe_b64decode(value + padding))
+
+
+def _encode_base64url_json(value: object) -> str:
+    encoded = json.dumps(value, separators=(",", ":")).encode("utf-8")
+    return base64.urlsafe_b64encode(encoded).rstrip(b"=").decode("ascii")
+
+
+def _tamper_disclosure_digest(disclosure: str) -> str:
+    value = _decode_base64url_json(disclosure)
+    if not isinstance(value, list) or not value or not isinstance(value[0], str):
+        raise ValueError("test disclosure is malformed")
+    value[0] = value[0] + "tampered"
+    return _encode_base64url_json(value)
+
+
+def _resign_with_bad_sd_hash(token: str, holder_key: JWK) -> str:
+    token_parts = token.split("~")
+    jwt_parts = token_parts[0].split(".")
+    if len(jwt_parts) != 3:
+        raise ValueError("test KB SD JWT is malformed")
+    header = _decode_base64url_json(jwt_parts[0])
+    payload = _decode_base64url_json(jwt_parts[1])
+    if not isinstance(header, dict) or not isinstance(payload, dict):
+        raise ValueError("test KB SD JWT JSON is malformed")
+    current_hash = payload.get("sd_hash")
+    if not isinstance(current_hash, str):
+        raise ValueError("test KB SD JWT has no sd_hash")
+    payload["sd_hash"] = "A" * 43 if current_hash != "A" * 43 else "B" * 43
+    token_parts[0] = create_jwt(header, payload, holder_key)
+    return "~".join(token_parts)
+
+
+def _make_request() -> tuple[dict, JWK]:
     now = int(time.time())
     root_key = _key("independent-root")
     holder_key = _key("independent-holder")
@@ -112,26 +148,30 @@ def _make_request() -> dict:
         receipt_key,
     )
     verification_time = int(time.time())
-    return {
-        "version": "inntris-pulse-ap2-structured-request/0.1",
-        "mandateChain": chain,
-        "paymentReceiptJwt": receipt_jwt,
-        "trustedRootPublicJwk": _public(root_key),
-        "trustedReceiptPublicJwk": _public(receipt_key),
-        "expectedAudience": "https://facilitator.example/ap2",
-        "expectedNonce": "independent-nonce",
-        "currentTimeEpoch": verification_time,
-        "clockSkewSeconds": 0,
-    }
+    return (
+        {
+            "version": "inntris-pulse-ap2-structured-request/0.1",
+            "mandateChain": chain,
+            "paymentReceiptJwt": receipt_jwt,
+            "trustedRootPublicJwk": _public(root_key),
+            "trustedReceiptPublicJwk": _public(receipt_key),
+            "expectedAudience": "https://facilitator.example/ap2",
+            "expectedNonce": "independent-nonce",
+            "currentTimeEpoch": verification_time,
+            "clockSkewSeconds": 0,
+        },
+        holder_key,
+    )
 
 
 def main() -> None:
-    request = _make_request()
+    request, holder_key = _make_request()
     valid = verify_request(request)
-    assert valid["openMandate"]["verified"] is True
-    assert valid["closedMandate"]["verified"] is True
-    assert valid["keyBinding"]["verified"] is True
-    assert valid["receipt"]["verified"] is True
+    assert valid["openMandate"]["status"] == "verified"
+    assert valid["closedMandate"]["status"] == "verified"
+    assert valid["keyBinding"]["status"] == "verified"
+    assert valid["mandateTime"]["status"] == "verified"
+    assert valid["receipt"]["status"] == "verified"
 
     root_bad = dict(request)
     root, leaf = request["mandateChain"].split("~~")
@@ -140,22 +180,81 @@ def main() -> None:
         [_flip_signature(root_jwt), *root_disclosures]
     ) + "~~" + leaf
     root_result = verify_request(root_bad)
-    assert root_result["openMandate"]["verified"] is False
-    assert root_result["closedMandate"]["verified"] is False
+    assert root_result["openMandate"]["status"] == "invalid"
+    assert root_result["closedMandate"]["status"] == "notEvaluated"
+    assert root_result["keyBinding"]["status"] == "notEvaluated"
+    assert root_result["mandateTime"]["status"] == "notEvaluated"
+    assert root_result["receipt"]["status"] == "verified"
+
+    leaf_bad = dict(request)
+    leaf_jwt, *leaf_disclosures = leaf.split("~")
+    leaf_bad["mandateChain"] = root + "~~" + "~".join(
+        [_flip_signature(leaf_jwt), *leaf_disclosures]
+    )
+    leaf_result = verify_request(leaf_bad)
+    assert leaf_result["openMandate"]["status"] == "verified"
+    assert leaf_result["closedMandate"]["status"] == "invalid"
+    assert leaf_result["keyBinding"]["status"] == "notEvaluated"
+    assert leaf_result["mandateTime"]["status"] == "notEvaluated"
+
+    disclosure_bad = dict(request)
+    leaf_parts = leaf.split("~")
+    if len(leaf_parts) < 2 or not leaf_parts[1]:
+        raise AssertionError("test leaf disclosure is unavailable")
+    leaf_parts[1] = _tamper_disclosure_digest(leaf_parts[1])
+    disclosure_bad["mandateChain"] = root + "~~" + "~".join(leaf_parts)
+    disclosure_result = verify_request(disclosure_bad)
+    assert disclosure_result["openMandate"]["status"] == "verified"
+    assert disclosure_result["closedMandate"]["status"] == "invalid"
+    assert disclosure_result["keyBinding"]["status"] == "notEvaluated"
+
+    sd_hash_bad = dict(request)
+    sd_hash_bad["mandateChain"] = (
+        root + "~~" + _resign_with_bad_sd_hash(leaf, holder_key)
+    )
+    sd_hash_result = verify_request(sd_hash_bad)
+    assert sd_hash_result["openMandate"]["status"] == "verified"
+    assert sd_hash_result["closedMandate"]["status"] == "verified"
+    assert sd_hash_result["keyBinding"]["status"] == "invalid"
+    assert sd_hash_result["mandateTime"]["status"] == "verified"
 
     binding_bad = dict(request)
     binding_bad["expectedNonce"] = "wrong-nonce"
     binding_result = verify_request(binding_bad)
-    assert binding_result["openMandate"]["verified"] is True
-    assert binding_result["closedMandate"]["verified"] is False
-    assert binding_result["keyBinding"]["verified"] is False
+    assert binding_result["openMandate"]["status"] == "verified"
+    assert binding_result["closedMandate"]["status"] == "verified"
+    assert binding_result["keyBinding"]["status"] == "invalid"
+    assert binding_result["mandateTime"]["status"] == "verified"
+
+    audience_bad = dict(request)
+    audience_bad["expectedAudience"] = "https://wrong.example/ap2"
+    audience_result = verify_request(audience_bad)
+    assert audience_result["closedMandate"]["status"] == "verified"
+    assert audience_result["keyBinding"]["status"] == "invalid"
+
+    expired = dict(request)
+    expired["currentTimeEpoch"] = request["currentTimeEpoch"] + 1_000
+    expired_result = verify_request(expired)
+    assert expired_result["openMandate"]["status"] == "verified"
+    assert expired_result["closedMandate"]["status"] == "verified"
+    assert expired_result["keyBinding"]["status"] == "verified"
+    assert expired_result["mandateTime"]["status"] == "invalid"
 
     receipt_bad = dict(request)
     receipt_bad["paymentReceiptJwt"] = _flip_signature(
         request["paymentReceiptJwt"]
     )
     receipt_result = verify_request(receipt_bad)
-    assert receipt_result["receipt"]["verified"] is False
+    assert receipt_result["receipt"]["status"] == "invalid"
+
+    malformed = dict(request)
+    malformed["mandateChain"] = root
+    try:
+        verify_request(malformed)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("malformed chain must fail the bridge envelope")
     print("PASS independent structured AP2 bridge")
 
 
