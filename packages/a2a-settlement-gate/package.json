@@ -20,7 +20,7 @@
     "build": "tsc -b"
   },
   "dependencies": {
-    "@a2a-js/sdk": "1.0.0",
+    "@a2a-js/sdk": "1.0.1",
     "@inntris/decision-core": "workspace:*",
     "@inntris/x402-adapter": "workspace:*",
     "tweetnacl": "1.0.3",
