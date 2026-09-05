@@ -1,0 +1,601 @@
+{
+  "recordVersion": "pulse-independent-reproduction/0.1",
+  "performedAt": "2026-09-05T13:34:11.485Z",
+  "implementation": {
+    "repositoryUrl": "https://github.com/Inntris/inntris-x402-policy-adapter",
+    "commit": "5a2c65ea10dc3078d3b38971db7373f1f34cac7c",
+    "language": "TypeScript and Python",
+    "runtime": "Node.js v24.18.0; Python 3.12",
+    "command": "pnpm pulse:evaluate -- --input evaluator-input.json --record reproduction.json",
+    "organization": "Inntris",
+    "independentOfPrimeBeat": true
+  },
+  "fixture": {
+    "repositoryCommit": "e06a6cbfe3ddb965c8fc70f50838f5014ec2038e",
+    "path": "fixtures/v0.3/cases.json",
+    "sha256": "8f40be1bdc3d4458f758100e91b418b6a335c5d8d358723f118e2d3e1ad84ee0",
+    "caseCount": 80
+  },
+  "environment": {
+    "operatingSystem": "linux 6.17.0-1022-azure",
+    "architecture": "x64",
+    "dependencies": [
+      "@x402/core 2.23.0",
+      "@x402/evm 2.23.0",
+      "canonicalize 3.0.0",
+      "viem 2.55.8",
+      "zod 4.4.3",
+      "google-agentic-commerce/AP2 e1ea56db72a6385bce3e5c1112b3a56ce60acb43",
+      "cryptography 50.0.0",
+      "jwcrypto 1.5.7"
+    ]
+  },
+  "results": [
+    {
+      "id": "valid-base-sepolia-01",
+      "decision": "accept",
+      "failureCodes": []
+    },
+    {
+      "id": "valid-base-sepolia-02",
+      "decision": "accept",
+      "failureCodes": []
+    },
+    {
+      "id": "valid-base-sepolia-03",
+      "decision": "accept",
+      "failureCodes": []
+    },
+    {
+      "id": "valid-base-sepolia-04",
+      "decision": "accept",
+      "failureCodes": []
+    },
+    {
+      "id": "valid-base-sepolia-05",
+      "decision": "accept",
+      "failureCodes": []
+    },
+    {
+      "id": "valid-base-sepolia-06",
+      "decision": "accept",
+      "failureCodes": []
+    },
+    {
+      "id": "valid-base-sepolia-07",
+      "decision": "accept",
+      "failureCodes": []
+    },
+    {
+      "id": "valid-base-sepolia-08",
+      "decision": "accept",
+      "failureCodes": []
+    },
+    {
+      "id": "valid-base-sepolia-09",
+      "decision": "accept",
+      "failureCodes": []
+    },
+    {
+      "id": "valid-base-sepolia-10",
+      "decision": "accept",
+      "failureCodes": []
+    },
+    {
+      "id": "valid-local-31337-11",
+      "decision": "accept",
+      "failureCodes": []
+    },
+    {
+      "id": "valid-local-31337-12",
+      "decision": "accept",
+      "failureCodes": []
+    },
+    {
+      "id": "valid-local-31337-13",
+      "decision": "accept",
+      "failureCodes": []
+    },
+    {
+      "id": "valid-local-31337-14",
+      "decision": "accept",
+      "failureCodes": []
+    },
+    {
+      "id": "valid-local-31337-15",
+      "decision": "accept",
+      "failureCodes": []
+    },
+    {
+      "id": "valid-local-31337-16",
+      "decision": "accept",
+      "failureCodes": []
+    },
+    {
+      "id": "valid-local-31337-17",
+      "decision": "accept",
+      "failureCodes": []
+    },
+    {
+      "id": "valid-local-31337-18",
+      "decision": "accept",
+      "failureCodes": []
+    },
+    {
+      "id": "valid-local-31337-19",
+      "decision": "accept",
+      "failureCodes": []
+    },
+    {
+      "id": "valid-local-31337-20",
+      "decision": "accept",
+      "failureCodes": []
+    },
+    {
+      "id": "invalid-ap2-open-signature-invalid-01",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_OPEN_MANDATE_UNVERIFIED"
+      ]
+    },
+    {
+      "id": "invalid-ap2-open-signature-invalid-02",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_OPEN_MANDATE_UNVERIFIED"
+      ]
+    },
+    {
+      "id": "invalid-ap2-key-binding-invalid-01",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_KEY_BINDING_UNVERIFIED"
+      ]
+    },
+    {
+      "id": "invalid-ap2-key-binding-invalid-02",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_KEY_BINDING_UNVERIFIED"
+      ]
+    },
+    {
+      "id": "invalid-ap2-claims-hashes-mismatch-01",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_CLOSED_MANDATE_CLAIMS_HASH_MISMATCH",
+        "AP2_OPEN_MANDATE_CLAIMS_HASH_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-ap2-claims-hashes-mismatch-02",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_CLOSED_MANDATE_CLAIMS_HASH_MISMATCH",
+        "AP2_OPEN_MANDATE_CLAIMS_HASH_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-ap2-receipt-signature-invalid-01",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_RECEIPT_UNVERIFIED"
+      ]
+    },
+    {
+      "id": "invalid-ap2-receipt-signature-invalid-02",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_RECEIPT_UNVERIFIED"
+      ]
+    },
+    {
+      "id": "invalid-ap2-receipt-reference-mismatch-01",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_RECEIPT_UNVERIFIED",
+        "AP2_OPEN_MANDATE_CLAIMS_HASH_MISMATCH",
+        "AP2_PAYMENT_REFERENCE_MISMATCH",
+        "AP2_RECEIPT_REFERENCE_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-ap2-receipt-reference-mismatch-02",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_RECEIPT_UNVERIFIED",
+        "AP2_OPEN_MANDATE_CLAIMS_HASH_MISMATCH",
+        "AP2_PAYMENT_REFERENCE_MISMATCH",
+        "AP2_RECEIPT_REFERENCE_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-ap2-receipt-transaction-mismatch-01",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_RECEIPT_UNVERIFIED",
+        "AP2_RECEIPT_TRANSACTION_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-ap2-receipt-transaction-mismatch-02",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_RECEIPT_UNVERIFIED",
+        "AP2_RECEIPT_TRANSACTION_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-ap2-instrument-type-not-allowed-01",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_OPEN_MANDATE_CLAIMS_HASH_MISMATCH",
+        "AP2_CONSTRAINT_VIOLATION",
+        "AP2_PAYMENT_INSTRUMENT_NOT_ALLOWED"
+      ]
+    },
+    {
+      "id": "invalid-ap2-instrument-type-not-allowed-02",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_OPEN_MANDATE_CLAIMS_HASH_MISMATCH",
+        "AP2_CONSTRAINT_VIOLATION",
+        "AP2_PAYMENT_INSTRUMENT_NOT_ALLOWED"
+      ]
+    },
+    {
+      "id": "invalid-ap2-instrument-x402-extension-missing-01",
+      "decision": "reject",
+      "failureCodes": [
+        "INPUT_SCHEMA_INVALID"
+      ]
+    },
+    {
+      "id": "invalid-ap2-instrument-x402-extension-missing-02",
+      "decision": "reject",
+      "failureCodes": [
+        "INPUT_SCHEMA_INVALID"
+      ]
+    },
+    {
+      "id": "invalid-ap2-instrument-x402-extension-unknown-field-01",
+      "decision": "reject",
+      "failureCodes": [
+        "INPUT_SCHEMA_INVALID"
+      ]
+    },
+    {
+      "id": "invalid-ap2-instrument-x402-extension-unknown-field-02",
+      "decision": "reject",
+      "failureCodes": [
+        "INPUT_SCHEMA_INVALID"
+      ]
+    },
+    {
+      "id": "invalid-ap2-x402-scheme-mismatch-01",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_X402_SCHEME_MISMATCH",
+        "AP2_X402_EIP712_DOMAIN_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-ap2-x402-scheme-mismatch-02",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_X402_SCHEME_MISMATCH",
+        "AP2_X402_EIP712_DOMAIN_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-ap2-x402-network-mismatch-01",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_X402_NETWORK_MISMATCH",
+        "SETTLEMENT_NETWORK_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-ap2-x402-network-mismatch-02",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_X402_NETWORK_MISMATCH",
+        "SETTLEMENT_NETWORK_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-ap2-x402-asset-mismatch-01",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_X402_ASSET_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-ap2-x402-asset-mismatch-02",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_X402_ASSET_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-ap2-x402-amount-mismatch-01",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_X402_AMOUNT_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-ap2-x402-amount-mismatch-02",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_X402_AMOUNT_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-ap2-x402-payee-mismatch-01",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_CLOSED_MANDATE_CLAIMS_HASH_MISMATCH",
+        "AP2_OPEN_MANDATE_CLAIMS_HASH_MISMATCH",
+        "AP2_X402_PAYEE_MISMATCH",
+        "AP2_X402_COMMERCE_BINDING_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-ap2-x402-payee-mismatch-02",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_CLOSED_MANDATE_CLAIMS_HASH_MISMATCH",
+        "AP2_OPEN_MANDATE_CLAIMS_HASH_MISMATCH",
+        "AP2_X402_PAYEE_MISMATCH",
+        "AP2_X402_COMMERCE_BINDING_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-ap2-x402-timeout-mismatch-01",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_OPEN_MANDATE_CLAIMS_HASH_MISMATCH",
+        "AP2_UNSUPPORTED_CONSTRAINT",
+        "AP2_X402_TIMEOUT_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-ap2-x402-timeout-mismatch-02",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_OPEN_MANDATE_CLAIMS_HASH_MISMATCH",
+        "AP2_UNSUPPORTED_CONSTRAINT",
+        "AP2_X402_TIMEOUT_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-x402-mandate-reference-mismatch-01",
+      "decision": "reject",
+      "failureCodes": [
+        "X402_MANDATE_REFERENCE_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-x402-mandate-reference-mismatch-02",
+      "decision": "reject",
+      "failureCodes": [
+        "X402_MANDATE_REFERENCE_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-x402-accepted-requirements-mismatch-01",
+      "decision": "reject",
+      "failureCodes": [
+        "X402_ACCEPTED_REQUIREMENTS_MISMATCH",
+        "X402_UNSUPPORTED_EXTENSION"
+      ]
+    },
+    {
+      "id": "invalid-x402-accepted-requirements-mismatch-02",
+      "decision": "reject",
+      "failureCodes": [
+        "X402_ACCEPTED_REQUIREMENTS_MISMATCH",
+        "X402_UNSUPPORTED_EXTENSION"
+      ]
+    },
+    {
+      "id": "invalid-ap2-receipt-not-successful-01",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_RECEIPT_UNVERIFIED",
+        "AP2_OPEN_MANDATE_CLAIMS_HASH_MISMATCH",
+        "AP2_OPEN_PRESET_MISMATCH",
+        "AP2_RECEIPT_NOT_SUCCESSFUL"
+      ]
+    },
+    {
+      "id": "invalid-ap2-receipt-not-successful-02",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_RECEIPT_UNVERIFIED",
+        "AP2_OPEN_MANDATE_CLAIMS_HASH_MISMATCH",
+        "AP2_OPEN_PRESET_MISMATCH",
+        "AP2_RECEIPT_NOT_SUCCESSFUL"
+      ]
+    },
+    {
+      "id": "invalid-eip3009-from-mismatch-01",
+      "decision": "reject",
+      "failureCodes": [
+        "EIP3009_PAYER_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-eip3009-from-mismatch-02",
+      "decision": "reject",
+      "failureCodes": [
+        "EIP3009_PAYER_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-eip3009-recipient-mismatch-01",
+      "decision": "reject",
+      "failureCodes": [
+        "EIP3009_RECIPIENT_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-eip3009-recipient-mismatch-02",
+      "decision": "reject",
+      "failureCodes": [
+        "EIP3009_RECIPIENT_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-eip3009-value-mismatch-01",
+      "decision": "reject",
+      "failureCodes": [
+        "EIP3009_VALUE_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-eip3009-value-mismatch-02",
+      "decision": "reject",
+      "failureCodes": [
+        "EIP3009_VALUE_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-eip3009-valid-after-in-future-01",
+      "decision": "reject",
+      "failureCodes": [
+        "EIP3009_VALID_AFTER_IN_FUTURE",
+        "EIP3009_VALIDITY_EXCEEDS_TIMEOUT",
+        "EIP3009_VALIDITY_EXCEEDS_AP2_EXPIRY"
+      ]
+    },
+    {
+      "id": "invalid-eip3009-valid-after-in-future-02",
+      "decision": "reject",
+      "failureCodes": [
+        "EIP3009_VALID_AFTER_IN_FUTURE",
+        "EIP3009_VALIDITY_EXCEEDS_TIMEOUT",
+        "EIP3009_VALIDITY_EXCEEDS_AP2_EXPIRY"
+      ]
+    },
+    {
+      "id": "invalid-eip3009-valid-before-expired-01",
+      "decision": "reject",
+      "failureCodes": [
+        "EIP3009_VALID_BEFORE_EXPIRED"
+      ]
+    },
+    {
+      "id": "invalid-eip3009-valid-before-expired-02",
+      "decision": "reject",
+      "failureCodes": [
+        "EIP3009_VALID_BEFORE_EXPIRED"
+      ]
+    },
+    {
+      "id": "invalid-eip3009-nonce-binding-mismatch-01",
+      "decision": "reject",
+      "failureCodes": [
+        "EIP3009_NONCE_BINDING_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-eip3009-nonce-binding-mismatch-02",
+      "decision": "reject",
+      "failureCodes": [
+        "EIP3009_NONCE_BINDING_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-eip3009-signature-invalid-01",
+      "decision": "reject",
+      "failureCodes": [
+        "EIP3009_SIGNATURE_INVALID"
+      ]
+    },
+    {
+      "id": "invalid-eip3009-signature-invalid-02",
+      "decision": "reject",
+      "failureCodes": [
+        "EIP3009_SIGNATURE_INVALID"
+      ]
+    },
+    {
+      "id": "invalid-settlement-failed-01",
+      "decision": "reject",
+      "failureCodes": [
+        "SETTLEMENT_FAILED"
+      ]
+    },
+    {
+      "id": "invalid-settlement-failed-02",
+      "decision": "reject",
+      "failureCodes": [
+        "SETTLEMENT_FAILED"
+      ]
+    },
+    {
+      "id": "invalid-ap2-closed-transaction-id-mismatch-01",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_CLOSED_MANDATE_CLAIMS_HASH_MISMATCH",
+        "AP2_CLOSED_TRANSACTION_ID_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-ap2-closed-transaction-id-mismatch-02",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_CLOSED_MANDATE_CLAIMS_HASH_MISMATCH",
+        "AP2_CLOSED_TRANSACTION_ID_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-settlement-payer-mismatch-01",
+      "decision": "reject",
+      "failureCodes": [
+        "SETTLEMENT_PAYER_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-settlement-payer-mismatch-02",
+      "decision": "reject",
+      "failureCodes": [
+        "SETTLEMENT_PAYER_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-settlement-amount-mismatch-01",
+      "decision": "reject",
+      "failureCodes": [
+        "SETTLEMENT_AMOUNT_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-settlement-amount-mismatch-02",
+      "decision": "reject",
+      "failureCodes": [
+        "SETTLEMENT_AMOUNT_MISMATCH"
+      ]
+    },
+    {
+      "id": "invalid-settlement-transaction-invalid-01",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_RECEIPT_TRANSACTION_MISMATCH",
+        "SETTLEMENT_TRANSACTION_INVALID"
+      ]
+    },
+    {
+      "id": "invalid-settlement-transaction-invalid-02",
+      "decision": "reject",
+      "failureCodes": [
+        "AP2_RECEIPT_TRANSACTION_MISMATCH",
+        "SETTLEMENT_TRANSACTION_INVALID"
+      ]
+    }
+  ],
+  "notes": "Offline synthetic fixture evaluation only; no live settlement claim.",
+  "publishedUrl": "https://github.com/Inntris/inntris-x402-policy-adapter/actions/runs/33969196769"
+}

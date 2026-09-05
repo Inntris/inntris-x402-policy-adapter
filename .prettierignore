@@ -3,3 +3,4 @@ node_modules
 .inspect-x402
 coverage
 pnpm-lock.yaml
+evidence/pulse-ap2-x402-v0.3/reproduction.json
