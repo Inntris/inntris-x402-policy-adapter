@@ -5,11 +5,31 @@ import { z } from "zod";
 import { AP2_COMMIT, AP2_REPOSITORY } from "./constants.js";
 import type { StructuredAp2Verification, StructuredAp2Verifier } from "./types.js";
 
-const ClaimsResultSchema = z
-  .object({
-    verified: z.boolean(),
-    claims: z.record(z.string(), z.unknown()).optional(),
-  })
+const ClaimsResultSchema = z.discriminatedUnion("status", [
+  z
+    .object({
+      status: z.literal("verified"),
+      claims: z.record(z.string(), z.unknown()),
+    })
+    .strict(),
+  z.object({ status: z.literal("invalid") }).strict(),
+  z.object({ status: z.literal("notEvaluated") }).strict(),
+]);
+
+const ClosedMandateResultSchema = z.discriminatedUnion("status", [
+  z
+    .object({
+      status: z.literal("verified"),
+      claims: z.record(z.string(), z.unknown()),
+      issuerJwt: z.string().min(1),
+    })
+    .strict(),
+  z.object({ status: z.literal("invalid") }).strict(),
+  z.object({ status: z.literal("notEvaluated") }).strict(),
+]);
+
+const StatusResultSchema = z
+  .object({ status: z.enum(["verified", "invalid", "notEvaluated"]) })
   .strict();
 
 const StructuredResultSchema = z
@@ -23,8 +43,9 @@ const StructuredResultSchema = z
       })
       .strict(),
     openMandate: ClaimsResultSchema,
-    closedMandate: ClaimsResultSchema.extend({ issuerJwt: z.string().optional() }).strict(),
-    keyBinding: z.object({ verified: z.boolean() }).strict(),
+    closedMandate: ClosedMandateResultSchema,
+    keyBinding: StatusResultSchema,
+    mandateTime: StatusResultSchema,
     receipt: ClaimsResultSchema,
   })
   .strict();

@@ -241,10 +241,11 @@ export function makeMockVerifier(fixtureCase: ConformanceCase): StructuredAp2Ver
         commit: AP2_COMMIT,
         protocolVersion: "0.2",
       },
-      openMandate: { verified: true, claims: openClaims },
-      closedMandate: { verified: true, claims: closedClaims, issuerJwt },
-      keyBinding: { verified: true },
-      receipt: { verified: true, claims: receiptClaims },
+      openMandate: { status: "verified", claims: openClaims },
+      closedMandate: { status: "verified", claims: closedClaims, issuerJwt },
+      keyBinding: { status: "verified" },
+      mandateTime: { status: "verified" },
+      receipt: { status: "verified", claims: receiptClaims },
     }),
   };
 }

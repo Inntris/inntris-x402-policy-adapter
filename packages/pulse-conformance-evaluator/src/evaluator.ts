@@ -7,34 +7,26 @@ import {
 import { verifyEip3009Signature } from "./eip3009.js";
 import { FailureCollector } from "./failures.js";
 import { calculateInputHash, canonicalHash, sha256Base64Url } from "./hashing.js";
-import { ClosedMandateSchema, OpenMandateSchema, PaymentReceiptSchema } from "./schemas.js";
+import {
+  ClosedMandateSchema,
+  OpenMandateSchema,
+  PaymentReceiptSchema,
+  tryParseConformanceCase,
+} from "./schemas.js";
 import type {
   Ap2X402Extension,
   ClosedMandate,
   ConformanceBundle,
   ConformanceCase,
+  ConformanceCaseEnvelope,
   ConformanceResult,
   OpenMandate,
+  PaymentReceipt,
   PaymentConstraint,
   PaymentInstrument,
   StructuredAp2Verifier,
 } from "./types.js";
-import { addressesEqual, canonicalEqual, hasExactKeys, isHex32 } from "./values.js";
-
-const AP2_X402_KEYS = [
-  "version",
-  "scheme",
-  "network",
-  "asset",
-  "amount",
-  "payTo",
-  "payer",
-  "ap2PayeeId",
-  "ap2PaymentAmount",
-  "maxTimeoutSeconds",
-  "eip712Domain",
-  "nonceBinding",
-] as const;
+import { addressesEqual, canonicalEqual, isHex32 } from "./values.js";
 
 const SUPPORTED_CONSTRAINTS = new Set([
   "payment.reference",
@@ -156,63 +148,44 @@ function evaluatePresets(
 }
 
 function evaluateAp2X402(
-  extension: Ap2X402Extension | undefined,
+  extension: Ap2X402Extension,
   fixtureCase: ConformanceCase,
   closed: ClosedMandate,
   failures: FailureCollector,
 ): void {
   const { requirements } = fixtureCase.x402;
-  const accepted = fixtureCase.x402.payload.accepted;
-  if (extension === undefined) {
-    failures.add("AP2_X402_COMMERCE_BINDING_MISMATCH");
-    return;
-  }
+  const payeeIdentityMismatch =
+    extension.ap2PayeeId.length === 0 || extension.ap2PayeeId !== closed.payee.id;
 
   failures.add(
     "X402_UNSUPPORTED_EXTENSION",
-    !hasExactKeys(extension, AP2_X402_KEYS) ||
-      extension.version !== 2 ||
-      extension.nonceBinding !== REQUIRED_NONCE_DERIVATION,
+    extension.version !== 2 || extension.nonceBinding !== REQUIRED_NONCE_DERIVATION,
   );
   failures.add(
     "AP2_X402_SCHEME_MISMATCH",
-    extension.scheme !== "exact" || requirements.scheme !== "exact" || accepted.scheme !== "exact",
+    extension.scheme !== "exact" ||
+      requirements.scheme !== "exact" ||
+      extension.scheme !== requirements.scheme,
   );
-  failures.add(
-    "AP2_X402_NETWORK_MISMATCH",
-    extension.network !== requirements.network || extension.network !== accepted.network,
-  );
-  failures.add(
-    "AP2_X402_ASSET_MISMATCH",
-    !addressesEqual(extension.asset, requirements.asset) ||
-      !addressesEqual(extension.asset, accepted.asset),
-  );
-  failures.add(
-    "AP2_X402_AMOUNT_MISMATCH",
-    extension.amount !== requirements.amount || extension.amount !== accepted.amount,
-  );
+  failures.add("AP2_X402_NETWORK_MISMATCH", extension.network !== requirements.network);
+  failures.add("AP2_X402_ASSET_MISMATCH", !addressesEqual(extension.asset, requirements.asset));
+  failures.add("AP2_X402_AMOUNT_MISMATCH", extension.amount !== requirements.amount);
   failures.add(
     "AP2_X402_PAYEE_MISMATCH",
-    !addressesEqual(extension.payTo, requirements.payTo) ||
-      !addressesEqual(extension.payTo, accepted.payTo),
+    !addressesEqual(extension.payTo, requirements.payTo) || payeeIdentityMismatch,
   );
   failures.add(
     "AP2_X402_COMMERCE_BINDING_MISMATCH",
-    extension.ap2PayeeId.length === 0 ||
-      extension.ap2PayeeId !== closed.payee.id ||
-      !canonicalEqual(extension.ap2PaymentAmount, closed.payment_amount),
+    payeeIdentityMismatch || !canonicalEqual(extension.ap2PaymentAmount, closed.payment_amount),
   );
   failures.add(
     "AP2_X402_TIMEOUT_MISMATCH",
-    extension.maxTimeoutSeconds !== requirements.maxTimeoutSeconds ||
-      extension.maxTimeoutSeconds !== accepted.maxTimeoutSeconds,
+    extension.maxTimeoutSeconds !== requirements.maxTimeoutSeconds,
   );
   failures.add(
     "AP2_X402_EIP712_DOMAIN_MISMATCH",
     extension.eip712Domain.name !== requirements.extra.name ||
-      extension.eip712Domain.version !== requirements.extra.version ||
-      extension.eip712Domain.name !== accepted.extra.name ||
-      extension.eip712Domain.version !== accepted.extra.version,
+      extension.eip712Domain.version !== requirements.extra.version,
   );
 }
 
@@ -225,9 +198,18 @@ function parseVerifiedClaims<T>(
 }
 
 export async function evaluateCase(
-  fixtureCase: ConformanceCase,
+  caseInput: ConformanceCaseEnvelope,
   ap2Verifier: StructuredAp2Verifier,
 ): Promise<ConformanceResult> {
+  const parsedCase = tryParseConformanceCase(caseInput);
+  if (parsedCase === undefined) {
+    return {
+      id: caseInput.id,
+      decision: "reject",
+      failureCodes: ["INPUT_SCHEMA_INVALID"],
+    };
+  }
+  const fixtureCase = parsedCase;
   const failures = new FailureCollector();
   failures.add("INPUT_HASH_MISMATCH", calculateInputHash(fixtureCase) !== fixtureCase.inputHash);
 
@@ -250,34 +232,51 @@ export async function evaluateCase(
     structured = undefined;
   }
 
-  const verifiedOpen = parseVerifiedClaims(structured?.openMandate.claims, OpenMandateSchema);
-  const verifiedClosed = parseVerifiedClaims(structured?.closedMandate.claims, ClosedMandateSchema);
-  const verifiedReceipt = parseVerifiedClaims(structured?.receipt.claims, PaymentReceiptSchema);
-  const openVerified = structured?.openMandate.verified === true && verifiedOpen !== undefined;
+  failures.add("AP2_CRYPTOGRAPHIC_EVIDENCE_INVALID", structured === undefined);
+
+  const verifiedOpen =
+    structured?.openMandate.status === "verified"
+      ? parseVerifiedClaims(structured.openMandate.claims, OpenMandateSchema)
+      : undefined;
+  const verifiedClosed =
+    structured?.closedMandate.status === "verified"
+      ? parseVerifiedClaims(structured.closedMandate.claims, ClosedMandateSchema)
+      : undefined;
+  const verifiedReceipt =
+    structured?.receipt.status === "verified"
+      ? parseVerifiedClaims(structured.receipt.claims, PaymentReceiptSchema)
+      : undefined;
+  const openVerified = structured?.openMandate.status === "verified" && verifiedOpen !== undefined;
   const closedVerified =
-    structured?.closedMandate.verified === true && verifiedClosed !== undefined;
-  const keyBindingVerified = structured?.keyBinding.verified === true;
+    structured?.closedMandate.status === "verified" && verifiedClosed !== undefined;
+  const keyBindingVerified = structured?.keyBinding.status === "verified";
   const receiptCryptographicallyVerified =
-    structured?.receipt.verified === true && verifiedReceipt !== undefined;
+    structured?.receipt.status === "verified" && verifiedReceipt !== undefined;
 
   failures.add(
-    "AP2_CRYPTOGRAPHIC_EVIDENCE_INVALID",
-    !openVerified || !closedVerified || !keyBindingVerified || !receiptCryptographicallyVerified,
+    "AP2_OPEN_MANDATE_UNVERIFIED",
+    structured?.openMandate.status === "invalid" ||
+      (structured?.openMandate.status === "verified" && verifiedOpen === undefined),
   );
-  failures.add("AP2_CLOSED_MANDATE_UNVERIFIED", !closedVerified);
-  failures.add("AP2_OPEN_MANDATE_UNVERIFIED", !openVerified);
-  failures.add("AP2_KEY_BINDING_UNVERIFIED", !keyBindingVerified);
+  failures.add(
+    "AP2_CLOSED_MANDATE_UNVERIFIED",
+    structured?.closedMandate.status === "invalid" ||
+      (structured?.closedMandate.status === "verified" && verifiedClosed === undefined),
+  );
+  failures.add("AP2_KEY_BINDING_UNVERIFIED", structured?.keyBinding.status === "invalid");
 
   const normalisedReceipt = fixtureCase.ap2.paymentReceipt;
   failures.add(
     "AP2_RECEIPT_UNVERIFIED",
-    !receiptCryptographicallyVerified ||
-      normalisedReceipt === undefined ||
-      verifiedReceipt === undefined ||
-      !canonicalEqual(normalisedReceipt, verifiedReceipt),
+    structured?.receipt.status === "invalid" ||
+      (structured?.receipt.status === "verified" && verifiedReceipt === undefined) ||
+      (receiptCryptographicallyVerified && normalisedReceipt === undefined),
   );
 
-  const issuerJwt = structured?.closedMandate.issuerJwt;
+  const issuerJwt =
+    structured?.closedMandate.status === "verified"
+      ? structured.closedMandate.issuerJwt
+      : undefined;
   const derivedReference =
     closedVerified && typeof issuerJwt === "string" ? sha256Base64Url(issuerJwt) : undefined;
   failures.add(
@@ -287,60 +286,64 @@ export async function evaluateCase(
 
   failures.add(
     "AP2_CLOSED_MANDATE_CLAIMS_HASH_MISMATCH",
-    canonicalHash(fixtureCase.ap2.closedMandate) !== verification.closedMandateClaimsHash ||
-      (verifiedClosed !== undefined &&
-        canonicalHash(verifiedClosed) !== verification.closedMandateClaimsHash),
+    canonicalHash(fixtureCase.ap2.closedMandate) !== verification.closedMandateClaimsHash,
   );
   failures.add(
     "AP2_OPEN_MANDATE_CLAIMS_HASH_MISMATCH",
-    canonicalHash(fixtureCase.ap2.openMandate) !== verification.openMandateClaimsHash ||
-      (verifiedOpen !== undefined &&
-        canonicalHash(verifiedOpen) !== verification.openMandateClaimsHash),
+    canonicalHash(fixtureCase.ap2.openMandate) !== verification.openMandateClaimsHash,
   );
 
-  const open = verifiedOpen ?? fixtureCase.ap2.openMandate;
-  const closed = verifiedClosed ?? fixtureCase.ap2.closedMandate;
-  const referenceConstraints = open.constraints.filter(
-    (constraint) => constraintType(constraint) === "payment.reference",
-  );
-  const referenceMismatch =
-    referenceConstraints.length === 0 ||
-    referenceConstraints.some(
-      (constraint) =>
-        Reflect.get(constraint, "conditional_transaction_id") !==
-        verification.openCheckoutReference,
-    );
-  const transactionMismatch = closed.transaction_id !== verification.openCheckoutReference;
-  failures.add("AP2_CHECKOUT_BINDING_UNVERIFIED", referenceMismatch || transactionMismatch);
-  failures.add("AP2_PAYMENT_REFERENCE_MISMATCH", referenceMismatch);
-  failures.add("AP2_CLOSED_TRANSACTION_ID_MISMATCH", transactionMismatch);
-
-  evaluateConstraints(open, closed, verification.openCheckoutReference, failures);
-  evaluatePresets(open, closed, failures);
-  failures.add(
-    "AP2_MANDATE_TIME_INVALID",
-    open.iat > fixtureCase.nowEpochSeconds ||
-      closed.iat > fixtureCase.nowEpochSeconds ||
-      open.exp < fixtureCase.nowEpochSeconds ||
-      closed.exp < fixtureCase.nowEpochSeconds,
-  );
-  failures.add("AP2_PAYMENT_INSTRUMENT_NOT_ALLOWED", closed.payment_instrument.type !== "x402");
-
-  const receipt = verifiedReceipt ?? normalisedReceipt;
-  if (receipt !== undefined) {
-    failures.add("AP2_RECEIPT_NOT_SUCCESSFUL", receipt.status !== "Success");
-    failures.add(
-      "AP2_RECEIPT_REFERENCE_MISMATCH",
-      derivedReference !== undefined && receipt.reference !== derivedReference,
-    );
-    failures.add(
-      "AP2_RECEIPT_TRANSACTION_MISMATCH",
-      receipt.network_confirmation_id !== fixtureCase.x402.settlement.transaction,
-    );
+  const mandatePairs: (readonly [OpenMandate, ClosedMandate])[] = [];
+  if (openVerified && closedVerified && keyBindingVerified) {
+    mandatePairs.push([fixtureCase.ap2.openMandate, fixtureCase.ap2.closedMandate]);
+    mandatePairs.push([verifiedOpen, verifiedClosed]);
   }
+  for (const [open, closed] of mandatePairs) {
+    const referenceConstraints = open.constraints.filter(
+      (constraint) => constraintType(constraint) === "payment.reference",
+    );
+    const referenceMismatch =
+      referenceConstraints.length === 0 ||
+      referenceConstraints.some(
+        (constraint) =>
+          Reflect.get(constraint, "conditional_transaction_id") !==
+          verification.openCheckoutReference,
+      );
+    const transactionMismatch = closed.transaction_id !== verification.openCheckoutReference;
+    failures.add("AP2_CHECKOUT_BINDING_UNVERIFIED", referenceMismatch || transactionMismatch);
+    failures.add("AP2_PAYMENT_REFERENCE_MISMATCH", referenceMismatch);
+    failures.add("AP2_CLOSED_TRANSACTION_ID_MISMATCH", transactionMismatch);
 
-  const extension = closed.payment_instrument.x402;
-  evaluateAp2X402(extension, fixtureCase, closed, failures);
+    evaluateConstraints(open, closed, verification.openCheckoutReference, failures);
+    evaluatePresets(open, closed, failures);
+    failures.add(
+      "AP2_MANDATE_TIME_INVALID",
+      open.iat > fixtureCase.nowEpochSeconds ||
+        closed.iat > fixtureCase.nowEpochSeconds ||
+        open.exp < fixtureCase.nowEpochSeconds ||
+        closed.exp < fixtureCase.nowEpochSeconds,
+    );
+    failures.add("AP2_PAYMENT_INSTRUMENT_NOT_ALLOWED", closed.payment_instrument.type !== "x402");
+    const extension = closed.payment_instrument.x402;
+    if (extension !== undefined) evaluateAp2X402(extension, fixtureCase, closed, failures);
+  }
+  failures.add("AP2_MANDATE_TIME_INVALID", structured?.mandateTime.status === "invalid");
+
+  if (receiptCryptographicallyVerified && verifiedReceipt !== undefined) {
+    const receipts: PaymentReceipt[] = [verifiedReceipt];
+    if (normalisedReceipt !== undefined) receipts.push(normalisedReceipt);
+    for (const receipt of receipts) {
+      failures.add("AP2_RECEIPT_NOT_SUCCESSFUL", receipt.status !== "Success");
+      failures.add(
+        "AP2_RECEIPT_REFERENCE_MISMATCH",
+        derivedReference !== undefined && receipt.reference !== derivedReference,
+      );
+      failures.add(
+        "AP2_RECEIPT_TRANSACTION_MISMATCH",
+        receipt.network_confirmation_id !== fixtureCase.x402.settlement.transaction,
+      );
+    }
+  }
 
   const { payload, requirements, settlement } = fixtureCase.x402;
   const accepted = payload.accepted;
@@ -350,31 +353,23 @@ export async function evaluateCase(
     payload.extensions !== undefined ||
       payload.x402Version !== 2 ||
       requirements.extra.assetTransferMethod !== REQUIRED_TRANSFER_METHOD ||
-      accepted.extra.assetTransferMethod !== REQUIRED_TRANSFER_METHOD ||
-      requirements.extra.ap2NonceDerivation !== REQUIRED_NONCE_DERIVATION ||
-      accepted.extra.ap2NonceDerivation !== REQUIRED_NONCE_DERIVATION,
+      requirements.extra.ap2NonceDerivation !== REQUIRED_NONCE_DERIVATION,
   );
   failures.add(
     "X402_MANDATE_REFERENCE_MISMATCH",
-    derivedReference !== undefined &&
-      (requirements.extra.ap2MandateReference !== derivedReference ||
-        accepted.extra.ap2MandateReference !== derivedReference),
+    derivedReference !== undefined && requirements.extra.ap2MandateReference !== derivedReference,
   );
 
   const authorization = payload.payload.authorization;
-  failures.add(
-    "EIP3009_PAYER_MISMATCH",
-    extension !== undefined && !addressesEqual(extension.payer, authorization.from),
-  );
-  failures.add(
-    "EIP3009_RECIPIENT_MISMATCH",
-    !addressesEqual(authorization.to, requirements.payTo) ||
-      !addressesEqual(authorization.to, accepted.payTo),
-  );
-  failures.add(
-    "EIP3009_VALUE_MISMATCH",
-    authorization.value !== requirements.amount || authorization.value !== accepted.amount,
-  );
+  for (const [, closed] of mandatePairs) {
+    const extension = closed.payment_instrument.x402;
+    failures.add(
+      "EIP3009_PAYER_MISMATCH",
+      extension !== undefined && !addressesEqual(extension.payer, authorization.from),
+    );
+  }
+  failures.add("EIP3009_RECIPIENT_MISMATCH", !addressesEqual(authorization.to, requirements.payTo));
+  failures.add("EIP3009_VALUE_MISMATCH", authorization.value !== requirements.amount);
 
   const now = BigInt(fixtureCase.nowEpochSeconds);
   const validAfter = BigInt(authorization.validAfter);
@@ -385,10 +380,12 @@ export async function evaluateCase(
     "EIP3009_VALIDITY_EXCEEDS_TIMEOUT",
     validBefore > now + BigInt(requirements.maxTimeoutSeconds),
   );
-  failures.add(
-    "EIP3009_VALIDITY_EXCEEDS_AP2_EXPIRY",
-    validBefore > BigInt(Math.min(open.exp, closed.exp)),
-  );
+  for (const [open, closed] of mandatePairs) {
+    failures.add(
+      "EIP3009_VALIDITY_EXCEEDS_AP2_EXPIRY",
+      validBefore > BigInt(Math.min(open.exp, closed.exp)),
+    );
+  }
   let expectedNonce: string | undefined;
   if (derivedReference !== undefined) {
     const decoded = Buffer.from(derivedReference, "base64url");
@@ -410,15 +407,8 @@ export async function evaluateCase(
   failures.add("EIP3009_SIGNATURE_INVALID", !signatureResult.valid);
 
   failures.add("SETTLEMENT_FAILED", !settlement.success);
-  failures.add(
-    "SETTLEMENT_NETWORK_MISMATCH",
-    settlement.network !== requirements.network || settlement.network !== accepted.network,
-  );
-  failures.add(
-    "SETTLEMENT_PAYER_MISMATCH",
-    !addressesEqual(settlement.payer, authorization.from) ||
-      (extension !== undefined && !addressesEqual(settlement.payer, extension.payer)),
-  );
+  failures.add("SETTLEMENT_NETWORK_MISMATCH", settlement.network !== requirements.network);
+  failures.add("SETTLEMENT_PAYER_MISMATCH", !addressesEqual(settlement.payer, authorization.from));
   failures.add(
     "SETTLEMENT_AMOUNT_MISMATCH",
     settlement.amount !== undefined && settlement.amount !== requirements.amount,
