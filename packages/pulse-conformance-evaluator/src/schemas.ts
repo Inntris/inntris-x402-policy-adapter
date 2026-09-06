@@ -9,6 +9,7 @@ import {
   X402_PACKAGE_VERSION,
 } from "./constants.js";
 import type { ConformanceBundle, ConformanceCase, ConformanceCaseEnvelope } from "./types.js";
+import { assertJsonValue } from "./strict-json.js";
 
 const NonEmptyString = z.string().min(1).max(2_048);
 const Identifier = z.string().min(1).max(512);
@@ -359,6 +360,7 @@ export const ConformanceBundleSchema = z
   .strict();
 
 export function parseConformanceBundle(value: unknown): ConformanceBundle {
+  assertJsonValue(value);
   const bundle = ConformanceBundleSchema.parse(value) as ConformanceBundle;
   const ids = new Set<string>();
   for (const fixtureCase of bundle.cases) {
@@ -369,12 +371,16 @@ export function parseConformanceBundle(value: unknown): ConformanceBundle {
 }
 
 export function parseConformanceCase(value: unknown): ConformanceCase {
+  assertJsonValue(value);
   return ConformanceCaseSchema.parse(value);
 }
 
 export function tryParseConformanceCase(
   value: ConformanceCaseEnvelope,
 ): ConformanceCase | undefined {
-  const result = ConformanceCaseSchema.safeParse(value);
-  return result.success ? result.data : undefined;
+  try {
+    return parseConformanceCase(value);
+  } catch {
+    return undefined;
+  }
 }

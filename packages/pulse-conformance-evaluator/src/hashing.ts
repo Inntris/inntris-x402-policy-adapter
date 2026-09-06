@@ -2,6 +2,7 @@ import { canonicalBytes } from "@inntris/decision-core";
 import { createHash } from "node:crypto";
 
 import type { ConformanceCase } from "./types.js";
+import { assertJsonValue } from "./strict-json.js";
 
 export function sha256Base64Url(value: Uint8Array | string): string {
   return createHash("sha256").update(value).digest("base64url");
@@ -12,6 +13,7 @@ export function sha256Hex(value: Uint8Array | string): string {
 }
 
 export function canonicalHash(value: unknown): string {
+  assertJsonValue(value);
   return sha256Base64Url(canonicalBytes(value));
 }
 
