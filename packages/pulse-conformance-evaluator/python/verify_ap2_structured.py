@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import sys
 from importlib.metadata import distribution, version
 from typing import Any
@@ -11,6 +12,7 @@ from ap2.sdk.generated.payment_receipt import PaymentReceipt
 from ap2.sdk.jwt_helper import verify_jwt
 from ap2.sdk.sdjwt import common, kb_sd_jwt, sd_jwt
 from jwcrypto.jwk import JWK
+from presentation import jwt_json, strict_json, validate_presentation
 
 
 AP2_REPOSITORY = "https://github.com/google-agentic-commerce/AP2"
@@ -75,18 +77,21 @@ def _check_time_claims(
     payloads: list[dict[str, Any]], current_time: int, clock_skew: int
 ) -> None:
     for payload in payloads:
-        issued_at = payload.get("iat")
-        expires_at = payload.get("exp")
-        if issued_at is not None:
-            if type(issued_at) not in (int, float):
-                raise ValueError("mandate iat is invalid")
-            if issued_at > current_time + clock_skew:
-                raise ValueError("mandate iat is in the future")
-        if expires_at is not None:
-            if type(expires_at) not in (int, float):
-                raise ValueError("mandate exp is invalid")
-            if current_time > expires_at + clock_skew:
-                raise ValueError("mandate is expired")
+        for claim in ("iat", "nbf", "exp"):
+            if claim not in payload:
+                continue
+            timestamp = payload[claim]
+            if not _numeric_date(timestamp):
+                raise ValueError(f"{claim} must be a finite numeric date")
+            if claim in ("iat", "nbf") and timestamp > current_time + clock_skew:
+                raise ValueError(f"{claim} is in the future")
+            if claim == "exp" and current_time >= timestamp + clock_skew:
+                raise ValueError("JWT is expired")
+
+
+def _numeric_date(value: Any) -> bool:
+    # Bound transport to exact interoperable numeric dates, not JS rounded integers.
+    return type(value) in (int, float) and abs(value) <= 2**53 - 1 and math.isfinite(value)
 
 
 def _verify_terminal_binding(
@@ -113,14 +118,7 @@ def _verify_terminal_binding(
 
 
 def _jwt_header(token: str) -> dict[str, Any]:
-    encoded = token.split(".", maxsplit=1)[0]
-    padding = "=" * ((4 - len(encoded) % 4) % 4)
-    import base64
-
-    value = json.loads(base64.urlsafe_b64decode(encoded + padding))
-    if not isinstance(value, dict):
-        raise ValueError("JWT header must be an object")
-    return value
+    return jwt_json(token)[0]
 
 
 def verify_request(request: dict[str, Any]) -> dict[str, Any]:
@@ -160,6 +158,9 @@ def verify_request(request: dict[str, Any]) -> dict[str, Any]:
     key_binding_result: dict[str, Any] = {"status": "notEvaluated"}
     mandate_time_result: dict[str, Any] = {"status": "notEvaluated"}
     receipt_result: dict[str, Any] = {"status": "invalid"}
+    # Only authenticated payloads enter this list. Root validity is independent
+    # of leaf signature success; receipt expiry does not grant payment authority.
+    time_payloads: list[tuple[str, dict[str, Any]]] = []
 
     parts = mandate_chain.split("~~")
     if len(parts) != 2 or not parts[0] or not parts[1]:
@@ -175,11 +176,15 @@ def verify_request(request: dict[str, Any]) -> dict[str, Any]:
         root_key = JWK(**root_jwk)
         root = common.parse_token(root_segment)
         _require_es256(root.header, "open mandate")
+        validate_presentation(root)
         root_payload = sd_jwt.verify(root.canonical, root_key)
+        time_payloads.append(("rootJwt", root_payload))
         open_claims = _effective_claims(root_payload, "open mandate")
-        verified_root = root.with_verified_payload(root_payload, [open_claims])
-        if verified_root.cnf_jwk() is None:
+        time_payloads.append(("openMandate", open_claims))
+        candidate_root = root.with_verified_payload(root_payload, [open_claims])
+        if candidate_root.cnf_jwk() is None:
             raise ValueError("open mandate is missing a verified holder key")
+        verified_root = candidate_root
         open_result = {"status": "verified", "claims": open_claims}
     except Exception:  # noqa: BLE001 - each stage is reported fail closed
         pass
@@ -191,11 +196,14 @@ def verify_request(request: dict[str, Any]) -> dict[str, Any]:
         try:
             leaf = common.parse_token(parts[1])
             _require_es256(leaf.header, "closed mandate")
+            validate_presentation(leaf)
             holder_key = verified_root.cnf_jwk()
             if holder_key is None:
                 raise ValueError("open mandate is missing a verified holder key")
             leaf_payload = sd_jwt.verify(leaf.sd_jwt, holder_key)
+            time_payloads.append(("closedJwt", leaf_payload))
             closed_claims = _effective_claims(leaf_payload, "closed mandate")
+            time_payloads.append(("closedMandate", closed_claims))
             closed_result = {
                 "status": "verified",
                 "claims": closed_claims,
@@ -216,20 +224,26 @@ def verify_request(request: dict[str, Any]) -> dict[str, Any]:
             except Exception:  # noqa: BLE001 - stage remains independently invalid
                 pass
 
-            mandate_time_result = {"status": "invalid"}
-            try:
-                if root_payload is None or open_claims is None:
-                    raise ValueError("open mandate time prerequisites are unavailable")
-                _check_time_claims(
-                    [root_payload, open_claims, leaf_payload, closed_claims],
-                    current_time,
-                    clock_skew,
-                )
-                mandate_time_result = {"status": "verified"}
-            except Exception:  # noqa: BLE001 - stage remains independently invalid
-                pass
         except Exception:  # noqa: BLE001 - each stage is reported fail closed
             pass
+
+    bounds = []
+    invalid_time = False
+    for source, payload in time_payloads:
+        try:
+            _check_time_claims([payload], current_time, clock_skew)
+        except ValueError:
+            invalid_time = True
+        if "exp" in payload and _numeric_date(payload["exp"]):
+            bounds.append({"source": source, "expiresAt": payload["exp"]})
+    mandate_time_result = {
+        "status": "invalid" if invalid_time else (
+            "verified" if len(time_payloads) == 4 else "notEvaluated"
+        ),
+        "expiryBounds": bounds,
+    }
+    if bounds:
+        mandate_time_result["effectiveAuthorityExpiry"] = min(b["expiresAt"] for b in bounds)
 
     try:
         receipt_key = JWK(**receipt_jwk)
@@ -239,9 +253,10 @@ def verify_request(request: dict[str, Any]) -> dict[str, Any]:
         if header.get("kid") != receipt_key.get("kid"):
             raise ValueError("receipt JWT key id is invalid")
         receipt_claims = verify_jwt(receipt_jwt, receipt_key)
+        _check_time_claims([receipt_claims], current_time, clock_skew)
         PaymentReceipt.model_validate(receipt_claims)
         issued_at = receipt_claims.get("iat")
-        if not isinstance(issued_at, int) or issued_at > current_time + clock_skew:
+        if type(issued_at) is not int or issued_at > current_time + clock_skew:
             raise ValueError("receipt JWT time is invalid")
         receipt_result = {"status": "verified", "claims": receipt_claims}
     except Exception:  # noqa: BLE001 - each stage is reported fail closed
@@ -267,7 +282,7 @@ def main() -> int:
         raw = sys.stdin.read(2_000_001)
         if len(raw) > 2_000_000:
             raise ValueError("request exceeds limit")
-        request = json.loads(raw)
+        request = strict_json(raw)
         if not isinstance(request, dict):
             raise ValueError("request must be an object")
         result = verify_request(request)

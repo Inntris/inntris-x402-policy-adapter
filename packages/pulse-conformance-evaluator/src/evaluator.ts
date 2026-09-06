@@ -1,10 +1,10 @@
 import {
   EIP3009_SAFETY_BUFFER_SECONDS,
-  EXPECTED_AP2_VERIFIER,
   REQUIRED_NONCE_DERIVATION,
   REQUIRED_TRANSFER_METHOD,
 } from "./constants.js";
 import { verifyEip3009Signature } from "./eip3009.js";
+import { allMandatoryStagesVerified, parseStructuredVerification } from "./ap2-bridge.js";
 import { FailureCollector } from "./failures.js";
 import { calculateInputHash, canonicalHash, sha256Base64Url } from "./hashing.js";
 import {
@@ -25,6 +25,7 @@ import type {
   PaymentConstraint,
   PaymentInstrument,
   StructuredAp2Verifier,
+  StructuredAp2Verification,
 } from "./types.js";
 import { addressesEqual, canonicalEqual, isHex32 } from "./values.js";
 
@@ -215,18 +216,19 @@ export async function evaluateCase(
   const verification = fixtureCase.ap2.verification;
   failures.add(
     "AP2_VERIFICATION_CONTEXT_MISMATCH",
-    verification.verifier !== EXPECTED_AP2_VERIFIER ||
-      verification.verifiedAtEpochSeconds !== fixtureCase.nowEpochSeconds ||
+    verification.verifiedAtEpochSeconds !== fixtureCase.nowEpochSeconds ||
       verification.clockSkewSeconds !== 0,
   );
 
-  let structured;
+  let structured: StructuredAp2Verification | undefined;
   try {
-    structured = await ap2Verifier.verify({
-      ...verification.cryptographicEvidence,
-      currentTimeEpoch: fixtureCase.nowEpochSeconds,
-      clockSkewSeconds: verification.clockSkewSeconds,
-    });
+    structured = parseStructuredVerification(
+      await ap2Verifier.verify({
+        ...verification.cryptographicEvidence,
+        currentTimeEpoch: fixtureCase.nowEpochSeconds,
+        clockSkewSeconds: verification.clockSkewSeconds,
+      }),
+    );
   } catch {
     structured = undefined;
   }
@@ -251,6 +253,26 @@ export async function evaluateCase(
   const keyBindingVerified = structured?.keyBinding.status === "verified";
   const receiptCryptographicallyVerified =
     structured?.receipt.status === "verified" && verifiedReceipt !== undefined;
+  const allMandatoryChecksValid =
+    allMandatoryStagesVerified(structured) &&
+    openVerified &&
+    closedVerified &&
+    receiptCryptographicallyVerified;
+  // A skipped dependent stage is not an invented crypto failure. An unexplained
+  // incomplete verification is a bridge contract failure, even if x402 also fails.
+  const explicitInvalidStage =
+    structured !== undefined &&
+    [
+      structured.openMandate,
+      structured.closedMandate,
+      structured.keyBinding,
+      structured.mandateTime,
+      structured.receipt,
+    ].some((stage) => stage.status === "invalid");
+  failures.add(
+    "AP2_CRYPTOGRAPHIC_EVIDENCE_INVALID",
+    !allMandatoryStagesVerified(structured) && !explicitInvalidStage,
+  );
 
   failures.add(
     "AP2_OPEN_MANDATE_UNVERIFIED",
@@ -340,8 +362,8 @@ export async function evaluateCase(
       "AP2_MANDATE_TIME_INVALID",
       open.iat > fixtureCase.nowEpochSeconds ||
         closed.iat > fixtureCase.nowEpochSeconds ||
-        open.exp < fixtureCase.nowEpochSeconds ||
-        closed.exp < fixtureCase.nowEpochSeconds,
+        open.exp <= fixtureCase.nowEpochSeconds ||
+        closed.exp <= fixtureCase.nowEpochSeconds,
     );
     failures.add("AP2_PAYMENT_INSTRUMENT_NOT_ALLOWED", closed.payment_instrument.type !== "x402");
     const extension = closed.payment_instrument.x402;
@@ -407,6 +429,14 @@ export async function evaluateCase(
       validBefore > BigInt(Math.min(open.exp, closed.exp)),
     );
   }
+  // Authenticated wrapper bounds remain relevant even if a later token fails.
+  // The bridge lists each contributing signed source and verifies the minimum.
+  const effectiveAuthorityExpiry = structured?.mandateTime.effectiveAuthorityExpiry;
+  failures.add(
+    "EIP3009_VALIDITY_EXCEEDS_AP2_EXPIRY",
+    effectiveAuthorityExpiry !== undefined &&
+      validBefore > BigInt(Math.floor(effectiveAuthorityExpiry)),
+  );
   let expectedNonce: string | undefined;
   if (derivedReference !== undefined) {
     const decoded = Buffer.from(derivedReference, "base64url");
@@ -439,7 +469,7 @@ export async function evaluateCase(
   const failureCodes = failures.ordered();
   return {
     id: fixtureCase.id,
-    decision: failureCodes.length === 0 ? "accept" : "reject",
+    decision: allMandatoryChecksValid && failureCodes.length === 0 ? "accept" : "reject",
     failureCodes,
   };
 }

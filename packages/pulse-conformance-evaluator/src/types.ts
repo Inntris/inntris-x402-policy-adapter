@@ -9,7 +9,7 @@ export interface SourcePins {
 export interface Merchant {
   id: string;
   name: string;
-  website: string;
+  website?: string | undefined;
 }
 
 export interface Amount {
@@ -233,6 +233,19 @@ export type StructuredClosedMandateVerification =
   | { status: "verified"; claims: Record<string, unknown>; issuerJwt: string }
   | { status: "invalid" | "notEvaluated" };
 
+export interface AuthorityExpiryBound {
+  source: "rootJwt" | "openMandate" | "closedJwt" | "closedMandate";
+  expiresAt: number;
+}
+
+export type StructuredMandateTimeVerification =
+  | { status: "verified"; expiryBounds: AuthorityExpiryBound[]; effectiveAuthorityExpiry: number }
+  | {
+      status: "invalid" | "notEvaluated";
+      expiryBounds?: AuthorityExpiryBound[];
+      effectiveAuthorityExpiry?: number;
+    };
+
 export interface StructuredAp2Verification {
   version: "inntris-pulse-ap2-structured-verification/0.1";
   sdk: {
@@ -243,7 +256,7 @@ export interface StructuredAp2Verification {
   openMandate: StructuredClaimsVerification;
   closedMandate: StructuredClosedMandateVerification;
   keyBinding: { status: Ap2VerificationStatus };
-  mandateTime: { status: Ap2VerificationStatus };
+  mandateTime: StructuredMandateTimeVerification;
   receipt: StructuredClaimsVerification;
 }
 

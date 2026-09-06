@@ -260,3 +260,6 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+    from adversarial_test import run_tests
+
+    run_tests()

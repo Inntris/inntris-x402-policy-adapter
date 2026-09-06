@@ -56,7 +56,7 @@ const MerchantSchema = z
   .object({
     id: z.string().max(512),
     name: NonEmptyString,
-    website: z.url().max(2_048),
+    website: z.url().max(2_048).optional(),
   })
   .strict();
 

@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { AP2_COMMIT, AP2_REPOSITORY } from "./constants.js";
 import type { StructuredAp2Verification, StructuredAp2Verifier } from "./types.js";
+import { assertJsonValue, parseStrictJson } from "./strict-json.js";
 
 const ClaimsResultSchema = z.discriminatedUnion("status", [
   z
@@ -32,7 +33,40 @@ const StatusResultSchema = z
   .object({ status: z.enum(["verified", "invalid", "notEvaluated"]) })
   .strict();
 
-const StructuredResultSchema = z
+const NumericDate = z.number().min(-Number.MAX_SAFE_INTEGER).max(Number.MAX_SAFE_INTEGER);
+const TimeResultSchema = z
+  .object({
+    status: z.enum(["verified", "invalid", "notEvaluated"]),
+    expiryBounds: z
+      .array(
+        z
+          .object({
+            source: z.enum(["rootJwt", "openMandate", "closedJwt", "closedMandate"]),
+            expiresAt: NumericDate,
+          })
+          .strict(),
+      )
+      .max(4)
+      .default([]),
+    effectiveAuthorityExpiry: NumericDate.optional(),
+  })
+  .strict()
+  .superRefine((time, ctx) => {
+    const sources = new Set(time.expiryBounds.map((bound) => bound.source));
+    const minimum =
+      time.expiryBounds.length === 0
+        ? undefined
+        : Math.min(...time.expiryBounds.map((bound) => bound.expiresAt));
+    if (
+      sources.size !== time.expiryBounds.length ||
+      minimum !== time.effectiveAuthorityExpiry ||
+      (time.status === "verified" && (!sources.has("openMandate") || !sources.has("closedMandate")))
+    ) {
+      ctx.addIssue({ code: "custom", message: "Incomplete or inconsistent signed expiry bounds" });
+    }
+  });
+
+export const StructuredResultSchema = z
   .object({
     version: z.literal("inntris-pulse-ap2-structured-verification/0.1"),
     sdk: z
@@ -45,10 +79,33 @@ const StructuredResultSchema = z
     openMandate: ClaimsResultSchema,
     closedMandate: ClosedMandateResultSchema,
     keyBinding: StatusResultSchema,
-    mandateTime: StatusResultSchema,
+    mandateTime: TimeResultSchema,
     receipt: ClaimsResultSchema,
   })
   .strict();
+
+// Adding a mandatory stage to the contract requires updating this exhaustive map.
+const MANDATORY_STAGES = {
+  openMandate: true,
+  closedMandate: true,
+  keyBinding: true,
+  mandateTime: true,
+  receipt: true,
+} satisfies Record<Exclude<keyof StructuredAp2Verification, "version" | "sdk">, true>;
+
+export function allMandatoryStagesVerified(result: StructuredAp2Verification | undefined): boolean {
+  return (
+    result !== undefined &&
+    (Object.keys(MANDATORY_STAGES) as (keyof typeof MANDATORY_STAGES)[]).every(
+      (stage) => result[stage].status === "verified",
+    )
+  );
+}
+
+export function parseStructuredVerification(value: unknown): StructuredAp2Verification {
+  assertJsonValue(value);
+  return StructuredResultSchema.parse(value) as StructuredAp2Verification;
+}
 
 export interface AP2StructuredPythonVerifierOptions {
   pythonExecutable?: string;
@@ -155,9 +212,11 @@ export class AP2StructuredPythonVerifier implements StructuredAp2Verifier {
           return;
         }
         try {
-          const parsed = StructuredResultSchema.parse(
-            JSON.parse(Buffer.concat(stdout).toString("utf8")) as unknown,
-          ) as StructuredAp2Verification;
+          const parsed = parseStructuredVerification(
+            parseStrictJson(
+              new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(stdout)),
+            ),
+          );
           finish(undefined, parsed);
         } catch {
           finish(

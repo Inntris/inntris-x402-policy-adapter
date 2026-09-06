@@ -5,7 +5,6 @@ import { privateKeyToAccount } from "viem/accounts";
 import {
   AP2_COMMIT,
   EIP3009_AUTHORIZATION_TYPES,
-  EXPECTED_AP2_VERIFIER,
   PULSE_CASE_VERSION,
   REQUIRED_NONCE_DERIVATION,
   X402_COMMIT,
@@ -168,7 +167,7 @@ export async function makeConformanceCase(): Promise<ConformanceCase> {
       openMandate,
       paymentReceipt: receipt,
       verification: {
-        verifier: EXPECTED_AP2_VERIFIER,
+        verifier: "test producer metadata",
         verifiedAtEpochSeconds: now,
         clockSkewSeconds: 0,
         openCheckoutReference: "A".repeat(43),
@@ -244,7 +243,14 @@ export function makeMockVerifier(fixtureCase: ConformanceCase): StructuredAp2Ver
       openMandate: { status: "verified", claims: openClaims },
       closedMandate: { status: "verified", claims: closedClaims, issuerJwt },
       keyBinding: { status: "verified" },
-      mandateTime: { status: "verified" },
+      mandateTime: {
+        status: "verified",
+        expiryBounds: [
+          { source: "openMandate", expiresAt: openClaims.exp },
+          { source: "closedMandate", expiresAt: closedClaims.exp },
+        ],
+        effectiveAuthorityExpiry: Math.min(openClaims.exp, closedClaims.exp),
+      },
       receipt: { status: "verified", claims: receiptClaims },
     }),
   };
