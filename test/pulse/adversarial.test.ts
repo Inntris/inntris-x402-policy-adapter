@@ -289,3 +289,38 @@ describe("P2 optional merchant and producer independence [default bridge]", () =
     expect((await evaluateCase(input, realVerifier)).decision).toBe("accept");
   });
 });
+
+describe("Specification boundary observations, not authorisation guarantees [default bridge]", () => {
+  it("records the concealed restriction ambiguity without defining an all-disclosure policy", async () => {
+    const concealed = await evaluateCase(
+      await signCase({ rootDisclosure: "concealed" }),
+      realVerifier,
+    );
+    const revealed = await evaluateCase(
+      await signCase({ rootDisclosure: "revealed" }),
+      realVerifier,
+    );
+    expect(concealed.decision).toBe("accept");
+    expect(revealed.failureCodes).toContain("AP2_CONSTRAINT_VIOLATION");
+  });
+  it("resource URL has shape validation but no separate authenticated expectation", async () => {
+    const input = await signCase();
+    input.x402.payload.resource.url = "https://different.example/resource";
+    input.inputHash = calculateInputHash(input);
+    expect((await evaluateCase(input, realVerifier)).decision).toBe("accept");
+  });
+  it("schema failure ends semantic applicability rather than speculatively inflating codes", async () => {
+    const input = await signCase();
+    Object.assign(input.x402.payload.resource, { unsupported: true });
+    input.x402.settlement.success = false;
+    input.inputHash = calculateInputHash(input);
+    expect((await evaluateCase(input, realVerifier)).failureCodes).toEqual([
+      "INPUT_SCHEMA_INVALID",
+    ]);
+  });
+  it("independent signing is byte-for-byte deterministic", async () => {
+    expect(await signCase({ rootDisclosure: "valid", leafDisclosure: "valid" })).toEqual(
+      await signCase({ rootDisclosure: "valid", leafDisclosure: "valid" }),
+    );
+  });
+});

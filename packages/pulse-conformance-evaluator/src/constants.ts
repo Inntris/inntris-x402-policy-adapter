@@ -14,8 +14,6 @@ export const AP2_COMMIT = "e1ea56db72a6385bce3e5c1112b3a56ce60acb43";
 export const X402_COMMIT = "17d319fab5c17a6b4873eb41197894db924f59ed";
 export const X402_PACKAGE_VERSION = "2.23.0";
 
-export const EXPECTED_AP2_VERIFIER =
-  "google-agentic-commerce/AP2@e1ea56db72a6385bce3e5c1112b3a56ce60acb43+scripts/ap2/verify_extract_artifacts.py/0.1";
 export const REQUIRED_NONCE_DERIVATION = "base64url-decode-ap2-mandate-reference";
 export const REQUIRED_TRANSFER_METHOD = "eip3009";
 export const EIP3009_SAFETY_BUFFER_SECONDS = 6n;
