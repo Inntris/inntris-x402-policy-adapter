@@ -60,3 +60,12 @@ that sequence and preserves the record plus its SHA 256 as an immutable workflow
 
 Passing the offline evaluator or the separately pinned evidence validator does not prove publisher
 identity, independence, live settlement, chain finality, production readiness or qualification.
+
+## Adversarial remediation
+
+The [remediation report](../../evidence/pulse-ap2-x402-remediation/README.md) records the
+independent counterexamples, tests first history, signed expiry and disclosure fixes, complete
+verification gate, named regression results and specification limits. In particular, authenticated
+presented disclosures do not prove that every possible authority limiting claim has been disclosed,
+and the input resource has no separately authenticated expectation. The unsigned producer label is
+metadata only and does not select trusted implementation behaviour.
