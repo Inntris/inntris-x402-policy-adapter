@@ -1,0 +1,343 @@
+{
+  "frozenImplementation": "5a2c65ea10dc3078d3b38971db7373f1f34cac7c",
+  "regressionCommit": "4353a5c",
+  "implementationCommit": "b4205e74586113a0ada2b38cf4f27eae8f20a21e",
+  "baseline": {
+    "total": 61,
+    "passed": 24,
+    "failed": 37
+  },
+  "remediated": {
+    "total": 65,
+    "passed": 65,
+    "failed": 0
+  },
+  "note": "Specification-boundary observations document limits, not authorisation guarantees. No Pulse expected values or reference validator were used.",
+  "results": [
+    {
+      "test": "P0 JWT time: signed authority must be active [default Python bridge, reject AP2_MANDATE_TIME_INVALID] root nbf=2000000001 cannot grant active authority",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 JWT time: signed authority must be active [default Python bridge, reject AP2_MANDATE_TIME_INVALID] root exp=2000000000 cannot grant active authority",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 JWT time: signed authority must be active [default Python bridge, reject AP2_MANDATE_TIME_INVALID] root iat=null cannot grant active authority",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 JWT time: signed authority must be active [default Python bridge, reject AP2_MANDATE_TIME_INVALID] root iat=invalid cannot grant active authority",
+      "baseline": "passed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 JWT time: signed authority must be active [default Python bridge, reject AP2_MANDATE_TIME_INVALID] root exp=null cannot grant active authority",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 JWT time: signed authority must be active [default Python bridge, reject AP2_MANDATE_TIME_INVALID] root nbf=false cannot grant active authority",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 JWT time: signed authority must be active [default Python bridge, reject AP2_MANDATE_TIME_INVALID] root exp=later cannot grant active authority",
+      "baseline": "passed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 JWT time: signed authority must be active [default Python bridge, reject AP2_MANDATE_TIME_INVALID] root now equals nbf is valid [accept]",
+      "baseline": "passed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 JWT time: signed authority must be active [default Python bridge, reject AP2_MANDATE_TIME_INVALID] leaf nbf=2000000001 cannot grant active authority",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 JWT time: signed authority must be active [default Python bridge, reject AP2_MANDATE_TIME_INVALID] leaf exp=2000000000 cannot grant active authority",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 JWT time: signed authority must be active [default Python bridge, reject AP2_MANDATE_TIME_INVALID] leaf iat=null cannot grant active authority",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 JWT time: signed authority must be active [default Python bridge, reject AP2_MANDATE_TIME_INVALID] leaf iat=invalid cannot grant active authority",
+      "baseline": "passed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 JWT time: signed authority must be active [default Python bridge, reject AP2_MANDATE_TIME_INVALID] leaf exp=null cannot grant active authority",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 JWT time: signed authority must be active [default Python bridge, reject AP2_MANDATE_TIME_INVALID] leaf nbf=false cannot grant active authority",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 JWT time: signed authority must be active [default Python bridge, reject AP2_MANDATE_TIME_INVALID] leaf exp=later cannot grant active authority",
+      "baseline": "passed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 JWT time: signed authority must be active [default Python bridge, reject AP2_MANDATE_TIME_INVALID] leaf now equals nbf is valid [accept]",
+      "baseline": "passed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 JWT time: signed authority must be active [default Python bridge, reject AP2_MANDATE_TIME_INVALID] missing required terminal iat rejects [key binding category]",
+      "baseline": "passed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 JWT time: signed authority must be active [default Python bridge, reject AP2_MANDATE_TIME_INVALID] receipt signed nbf cannot be ignored [receipt category]",
+      "baseline": "passed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 skew boundaries [real Python bridge interface, evaluator profile still requires zero skew] nbf=2000000005, skew 5 => verified",
+      "baseline": "passed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 skew boundaries [real Python bridge interface, evaluator profile still requires zero skew] nbf=2000000006, skew 5 => invalid",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 skew boundaries [real Python bridge interface, evaluator profile still requires zero skew] iat=2000000005, skew 5 => verified",
+      "baseline": "passed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 skew boundaries [real Python bridge interface, evaluator profile still requires zero skew] iat=2000000006, skew 5 => invalid",
+      "baseline": "passed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 skew boundaries [real Python bridge interface, evaluator profile still requires zero skew] exp=1999999996, skew 5 => verified",
+      "baseline": "passed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 skew boundaries [real Python bridge interface, evaluator profile still requires zero skew] exp=1999999995, skew 5 => invalid",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 expiry composition: payment cannot outlive any signed authority [default bridge] rejects validBefore beyond root wrapper [EIP3009_VALIDITY_EXCEEDS_AP2_EXPIRY]",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 expiry composition: payment cannot outlive any signed authority [default bridge] rejects validBefore beyond leaf wrapper [EIP3009_VALIDITY_EXCEEDS_AP2_EXPIRY]",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 expiry composition: payment cannot outlive any signed authority [default bridge] accepts equality with the earliest of all bounds",
+      "baseline": "passed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 expiry composition: payment cannot outlive any signed authority [default bridge] rejects one second beyond the earliest of differing bounds",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 expiry composition: payment cannot outlive any signed authority [default bridge] absent optional wrapper expiry keeps mandatory inner bounds [accept]",
+      "baseline": "passed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 disclosures: tampered presentation must not be accepted [default bridge] root orphan rejects [corresponding mandate unverified]",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 disclosures: tampered presentation must not be accepted [default bridge] root malformed rejects [corresponding mandate unverified]",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 disclosures: tampered presentation must not be accepted [default bridge] root duplicate rejects [corresponding mandate unverified]",
+      "baseline": "passed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 disclosures: tampered presentation must not be accepted [default bridge] root tampered rejects [corresponding mandate unverified]",
+      "baseline": "passed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 disclosures: tampered presentation must not be accepted [default bridge] leaf orphan rejects [corresponding mandate unverified]",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 disclosures: tampered presentation must not be accepted [default bridge] leaf malformed rejects [corresponding mandate unverified]",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 disclosures: tampered presentation must not be accepted [default bridge] leaf duplicate rejects [corresponding mandate unverified]",
+      "baseline": "passed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 disclosures: tampered presentation must not be accepted [default bridge] leaf tampered rejects [corresponding mandate unverified]",
+      "baseline": "passed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 disclosures: tampered presentation must not be accepted [default bridge] authenticated root and terminal disclosures remain valid [accept]",
+      "baseline": "passed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 disclosures: tampered presentation must not be accepted [default bridge] appending orphan bytes without resigning anything rejects",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 raw JSON/JCS: ambiguity must reject before information loss [parser boundary] duplicate ap2 concealing expected [reject parsing]",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 raw JSON/JCS: ambiguity must reject before information loss [parser boundary] conflicting success [reject parsing]",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 raw JSON/JCS: ambiguity must reject before information loss [parser boundary] nested duplicate [reject parsing]",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 raw JSON/JCS: ambiguity must reject before information loss [parser boundary] escaped equivalent member [reject parsing]",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 raw JSON/JCS: ambiguity must reject before information loss [parser boundary] lone high surrogate [reject parsing]",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 raw JSON/JCS: ambiguity must reject before information loss [parser boundary] lone low surrogate [reject parsing]",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 raw JSON/JCS: ambiguity must reject before information loss [parser boundary] lone surrogate cannot be hashed through the object API",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P0 raw JSON/JCS: ambiguity must reject before information loss [parser boundary] ordinary Unicode and canonical inputs remain valid [accept]",
+      "baseline": "passed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P1 mandatory stages: an empty failure list is not verification [interface only] all unavailable must reject [cryptographic verification category]",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P1 mandatory stages: an empty failure list is not verification [interface only] openMandate unavailable must reject [cryptographic verification category]",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P1 mandatory stages: an empty failure list is not verification [interface only] closedMandate unavailable must reject [cryptographic verification category]",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P1 mandatory stages: an empty failure list is not verification [interface only] keyBinding unavailable must reject [cryptographic verification category]",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P1 mandatory stages: an empty failure list is not verification [interface only] mandateTime unavailable must reject [cryptographic verification category]",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P1 mandatory stages: an empty failure list is not verification [interface only] receipt unavailable must reject [cryptographic verification category]",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P1 mandatory stages: an empty failure list is not verification [interface only] missing unavailable must reject [cryptographic verification category]",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P1 mandatory stages: an empty failure list is not verification [interface only] all mandatory stages explicitly verified remains valid [accept]",
+      "baseline": "passed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P1 independent failures: bad leaf cannot suppress authenticated root time [default bridge] expired root plus corrupt leaf preserves both categories in controlled order",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P1 independent failures: bad leaf cannot suppress authenticated root time [default bridge] nonce, EIP signature and settlement failures remain independently applicable",
+      "baseline": "passed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P2 optional merchant and producer independence [default bridge] matching merchant IDs without websites accept",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P2 optional merchant and producer independence [default bridge] supplied invalid website rejects [schema category]",
+      "baseline": "passed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P2 optional merchant and producer independence [default bridge] missing mandatory merchant identity rejects even without website",
+      "baseline": "passed",
+      "remediated": "passed"
+    },
+    {
+      "test": "P2 optional merchant and producer independence [default bridge] unsigned producer label cannot determine authority [accept]",
+      "baseline": "failed",
+      "remediated": "passed"
+    },
+    {
+      "test": "Specification boundary observations, not authorisation guarantees [default bridge] records the concealed restriction ambiguity without defining an all-disclosure policy",
+      "baseline": "supplementary observation or control",
+      "remediated": "passed"
+    },
+    {
+      "test": "Specification boundary observations, not authorisation guarantees [default bridge] resource URL has shape validation but no separate authenticated expectation",
+      "baseline": "supplementary observation or control",
+      "remediated": "passed"
+    },
+    {
+      "test": "Specification boundary observations, not authorisation guarantees [default bridge] schema failure ends semantic applicability rather than speculatively inflating codes",
+      "baseline": "supplementary observation or control",
+      "remediated": "passed"
+    },
+    {
+      "test": "Specification boundary observations, not authorisation guarantees [default bridge] independent signing is byte-for-byte deterministic",
+      "baseline": "supplementary observation or control",
+      "remediated": "passed"
+    }
+  ]
+}
