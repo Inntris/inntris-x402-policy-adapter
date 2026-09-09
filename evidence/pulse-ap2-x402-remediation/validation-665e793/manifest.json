@@ -1,0 +1,389 @@
+{
+  "format": "inntris-local-validation-evidence/1",
+  "classification": "QUALIFIED",
+  "scope": "Requested local qualification gates only; not hosted CI, production readiness or external Pulse qualification",
+  "testedSourceRevision": "665e793b253c7c771e497ebc9eba2aa87356e270",
+  "completedAt": "2026-09-09T07:20:46.606Z",
+  "packagedAt": "2026-09-09T08:01:38.230Z",
+  "evidenceOnly": true,
+  "evaluatorOrTestLogicChanges": false,
+  "sourceFilesVerified": 379,
+  "archive": {
+    "path": "validation-artifacts.zip",
+    "sha256": "4fd49b21a2e4cf3ddca0ef93e7e25bdafae11e79f19f6a7e67c5b1bff2e6dd14"
+  },
+  "finalValidationPath": ".dev/pulse-audit-replay-665e793-20260909/validation.json",
+  "priorReportsPreserved": true,
+  "reproduction": {
+    "path": ".dev/pulse-audit-replay-665e793-20260909/reproduction.json",
+    "sha256": "4f751cdb24792ba27880a04847b8af0f6e998c23db201599cd8ab74ba5caaa05",
+    "frozenAt": "2026-09-09T07:20:46.125Z",
+    "total": 80,
+    "unchanged": 80,
+    "missing": 0,
+    "indeterminate": 0,
+    "differences": []
+  },
+  "audit": {
+    "command": "pnpm audit --prod --audit-level high",
+    "exitCode": 0,
+    "findings": {
+      "moderate": 7,
+      "high": 0,
+      "critical": 0
+    },
+    "waived": false,
+    "baselineModerate": 4,
+    "additionalAdvisories": "Three Hono advisories published 8 September 2026; dependency graph unchanged from main",
+    "jsonReportingCaveat": "pnpm 10.18.1 JSON mode exits one for any vulnerability before applying auditLevel; unsuccessful JSON report is preserved",
+    "python": {
+      "command": "python -B -m pip_audit --timeout 20 --progress-spinner off --format json",
+      "exitCode": 0,
+      "dependencies": 45,
+      "findings": 0
+    }
+  },
+  "externalValidatorInvoked": false,
+  "artifacts": [
+    {
+      "path": ".dev/pulse-audit-replay-665e793-20260909/blind.log",
+      "bytes": 97,
+      "sha256": "caa5f032c7880d03218bd14e470e7ad91db57077f5acc00044eb267ff4ae6af7"
+    },
+    {
+      "path": ".dev/pulse-audit-replay-665e793-20260909/compare.log",
+      "bytes": 242,
+      "sha256": "0c93bd811d55f1b5ce5c25b60be59bc14fbb6e12dd24d9dee349d0a291614056"
+    },
+    {
+      "path": ".dev/pulse-audit-replay-665e793-20260909/compare.mjs",
+      "bytes": 1288,
+      "sha256": "ff63c6c402b742be9c2860696eb4a69cb7340d661418f085c63ae176376259b5"
+    },
+    {
+      "path": ".dev/pulse-audit-replay-665e793-20260909/dependency-audit.log",
+      "bytes": 45,
+      "sha256": "d915f2604af6b7e79e1e4bd2a6417ab5248d57396d59a49e884baa45e1630070"
+    },
+    {
+      "path": ".dev/pulse-audit-replay-665e793-20260909/esbuild-smoke.mjs",
+      "bytes": 680,
+      "sha256": "795fb60ca8588a7b6835e9a6896b1ef08c17ae8aee93045d5d972b9804a1088a"
+    },
+    {
+      "path": ".dev/pulse-audit-replay-665e793-20260909/python-audit.log",
+      "bytes": 2635,
+      "sha256": "2e3421ceba7830ba7a07a77ed6529fc7976a123d5501311ea2503181e3fd51ba"
+    },
+    {
+      "path": ".dev/pulse-audit-replay-665e793-20260909/replay.log",
+      "bytes": 113,
+      "sha256": "65c0d2f878fa0fdd659927cab335da4d697556284981530a25f0bccf885af53c"
+    },
+    {
+      "path": ".dev/pulse-audit-replay-665e793-20260909/reproduction.json",
+      "bytes": 15170,
+      "sha256": "4f751cdb24792ba27880a04847b8af0f6e998c23db201599cd8ab74ba5caaa05"
+    },
+    {
+      "path": ".dev/pulse-audit-replay-665e793-20260909/runtimes.log",
+      "bytes": 33,
+      "sha256": "4f2d6a8512b37b40275d7897dde72fdde10be87fe4d95d297e62866cc8a494c8"
+    },
+    {
+      "path": ".dev/pulse-audit-replay-665e793-20260909/validate.mjs",
+      "bytes": 8401,
+      "sha256": "336002a3a8707988c7317a262626235bc8d8c63fd71ebdf9ba2f0927b3c1b42a"
+    },
+    {
+      "path": ".dev/pulse-audit-replay-665e793-20260909/validation.json",
+      "bytes": 139303,
+      "sha256": "ce7d8179c6990bc16c2a0c5912d72471b7bf052df06ebcc4720af83a2a6ef613"
+    },
+    {
+      "path": ".dev/pulse-continuation-665e793-20260908/compare.mjs",
+      "bytes": 1288,
+      "sha256": "9d60ef6a9ea90b104e04b21ec0446c181e7ac164dd0819ae2dbb7aa1049b05f6"
+    },
+    {
+      "path": ".dev/pulse-continuation-665e793-20260908/environment-blocker.json",
+      "bytes": 48772,
+      "sha256": "cf84f3a9a0f139f180a0e5e122bb975b352dc0776d5858bceec28b81b7fd4a84"
+    },
+    {
+      "path": ".dev/pulse-continuation-665e793-20260908/esbuild-smoke.mjs",
+      "bytes": 680,
+      "sha256": "795fb60ca8588a7b6835e9a6896b1ef08c17ae8aee93045d5d972b9804a1088a"
+    },
+    {
+      "path": ".dev/pulse-continuation-665e793-20260908/postgres-create.log",
+      "bytes": 65,
+      "sha256": "e256ab0627fa3014cd95a8cefcd4638066047f752aba0c44aaff6d38cde73c36"
+    },
+    {
+      "path": ".dev/pulse-continuation-665e793-20260908/postgres-pull.log",
+      "bytes": 434,
+      "sha256": "f93fd670c4740c13bd9281f16978ca1e40a087ff49d86411470c6607665f66b5"
+    },
+    {
+      "path": ".dev/pulse-continuation-665e793-20260908/postgres-start.log",
+      "bytes": 287,
+      "sha256": "14d59946cfbceb5d502bd6857f7df4d9b63320185f265ef4f37872d4b6b9e468"
+    },
+    {
+      "path": ".dev/pulse-continuation-665e793-20260908/record-blocker.mjs",
+      "bytes": 4141,
+      "sha256": "1e71a7c19527f63cd356fbc5821388d3ac8d64ca6e64beda88f7e9c229d8fe03"
+    },
+    {
+      "path": ".dev/pulse-continuation-665e793-20260908/runtimes.log",
+      "bytes": 789,
+      "sha256": "e7e5b89920475851f18ea5619ac95b262f37ed00d33cb3aaab1e0ff440a4278c"
+    },
+    {
+      "path": ".dev/pulse-continuation-665e793-20260908/validate.mjs",
+      "bytes": 8868,
+      "sha256": "714db65d566a815170efdbf262d2d784dd04d1973b5a36960affdc907c8547a5"
+    },
+    {
+      "path": ".dev/pulse-continuation-665e793-20260908/validation.json",
+      "bytes": 98342,
+      "sha256": "cbd248771c8846588fd89f8b4a3272d3c0da6e6ce6ade0585af1ceca47116714"
+    },
+    {
+      "path": ".dev/pulse-docker-665e793-20260909/compare.mjs",
+      "bytes": 1282,
+      "sha256": "da0545b801f08ef7604f225c47594c82c697535875b7f7390d172b7a5389f62d"
+    },
+    {
+      "path": ".dev/pulse-docker-665e793-20260909/conformance-kya.log",
+      "bytes": 588,
+      "sha256": "ec8a0098f1cf8a1dd6ba30e96aec5ceadf0848a046a62ba66427d77a3890adde"
+    },
+    {
+      "path": ".dev/pulse-docker-665e793-20260909/conformance.log",
+      "bytes": 837,
+      "sha256": "5a1a5e871816d580e04ad659b790f9b5e8a448e8ecef2cf91cdf9cf30e529fab"
+    },
+    {
+      "path": ".dev/pulse-docker-665e793-20260909/dependency-audit.log",
+      "bytes": 27883,
+      "sha256": "0b7f6e59d784c589b6f2f57624eab450fef8d9ad34bce31bacac914a780dac34"
+    },
+    {
+      "path": ".dev/pulse-docker-665e793-20260909/esbuild-paths.log",
+      "bytes": 619,
+      "sha256": "35e4ad7bba37a0a8ebc3541db3368577e7a188026d135854ea39ed05e8001309"
+    },
+    {
+      "path": ".dev/pulse-docker-665e793-20260909/esbuild-smoke.log",
+      "bytes": 71,
+      "sha256": "733023f236b684a13807086c7c9ae6d7170c3d033e59e91c2dd8e4ad6770ebb9"
+    },
+    {
+      "path": ".dev/pulse-docker-665e793-20260909/esbuild-smoke.mjs",
+      "bytes": 680,
+      "sha256": "795fb60ca8588a7b6835e9a6896b1ef08c17ae8aee93045d5d972b9804a1088a"
+    },
+    {
+      "path": ".dev/pulse-docker-665e793-20260909/evidence-kya.log",
+      "bytes": 345,
+      "sha256": "c5a39546681c5f5d1a6e892e95857fbfcaa03167dcaa23e885ea909170684590"
+    },
+    {
+      "path": ".dev/pulse-docker-665e793-20260909/evidence.log",
+      "bytes": 575,
+      "sha256": "6194e6db0048dedd27f480a0e406e37f33382d3e513c3b992af7fd0808bdf4e9"
+    },
+    {
+      "path": ".dev/pulse-docker-665e793-20260909/integration.log",
+      "bytes": 598,
+      "sha256": "b0e540e429c81c89f1050a24063b9b7d7e3f9852af89782f973b50725c1f35ba"
+    },
+    {
+      "path": ".dev/pulse-docker-665e793-20260909/kya.log",
+      "bytes": 584,
+      "sha256": "282916d8bac2480f26715a556a39d393e161b8cfc80d102f01fb21b9702f67ff"
+    },
+    {
+      "path": ".dev/pulse-docker-665e793-20260909/postgres-create.log",
+      "bytes": 65,
+      "sha256": "93c8f1a13cb03d2e7f304b915542466be2a0a31423130f247d4ce815f176b9dc"
+    },
+    {
+      "path": ".dev/pulse-docker-665e793-20260909/postgres-pull.log",
+      "bytes": 434,
+      "sha256": "f93fd670c4740c13bd9281f16978ca1e40a087ff49d86411470c6607665f66b5"
+    },
+    {
+      "path": ".dev/pulse-docker-665e793-20260909/postgres-ready.log",
+      "bytes": 88,
+      "sha256": "8d27d89199ef6257f0b2eed1f8260f6dea08584a5167b36b0411d8aa0985f031"
+    },
+    {
+      "path": ".dev/pulse-docker-665e793-20260909/postgres-start.log",
+      "bytes": 36,
+      "sha256": "bc131e448a294cd8e9d8fce3d97d6bf63067c1ca2621ed358f2195eb990c0b84"
+    },
+    {
+      "path": ".dev/pulse-docker-665e793-20260909/postgres-version.log",
+      "bytes": 278,
+      "sha256": "6a321282a02bfa12ffa874befa8e39e0bb13fa5bcf09e91020a8c8f1753f71ba"
+    },
+    {
+      "path": ".dev/pulse-docker-665e793-20260909/runtimes.log",
+      "bytes": 789,
+      "sha256": "e7e5b89920475851f18ea5619ac95b262f37ed00d33cb3aaab1e0ff440a4278c"
+    },
+    {
+      "path": ".dev/pulse-docker-665e793-20260909/validate.mjs",
+      "bytes": 9379,
+      "sha256": "29a06ea17a448675a4b7f85833fd000aa4c9edc2a0b062c00417ef5ca7ba0e92"
+    },
+    {
+      "path": ".dev/pulse-docker-665e793-20260909/validation.json",
+      "bytes": 134919,
+      "sha256": "c3cd7193a0b45b280a099d232c2968fbefc31e309db7ae23b544ca3310de1206"
+    },
+    {
+      "path": ".dev/pulse-native-665e793-20260908/environment-build-tools.log",
+      "bytes": 2231,
+      "sha256": "cb0a909275669cc539421fd5d1bf1e740efb45a2f8723b8d1b6c8260130f5c1f"
+    },
+    {
+      "path": ".dev/pulse-native-665e793-20260908/run.mjs",
+      "bytes": 3977,
+      "sha256": "56cfbc3effcff7ae9be769d145708c1a2a70219659df417213a7a595d140d5fe"
+    },
+    {
+      "path": ".dev/pulse-native-665e793-20260908/setup.sh",
+      "bytes": 1293,
+      "sha256": "9d76561fde9ff02968f3029e59f0bee18e201567f219eb83ab0bc3ff037dd828"
+    },
+    {
+      "path": ".dev/pulse-native-665e793-20260908/validation.json",
+      "bytes": 55208,
+      "sha256": "3f3d32adce38e917292c118de762544749e60bb00a80b9ef1b1cbe6c3e19165d"
+    },
+    {
+      "path": ".dev/pulse-qualification-summary-20260909/README.md",
+      "bytes": 12317,
+      "sha256": "190873672d9e6d861bf5f3ff30f413c1061e11d74f1c426f65e67ba6c44c826b"
+    },
+    {
+      "path": ".dev/pulse-remediation-green.json",
+      "bytes": 27818,
+      "sha256": "5a09352dc5ae08675d3e13c44c33c620dedfe47a090f717fa3b3db3f0a440fd5"
+    },
+    {
+      "path": ".dev/pulse-remediation-red.json",
+      "bytes": 48838,
+      "sha256": "5aa4870111e52d8066f1a8ab04d67ce77d6b7d98b0e1180c9401af1e41804af7"
+    },
+    {
+      "path": ".dev/pulse-validation-665e793-20260908/adversarial.log",
+      "bytes": 164,
+      "sha256": "85582e874a6a534c4643ab72d5e8a8f0c398dfd38a790bb73a7153f449db85fa"
+    },
+    {
+      "path": ".dev/pulse-validation-665e793-20260908/build.log",
+      "bytes": 132,
+      "sha256": "a7831d60cd9b9cea16496172589d52b5a646e9f4c24063f950e1cb2c8ae94808"
+    },
+    {
+      "path": ".dev/pulse-validation-665e793-20260908/evaluator.log",
+      "bytes": 2373,
+      "sha256": "186aaeedb317c953fa2ae58c49d8314a41010629eba523a09ad9b8dd77b81b28"
+    },
+    {
+      "path": ".dev/pulse-validation-665e793-20260908/format.log",
+      "bytes": 217,
+      "sha256": "e5fa17598ced8ed76b4ba93a0fa371b6d3bdeac55a2c5ed314f278016c2a9b5b"
+    },
+    {
+      "path": ".dev/pulse-validation-665e793-20260908/fresh-adversarial.json",
+      "bytes": 27803,
+      "sha256": "45488c72c38dfa369b8230f1e392c8406ef19199f57e9cdfd6d3eab4437f5594"
+    },
+    {
+      "path": ".dev/pulse-validation-665e793-20260908/install.log",
+      "bytes": 1607,
+      "sha256": "b94099fe6067f565923ca9148b7cb21f44357108659b8c8722b2e1fedf4ca194"
+    },
+    {
+      "path": ".dev/pulse-validation-665e793-20260908/interrupted-checkpoint.json",
+      "bytes": 50314,
+      "sha256": "5b34e4bd44ba5dac190ea712f50762321a6041ef3014d7e4f8e0491993c0c9f8"
+    },
+    {
+      "path": ".dev/pulse-validation-665e793-20260908/lint.log",
+      "bytes": 133,
+      "sha256": "742c7dfbf0beef076f8addc996ed9c453000bf7980285dc79f00e95e5df9f328"
+    },
+    {
+      "path": ".dev/pulse-validation-665e793-20260908/postgres-init.log",
+      "bytes": 1084,
+      "sha256": "bbec4331f0090f276d1596e2c05f9246324cc5148ba7605abd1ae09e9b09840c"
+    },
+    {
+      "path": ".dev/pulse-validation-665e793-20260908/postgres-start-resumed.log",
+      "bytes": 177,
+      "sha256": "f81b5c837432c510834e32745c25f2901f9adf0282150f0e2c7e6cb192870ee7"
+    },
+    {
+      "path": ".dev/pulse-validation-665e793-20260908/postgres-start.ps1",
+      "bytes": 924,
+      "sha256": "d12586b0aaf70cb4e423c2ee9bc73644359c04af18290c60fa5e46550a5a75cc"
+    },
+    {
+      "path": ".dev/pulse-validation-665e793-20260908/postgres-stderr.log",
+      "bytes": 875,
+      "sha256": "bead75648981f5757f9b20a70731d32a5a466f27f1e8e1aa1a08dffb44bcfd6f"
+    },
+    {
+      "path": ".dev/pulse-validation-665e793-20260908/postgres-stdout.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".dev/pulse-validation-665e793-20260908/production-ap2.log",
+      "bytes": 233,
+      "sha256": "a4905dee81ace9c891f3993774ce293a19882175bbac22b3892d19cfb676562f"
+    },
+    {
+      "path": ".dev/pulse-validation-665e793-20260908/python-boundary.log",
+      "bytes": 120,
+      "sha256": "98d356085585ec72494b029b675d49574b97711a8bf56ada642ab684ceb94ee8"
+    },
+    {
+      "path": ".dev/pulse-validation-665e793-20260908/runtimes.log",
+      "bytes": 33,
+      "sha256": "4f2d6a8512b37b40275d7897dde72fdde10be87fe4d95d297e62866cc8a494c8"
+    },
+    {
+      "path": ".dev/pulse-validation-665e793-20260908/structured-bridge.log",
+      "bytes": 1718,
+      "sha256": "a02edb22b225fc47ebebfad99c8d60face1035549c89fced8c11a7e7dfdde34a"
+    },
+    {
+      "path": ".dev/pulse-validation-665e793-20260908/typecheck.log",
+      "bytes": 151,
+      "sha256": "7c0bd64d15aa905d8dd87d01fe622592a224df9225251d6c617864e0e11d642b"
+    },
+    {
+      "path": ".dev/pulse-validation-665e793-20260908/unit.log",
+      "bytes": 591,
+      "sha256": "8153b922b82b4c330e1e46ba96b2416f6913da8dc7b6bde537b7b3db478a0c74"
+    },
+    {
+      "path": ".dev/pulse-validation-665e793-20260908/validate.mjs",
+      "bytes": 12916,
+      "sha256": "f93e0a0e3a23fa192331753e0375ea2ddfa8277a6613d72eda70585032f763e6"
+    },
+    {
+      "path": ".dev/pulse-validation-665e793-20260908/validation.json",
+      "bytes": 95017,
+      "sha256": "dad02217262c9011f10a405c12138d49326a5ffcc80d793d86ff36258f395591"
+    }
+  ]
+}
