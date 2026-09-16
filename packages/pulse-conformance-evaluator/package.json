@@ -28,7 +28,7 @@
     "@inntris/decision-core": "workspace:*",
     "@x402/core": "2.23.0",
     "@x402/evm": "2.23.0",
-    "viem": "2.55.8",
+    "viem": "2.56.5",
     "zod": "4.4.3"
   }
 }
