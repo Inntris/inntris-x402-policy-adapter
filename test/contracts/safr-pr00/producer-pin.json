@@ -1,0 +1,8 @@
+{
+  "version": "inntris-pr00-producer-pin-v1",
+  "repository": "KingsmanRon/MTP",
+  "commit": "37541613c5efcfbf144d923f927b13691458476f",
+  "production_source_commit": "7d493faf1e5cbdad9048298b0eafcac37a94190e",
+  "pull_request": "https://github.com/KingsmanRon/MTP/pull/142",
+  "baseline_contract": "inntris-core-authority-http-observed-v1"
+}

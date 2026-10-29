@@ -1,0 +1,37 @@
+{
+  "contract_version": "inntris-core-authority-http-observed-v1",
+  "scope": "HTTP serialization only; services and authentication are synthetic",
+  "responses": {
+    "allow": {
+      "decision": "allow",
+      "reasons": [],
+      "execution_action_hash": "3d4cd983f3e6de6a92a4d459d8384190dde0bbbe72358727d076418c09563cf9",
+      "policy_snapshot_format": "inntris-payment-policy-snapshot-v1",
+      "policy_snapshot_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_revision": "pr00-synthetic-revision",
+      "grant_id": "44444444-4444-4444-8444-444444444444",
+      "authority_token": "pr00-fixture-not-executable",
+      "expires_at": "2030-01-01T00:00:00Z"
+    },
+    "block": {
+      "decision": "block",
+      "reasons": [],
+      "execution_action_hash": "3d4cd983f3e6de6a92a4d459d8384190dde0bbbe72358727d076418c09563cf9",
+      "policy_snapshot_format": "inntris-payment-policy-snapshot-v1",
+      "policy_snapshot_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_revision": "pr00-synthetic-revision",
+      "grant_id": null,
+      "authority_token": null
+    },
+    "require_approval": {
+      "decision": "require_approval",
+      "reasons": [],
+      "execution_action_hash": "3d4cd983f3e6de6a92a4d459d8384190dde0bbbe72358727d076418c09563cf9",
+      "policy_snapshot_format": "inntris-payment-policy-snapshot-v1",
+      "policy_snapshot_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "policy_revision": "pr00-synthetic-revision",
+      "grant_id": null,
+      "authority_token": null
+    }
+  }
+}
