@@ -1,0 +1,13 @@
+{
+  "version": "inntris-pr00-unreleased-client-snapshot-v1",
+  "released": false,
+  "repository": "Inntris/inntris-x402-policy-adapter",
+  "base_commit": "4312e601e41718e1e0fd1acadfbf48c6769bb89d",
+  "local_branch": "feat/mtp-v05-production-executor",
+  "source_path": "packages/mtp-authority/src/execution-client.ts",
+  "source_status": "untracked local source; not present in pinned main",
+  "raw_sha256": "103d3952bb15f51093168f3ee3f2d4847c8cebcf1850301fa676c8d1f4cd8051",
+  "normalized_sha256": "103d3952bb15f51093168f3ee3f2d4847c8cebcf1850301fa676c8d1f4cd8051",
+  "normalisation": "CRLF to LF only",
+  "inspected_core_commit_in_source": "e31bfdf8b0b2f67f9e5f8ebc3890e76f7d19bf56"
+}

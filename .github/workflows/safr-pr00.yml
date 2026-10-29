@@ -1,0 +1,74 @@
+name: SAFR PR00 contracts
+on:
+  pull_request:
+  push:
+    branches: ["codex/safr-00-baseline"]
+permissions:
+  contents: read
+jobs:
+  contract:
+    name: safr-pr00-${{ matrix.mode }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [baseline, compatibility]
+    env:
+      ENVIRONMENT: development
+      SERVER_SECRET: pr00-synthetic-ci-only
+      INNTRIS_DB_INTEGRATION: "0"
+      SAFR_CORE_WIRE_FIXTURE: ${{ github.workspace }}/core-observed.json
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271
+        with:
+          version: 10.18.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+      - name: Read immutable producer pin
+        id: producer
+        shell: bash
+        run: |
+          node --input-type=module <<'JS' >> "$GITHUB_OUTPUT"
+          import { readFileSync } from "node:fs";
+          const pin = JSON.parse(readFileSync("test/contracts/safr-pr00/producer-pin.json", "utf8"));
+          if (pin.repository !== "KingsmanRon/MTP" || !/^[a-f0-9]{40}$/.test(pin.commit))
+            throw new Error("Invalid producer pin");
+          console.log("commit=" + pin.commit);
+          JS
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: KingsmanRon/MTP
+          ref: ${{ steps.producer.outputs.commit }}
+          path: core-producer
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: "3.12"
+      - name: Install pinned Core dependencies
+        working-directory: core-producer
+        run: pip install -e '.[dev]'
+      - name: Verify producer source semantics
+        working-directory: core-producer
+        run:
+          python -m scripts.safr_pr00.check_baseline --repository core_authority --path .
+          --files-only
+      - name: Generate actual Core HTTP response
+        working-directory: core-producer
+        run: |
+          python -m scripts.safr_pr00.export_contract --check
+          python -m scripts.safr_pr00.export_contract --output "$SAFR_CORE_WIRE_FIXTURE"
+      - run: pnpm install --frozen-lockfile
+      - name: Contract check; compatibility remains a blocking failure in PR00
+        run: >-
+          pnpm exec vitest run --config vitest.safr-pr00.config.ts --configLoader runner --no-cache
+          test/contracts/safr-pr00/${{ matrix.mode }}.test.ts --reporter=default --reporter=json
+          --outputFile=pr00-results.json
+      - name: Require every baseline test to execute
+        if: matrix.mode == 'baseline'
+        run: >-
+          python -c "import json; d=json.load(open('pr00-results.json')); assert
+          d['numTotalTests']==10 and d['numPassedTests']==10 and d['numPendingTests']==0 and
+          d['numFailedTests']==0, 'PR00 baseline tests missing, skipped or failing'"
